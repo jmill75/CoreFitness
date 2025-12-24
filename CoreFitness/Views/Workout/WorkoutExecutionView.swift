@@ -1,4 +1,5 @@
 import SwiftUI
+import AudioToolbox
 
 struct WorkoutExecutionView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
@@ -62,20 +63,358 @@ struct WorkoutExecutionView: View {
                     dismiss()
                 }
         }
-        .confirmationDialog(
-            "End Workout?",
-            isPresented: $workoutManager.showExitConfirmation
-        ) {
-            Button("Save & Exit", role: .destructive) {
-                isDismissing = true
-                workoutManager.completeWorkout()
+        .overlay {
+            if workoutManager.showExitConfirmation {
+                ExitConfirmationView(
+                    onSaveExit: {
+                        isDismissing = true
+                        workoutManager.showExitConfirmation = false
+                        workoutManager.completeWorkout()
+                    },
+                    onDiscard: {
+                        isDismissing = true
+                        workoutManager.showExitConfirmation = false
+                        workoutManager.cancelWorkout()
+                        dismiss()
+                    },
+                    onContinue: {
+                        workoutManager.showExitConfirmation = false
+                    }
+                )
+                .transition(.opacity)
             }
-            Button("Discard Workout", role: .destructive) {
-                isDismissing = true
-                workoutManager.cancelWorkout()
-                dismiss()
+        }
+        .animation(.easeInOut(duration: 0.2), value: workoutManager.showExitConfirmation)
+        .overlay {
+            if workoutManager.showPRCelebration {
+                PRCelebrationView(
+                    exerciseName: workoutManager.prExerciseName,
+                    weight: workoutManager.prWeight,
+                    onDismiss: {
+                        workoutManager.showPRCelebration = false
+                    }
+                )
+                .transition(.opacity.combined(with: .scale))
             }
-            Button("Continue Workout", role: .cancel) {}
+        }
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: workoutManager.showPRCelebration)
+    }
+}
+
+// MARK: - PR Celebration View with Fireworks
+struct PRCelebrationView: View {
+    let exerciseName: String
+    let weight: Double
+    let onDismiss: () -> Void
+
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var showContent = false
+    @State private var particles: [FireworkParticle] = []
+
+    var body: some View {
+        ZStack {
+            // Blurred background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onDismiss()
+                }
+
+            // Extra dark tint for contrast
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+
+            // Firework particles
+            ForEach(particles) { particle in
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+                    .position(particle.position)
+                    .opacity(particle.opacity)
+            }
+
+            // Main content
+            VStack(spacing: 24) {
+                // Trophy icon
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.yellow.opacity(0.3), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 100
+                            )
+                        )
+                        .frame(width: 200, height: 200)
+                        .scaleEffect(showContent ? 1.2 : 0.8)
+                        .opacity(showContent ? 1 : 0)
+
+                    Text("🏆")
+                        .font(.system(size: 80))
+                        .scaleEffect(showContent ? 1 : 0)
+                }
+
+                // NEW PR text
+                Text("NEW PR!")
+                    .font(.system(size: 48, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.yellow, .orange],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .scaleEffect(showContent ? 1 : 0.5)
+                    .opacity(showContent ? 1 : 0)
+
+                // Exercise and weight
+                VStack(spacing: 8) {
+                    Text(exerciseName)
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+
+                    HStack(spacing: 4) {
+                        Text(themeManager.formatWeightValue(weight))
+                            .font(.system(size: 56, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                        Text(themeManager.weightUnitLabel)
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.green.opacity(0.8))
+                    }
+                }
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 20)
+
+                // Dismiss button
+                Button {
+                    onDismiss()
+                } label: {
+                    Text("KEEP CRUSHING IT")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 16)
+                        .background(
+                            LinearGradient(
+                                colors: [.yellow, .orange],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: .orange.opacity(0.5), radius: 10, y: 5)
+                }
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 30)
+                .padding(.top, 16)
+            }
+        }
+        .onAppear {
+            // Play celebration sound
+            playCelebrationSound()
+
+            // Animate content in
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                showContent = true
+            }
+
+            // Launch fireworks
+            launchFireworks()
+
+            // Auto-dismiss after 4 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                onDismiss()
+            }
+        }
+    }
+
+    private func playCelebrationSound() {
+        // Play a series of sounds for celebration effect
+        // 1057 = fanfare-like sound, 1025 = positive alert
+        AudioServicesPlaySystemSound(1025)
+
+        // Play additional sounds with delay for fanfare effect
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            AudioServicesPlaySystemSound(1025)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            AudioServicesPlaySystemSound(1025)
+        }
+    }
+
+    private func launchFireworks() {
+        let colors: [Color] = [.yellow, .orange, .red, .green, .cyan, .pink, .purple]
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+
+        // Create multiple bursts
+        for burst in 0..<5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(burst) * 0.3) {
+                let centerX = CGFloat.random(in: screenWidth * 0.2...screenWidth * 0.8)
+                let centerY = CGFloat.random(in: screenHeight * 0.2...screenHeight * 0.5)
+
+                // Create particles for this burst
+                for _ in 0..<20 {
+                    let angle = Double.random(in: 0...2 * .pi)
+                    let distance = CGFloat.random(in: 50...150)
+                    let endX = centerX + cos(angle) * distance
+                    let endY = centerY + sin(angle) * distance
+
+                    let particle = FireworkParticle(
+                        id: UUID(),
+                        position: CGPoint(x: centerX, y: centerY),
+                        color: colors.randomElement() ?? .yellow,
+                        size: CGFloat.random(in: 4...12),
+                        opacity: 1.0
+                    )
+
+                    particles.append(particle)
+                    let index = particles.count - 1
+
+                    // Animate particle outward
+                    withAnimation(.easeOut(duration: 0.8)) {
+                        if index < particles.count {
+                            particles[index].position = CGPoint(x: endX, y: endY)
+                        }
+                    }
+
+                    // Fade out and fall
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation(.easeIn(duration: 0.5)) {
+                            if index < particles.count {
+                                particles[index].opacity = 0
+                                particles[index].position.y += 50
+                            }
+                        }
+                    }
+
+                    // Remove particle
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                        if let idx = particles.firstIndex(where: { $0.id == particle.id }) {
+                            particles.remove(at: idx)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct FireworkParticle: Identifiable {
+    let id: UUID
+    var position: CGPoint
+    var color: Color
+    var size: CGFloat
+    var opacity: Double
+}
+
+// MARK: - Exit Confirmation View
+struct ExitConfirmationView: View {
+    let onSaveExit: () -> Void
+    let onDiscard: () -> Void
+    let onContinue: () -> Void
+
+    var body: some View {
+        ZStack {
+            // Blurred background overlay
+            Rectangle()
+                .fill(.regularMaterial)
+                .ignoresSafeArea()
+
+            // Dark tint for better contrast
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onContinue()
+                }
+
+            // Dialog content
+            VStack(spacing: 24) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.orange.opacity(0.2))
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.orange)
+                }
+
+                // Title
+                Text("End Workout?")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+
+                // Buttons
+                VStack(spacing: 16) {
+                    // Save & Exit
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onSaveExit()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title2)
+                            Text("Save & Exit")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 64)
+                        .background(Color.green)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    // Discard
+                    Button {
+                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        onDiscard()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "trash.fill")
+                                .font(.title2)
+                            Text("Discard Workout")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 64)
+                        .background(Color.red)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    // Continue
+                    Button {
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        onContinue()
+                    } label: {
+                        Text("Continue Workout")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.gray.opacity(0.3))
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                }
+                .padding(.horizontal, 8)
+            }
+            .padding(32)
+            .background(
+                RoundedRectangle(cornerRadius: 28)
+                    .fill(Color(.systemGray6).opacity(0.95))
+            )
+            .padding(.horizontal, 24)
         }
     }
 }
@@ -108,12 +447,17 @@ struct UnifiedWorkoutView: View {
             }
             .padding(.horizontal, 16)
 
-            Spacer(minLength: 0)
+            Spacer(minLength: 20)
 
             // Large save button
             saveButton
                 .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+
+            Spacer(minLength: 16)
+
+            // Skip exercise at very bottom
+            skipExerciseButton
+                .padding(.bottom, 16)
         }
         .onAppear {
             loadCurrentValues()
@@ -280,10 +624,10 @@ struct UnifiedWorkoutView: View {
 
                 // Weight display
                 VStack(spacing: 4) {
-                    Text(themeManager.formatWeight(weight))
-                        .font(.system(size: 60, weight: .bold, design: .rounded))
+                    Text(themeManager.formatWeightValue(weight))
+                        .font(.system(size: 72, weight: .bold, design: .rounded))
                         .foregroundStyle(.green)
-                    Text("WEIGHT")
+                    Text(themeManager.weightUnitLabel)
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundStyle(.gray)
@@ -310,27 +654,29 @@ struct UnifiedWorkoutView: View {
 
     // MARK: - Save Button (Extra large)
     private var saveButton: some View {
-        VStack(spacing: 12) {
-            Button {
-                workoutManager.logSet(reps: reps, weight: weight, rpe: nil)
-                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title)
-                    Text("SAVE SET")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                }
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity)
-                .frame(height: 72)
-                .background(Color.green)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .shadow(color: .green.opacity(0.4), radius: 8, y: 4)
+        Button {
+            workoutManager.logSet(reps: reps, weight: weight, rpe: nil)
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title)
+                Text("SAVE SET")
+                    .font(.title2)
+                    .fontWeight(.bold)
             }
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity)
+            .frame(height: 72)
+            .background(Color.green)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .green.opacity(0.4), radius: 8, y: 4)
+        }
+    }
 
-            // Skip exercise link
+    // MARK: - Skip Exercise Button
+    private var skipExerciseButton: some View {
+        Group {
             if !workoutManager.isLastExercise {
                 Button {
                     workoutManager.nextExercise()
@@ -339,6 +685,10 @@ struct UnifiedWorkoutView: View {
                         .font(.subheadline)
                         .foregroundStyle(.gray)
                 }
+            } else {
+                // Empty space to maintain layout
+                Text("")
+                    .font(.subheadline)
             }
         }
     }

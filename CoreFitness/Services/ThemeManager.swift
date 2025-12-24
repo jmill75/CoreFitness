@@ -109,6 +109,21 @@ class ThemeManager: ObservableObject {
         }
     }
 
+    /// Returns just the numeric value formatted (without unit)
+    func formatWeightValue(_ pounds: Double) -> String {
+        if useMetric {
+            let kg = pounds * 0.453592
+            return String(format: "%.1f", kg)
+        } else {
+            return String(format: "%.0f", pounds)
+        }
+    }
+
+    /// Returns the weight unit label
+    var weightUnitLabel: String {
+        useMetric ? "KG" : "LBS"
+    }
+
     func convertWeight(_ value: Double, toMetric: Bool) -> Double {
         if toMetric {
             return value * 0.453592

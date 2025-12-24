@@ -7,6 +7,7 @@ struct HealthView: View {
 
     // MARK: - State
     @State private var showWaterIntake = false
+    @State private var showMoodDetail = false
 
     var body: some View {
         NavigationStack {
@@ -27,7 +28,7 @@ struct HealthView: View {
                         WaterIntakeCard(showDetail: $showWaterIntake)
 
                         // Mood Tracker
-                        MoodTrackerCard()
+                        MoodTrackerCard(showDetail: $showMoodDetail)
                     }
                     .padding()
                 }
@@ -52,6 +53,10 @@ struct HealthView: View {
             }
             .sheet(isPresented: $showWaterIntake) {
                 WaterIntakeDetailView()
+                    .presentationBackground(.regularMaterial)
+            }
+            .sheet(isPresented: $showMoodDetail) {
+                MoodDetailView()
                     .presentationBackground(.regularMaterial)
             }
             .task {
@@ -599,56 +604,68 @@ struct WaterIntakeCard: View {
 // MARK: - Mood Tracker Card
 struct MoodTrackerCard: View {
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack {
-                IconBadge("face.smiling.fill", color: .accentYellow, size: 40)
+    @Binding var showDetail: Bool
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Mood This Week")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                    Text("Your emotional patterns")
+    var body: some View {
+        Button {
+            showDetail = true
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        } label: {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header
+                HStack {
+                    IconBadge("face.smiling.fill", color: .accentYellow, size: 40)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Mood This Week")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                        Text("Your emotional patterns")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Spacer()
-            }
-
-            // Mood grid
-            HStack(spacing: 0) {
-                ForEach(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], id: \.self) { day in
-                    VStack(spacing: 8) {
-                        Text(moodEmoji(for: day))
-                            .font(.title2)
-                        Text(day.prefix(1))
-                            .font(.caption2)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
+                // Mood grid
+                HStack(spacing: 0) {
+                    ForEach(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], id: \.self) { day in
+                        VStack(spacing: 8) {
+                            Text(moodEmoji(for: day))
+                                .font(.title2)
+                            Text(day.prefix(1))
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(day == "Sun" ? Color.accentYellow.opacity(0.15) : Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(day == "Sun" ? Color.accentYellow.opacity(0.15) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Mood summary
+                HStack(spacing: 16) {
+                    MoodSummaryPill(emoji: "😄", label: "Great", count: 3, color: .accentGreen)
+                    MoodSummaryPill(emoji: "😊", label: "Good", count: 2, color: .accentBlue)
+                    MoodSummaryPill(emoji: "😐", label: "Okay", count: 1, color: .accentOrange)
+                    MoodSummaryPill(emoji: "😴", label: "Tired", count: 1, color: .accentTeal)
                 }
             }
             .padding()
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            // Mood summary
-            HStack(spacing: 16) {
-                MoodSummaryPill(emoji: "😄", label: "Great", count: 3, color: .accentGreen)
-                MoodSummaryPill(emoji: "😊", label: "Good", count: 2, color: .accentBlue)
-                MoodSummaryPill(emoji: "😐", label: "Okay", count: 1, color: .accentOrange)
-                MoodSummaryPill(emoji: "😴", label: "Tired", count: 1, color: .accentTeal)
-            }
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .padding()
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .buttonStyle(.plain)
     }
 
     private func moodEmoji(for day: String) -> String {
@@ -684,6 +701,230 @@ struct MoodSummaryPill: View {
         .padding(.vertical, 8)
         .background(color.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+// MARK: - Mood Detail View (30 Days)
+struct MoodDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    // Mood types with their properties
+    private let moodTypes: [(emoji: String, label: String, color: Color)] = [
+        ("😄", "Great", .accentGreen),
+        ("😊", "Good", .accentBlue),
+        ("😐", "Okay", .accentOrange),
+        ("😔", "Low", .accentRed),
+        ("😴", "Tired", .accentTeal)
+    ]
+
+    // Sample 30-day mood data (index into moodTypes)
+    private let dailyMoods: [Int] = [
+        0, 1, 2, 1, 0, 0, 4,  // Week 1
+        1, 0, 1, 2, 1, 0, 1,  // Week 2
+        2, 1, 0, 0, 1, 0, 4,  // Week 3
+        1, 1, 0, 2, 3, 1, 0   // Week 4 + 2 days
+    ]
+
+    private var moodCounts: [Int] {
+        var counts = Array(repeating: 0, count: moodTypes.count)
+        for mood in dailyMoods {
+            counts[mood] += 1
+        }
+        return counts
+    }
+
+    private var dominantMood: Int {
+        moodCounts.enumerated().max(by: { $0.element < $1.element })?.offset ?? 0
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Summary header
+                    VStack(spacing: 12) {
+                        Text(moodTypes[dominantMood].emoji)
+                            .font(.system(size: 60))
+
+                        Text("Mostly \(moodTypes[dominantMood].label)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        Text("Based on your last 30 days")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top)
+
+                    // Mood breakdown
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Mood Breakdown")
+                            .font(.headline)
+                            .fontWeight(.bold)
+
+                        ForEach(0..<moodTypes.count, id: \.self) { index in
+                            MoodBreakdownRow(
+                                emoji: moodTypes[index].emoji,
+                                label: moodTypes[index].label,
+                                count: moodCounts[index],
+                                total: dailyMoods.count,
+                                color: moodTypes[index].color
+                            )
+                        }
+                    }
+                    .padding()
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal)
+
+                    // 30-day calendar grid
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Last 30 Days")
+                            .font(.headline)
+                            .fontWeight(.bold)
+
+                        // Calendar grid (5 rows x 7 columns, showing last 30 days)
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+                            // Day labels
+                            ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                                Text(day)
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                                    .frame(height: 20)
+                            }
+
+                            // Empty cells for alignment (assuming we start mid-week)
+                            ForEach(0..<2, id: \.self) { _ in
+                                Color.clear
+                                    .frame(height: 44)
+                            }
+
+                            // Mood cells
+                            ForEach(0..<dailyMoods.count, id: \.self) { index in
+                                VStack(spacing: 2) {
+                                    Text(moodTypes[dailyMoods[index]].emoji)
+                                        .font(.title3)
+                                    Text("\(index + 1)")
+                                        .font(.system(size: 9))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(height: 44)
+                                .frame(maxWidth: .infinity)
+                                .background(moodTypes[dailyMoods[index]].color.opacity(0.15))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal)
+
+                    // Weekly pattern
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Weekly Pattern")
+                            .font(.headline)
+                            .fontWeight(.bold)
+
+                        HStack(spacing: 0) {
+                            ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
+                                VStack(spacing: 8) {
+                                    Text(averageMoodEmoji(for: day))
+                                        .font(.title2)
+                                    Text(day.prefix(1))
+                                        .font(.caption2)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .padding()
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal)
+                }
+                .padding(.vertical)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Mood Tracker")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentYellow)
+                }
+            }
+        }
+    }
+
+    private func averageMoodEmoji(for day: String) -> String {
+        // Return typical mood for each day based on sample data
+        switch day {
+        case "Sun": return "😴"
+        case "Mon": return "😊"
+        case "Tue": return "😄"
+        case "Wed": return "😐"
+        case "Thu": return "😊"
+        case "Fri": return "😄"
+        case "Sat": return "😄"
+        default: return "😐"
+        }
+    }
+}
+
+struct MoodBreakdownRow: View {
+    let emoji: String
+    let label: String
+    let count: Int
+    let total: Int
+    let color: Color
+
+    private var percentage: Double {
+        Double(count) / Double(total)
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(emoji)
+                .font(.title2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(label)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Spacer()
+                    Text("\(count) days")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("(\(Int(percentage * 100))%)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(.systemGray5))
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(color)
+                            .frame(width: geometry.size.width * percentage, height: 8)
+                    }
+                }
+                .frame(height: 8)
+            }
+        }
     }
 }
 
@@ -860,47 +1101,283 @@ struct RecoveryFactorPillHealth: View {
 struct WaterIntakeDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
+    private let chartHeight: CGFloat = 180
+    private let goal: Int = 8
+
+    // Sample 30-day water intake data (glasses per day)
+    private let dailyData: [Int] = [
+        6, 7, 5, 8, 7, 6, 8, 5, 7, 6,
+        8, 7, 6, 5, 7, 8, 6, 7, 5, 8,
+        7, 6, 8, 7, 5, 6, 8, 7, 6, 5
+    ]
+
+    private var average: Double {
+        Double(dailyData.reduce(0, +)) / Double(dailyData.count)
+    }
+
+    private var daysMetGoal: Int {
+        dailyData.filter { $0 >= goal }.count
+    }
+
+    private var maxValue: Int {
+        dailyData.max() ?? 10
+    }
+
+    private var minValue: Int {
+        dailyData.min() ?? 0
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Hero illustration
-                ZStack {
-                    Circle()
-                        .fill(AppGradients.ocean.opacity(0.1))
-                        .frame(width: 120, height: 120)
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Header stats
+                    HStack(spacing: 12) {
+                        WaterDetailStatBox(
+                            icon: "drop.fill",
+                            value: String(format: "%.1f", average),
+                            label: "Daily Avg",
+                            color: .accentBlue
+                        )
+                        WaterDetailStatBox(
+                            icon: "checkmark.circle.fill",
+                            value: "\(daysMetGoal)",
+                            label: "Goals Met",
+                            color: .accentGreen
+                        )
+                        WaterDetailStatBox(
+                            icon: "target",
+                            value: "\(goal)",
+                            label: "Daily Goal",
+                            color: .accentOrange
+                        )
+                    }
+                    .padding(.horizontal)
 
-                    Image(systemName: "drop.fill")
-                        .font(.system(size: 50))
-                        .foregroundStyle(Color.accentBlue)
+                    // 30-day chart
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Last 30 Days")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .padding(.horizontal)
+
+                        // Chart with Y-axis
+                        HStack(alignment: .top, spacing: 8) {
+                            // Y-axis labels
+                            VStack {
+                                Text("10")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("8")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("5")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("0")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(width: 24, height: chartHeight)
+
+                            // Chart
+                            GeometryReader { geometry in
+                                let width = geometry.size.width
+                                let stepX = width / CGFloat(dailyData.count - 1)
+
+                                ZStack {
+                                    // Goal line
+                                    Path { path in
+                                        let goalY = chartHeight - (CGFloat(goal) / 10.0) * chartHeight
+                                        path.move(to: CGPoint(x: 0, y: goalY))
+                                        path.addLine(to: CGPoint(x: width, y: goalY))
+                                    }
+                                    .stroke(Color.accentGreen.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
+
+                                    // Grid lines
+                                    VStack(spacing: 0) {
+                                        ForEach(0..<4, id: \.self) { _ in
+                                            Divider()
+                                                .background(Color.gray.opacity(0.2))
+                                            Spacer()
+                                        }
+                                    }
+
+                                    // Gradient fill
+                                    Path { path in
+                                        path.move(to: CGPoint(x: 0, y: chartHeight))
+                                        for (index, value) in dailyData.enumerated() {
+                                            let x = CGFloat(index) * stepX
+                                            let y = chartHeight - (CGFloat(value) / 10.0) * chartHeight
+                                            path.addLine(to: CGPoint(x: x, y: y))
+                                        }
+                                        path.addLine(to: CGPoint(x: width, y: chartHeight))
+                                        path.closeSubpath()
+                                    }
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.accentBlue.opacity(0.4), Color.accentBlue.opacity(0.05)],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+
+                                    // Line
+                                    Path { path in
+                                        for (index, value) in dailyData.enumerated() {
+                                            let x = CGFloat(index) * stepX
+                                            let y = chartHeight - (CGFloat(value) / 10.0) * chartHeight
+                                            if index == 0 {
+                                                path.move(to: CGPoint(x: x, y: y))
+                                            } else {
+                                                path.addLine(to: CGPoint(x: x, y: y))
+                                            }
+                                        }
+                                    }
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [Color.accentBlue, Color.accentBlue.opacity(0.8)],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ),
+                                        style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                                    )
+
+                                    // Data points
+                                    ForEach(0..<dailyData.count, id: \.self) { index in
+                                        let x = CGFloat(index) * stepX
+                                        let y = chartHeight - (CGFloat(dailyData[index]) / 10.0) * chartHeight
+
+                                        Circle()
+                                            .fill(dailyData[index] >= goal ? Color.accentGreen : Color.accentBlue)
+                                            .frame(width: 6, height: 6)
+                                            .position(x: x, y: y)
+                                    }
+                                }
+                            }
+                            .frame(height: chartHeight)
+                            .padding(.trailing, 8)
+                        }
+                        .padding(.horizontal)
+
+                        // Legend
+                        HStack(spacing: 16) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(Color.accentGreen)
+                                    .frame(width: 8, height: 8)
+                                Text("Goal met")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack(spacing: 6) {
+                                Rectangle()
+                                    .fill(Color.accentGreen.opacity(0.5))
+                                    .frame(width: 16, height: 2)
+                                Text("Goal line (8 glasses)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical)
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal)
+
+                    // Stats summary
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Summary")
+                            .font(.headline)
+                            .fontWeight(.bold)
+
+                        HStack(spacing: 20) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Best Day")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(maxValue) glasses")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+
+                            Divider()
+                                .frame(height: 30)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Lowest Day")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(minValue) glasses")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+
+                            Divider()
+                                .frame(height: 30)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Success Rate")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("\(Int(Double(daysMetGoal) / Double(dailyData.count) * 100))%")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.accentGreen)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(.regularMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .padding(.horizontal)
                 }
-                .padding(.top, 40)
-
-                Text("Water Intake")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text("Track your daily hydration to stay healthy and energized.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-
-                Spacer()
-
-                GradientButton("Coming Soon", icon: "drop.fill", gradient: AppGradients.ocean) {
-                    dismiss()
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 32)
+                .padding(.vertical)
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Water Intake")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    DismissButton { dismiss() }
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentBlue)
                 }
             }
         }
+    }
+}
+
+struct WaterDetailStatBox: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(color)
+
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 

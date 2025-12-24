@@ -107,21 +107,21 @@ struct AppGradients {
         endPoint: .bottomTrailing
     )
 
-    // Score Gradients (Darker for better readability)
+    // Score Gradients
     static func scoreGradient(for score: Int) -> LinearGradient {
         switch score {
         case 80...100:
-            // Dark green
-            return LinearGradient(colors: [Color(hex: "1A5C2E"), Color(hex: "0F3D1C")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Vibrant green
+            return LinearGradient(colors: [Color(hex: "22C55E"), Color(hex: "16A34A")], startPoint: .topLeading, endPoint: .bottomTrailing)
         case 60..<80:
-            // Dark amber/gold
-            return LinearGradient(colors: [Color(hex: "8B6914"), Color(hex: "5C4A12")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Clean blue
+            return LinearGradient(colors: [Color(hex: "3B82F6"), Color(hex: "2563EB")], startPoint: .topLeading, endPoint: .bottomTrailing)
         case 40..<60:
-            // Dark orange
-            return LinearGradient(colors: [Color(hex: "8B4513"), Color(hex: "5C2E0D")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Warm orange
+            return LinearGradient(colors: [Color(hex: "F97316"), Color(hex: "EA580C")], startPoint: .topLeading, endPoint: .bottomTrailing)
         default:
-            // Dark red
-            return LinearGradient(colors: [Color(hex: "8B1A1A"), Color(hex: "5C1010")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            // Soft red
+            return LinearGradient(colors: [Color(hex: "EF4444"), Color(hex: "DC2626")], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 }

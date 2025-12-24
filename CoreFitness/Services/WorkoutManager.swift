@@ -39,6 +39,11 @@ class WorkoutManager: ObservableObject {
     @Published var showExitConfirmation: Bool = false
     @Published var showWorkoutComplete: Bool = false
 
+    // PR Celebration
+    @Published var showPRCelebration: Bool = false
+    @Published var prExerciseName: String = ""
+    @Published var prWeight: Double = 0
+
     // MARK: - Private Properties
     private var timer: Timer?
     private var restTimer: Timer?
@@ -390,6 +395,10 @@ class WorkoutManager: ObservableObject {
         guard let exercise = currentExercise,
               let session = currentSession else { return }
 
+        // Check for PR before saving (exclude current set from comparison)
+        let exerciseName = exercise.exercise?.name ?? "Exercise"
+        let isPR = checkForPR(exerciseName: exerciseName, newWeight: weight)
+
         let completedSet = CompletedSet(
             setNumber: currentSetNumber,
             reps: reps,
@@ -404,9 +413,31 @@ class WorkoutManager: ObservableObject {
 
         showSetLogger = false
 
-        // Haptic feedback
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        // Show PR celebration if new record
+        if isPR && weight > 0 {
+            prExerciseName = exerciseName
+            prWeight = weight
+            showPRCelebration = true
+            // Extra haptic for PR
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            }
 
+            // Delay next action to let PR celebration show
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                self?.handlePostSetAction()
+            }
+        } else {
+            // Normal haptic feedback
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            // Proceed immediately
+            handlePostSetAction()
+        }
+    }
+
+    /// Handle what happens after a set is logged
+    private func handlePostSetAction() {
         // Determine next action
         if isLastSet {
             if isLastExercise {
@@ -422,6 +453,26 @@ class WorkoutManager: ObservableObject {
 
         // Update Watch with current state
         sendWorkoutUpdateToWatch()
+    }
+
+    /// Check if the weight is a new personal record for this exercise
+    private func checkForPR(exerciseName: String, newWeight: Double) -> Bool {
+        guard let context = modelContext, newWeight > 0 else { return false }
+
+        // Fetch all completed sets for exercises with this name
+        let descriptor = FetchDescriptor<CompletedSet>(
+            sortBy: [SortDescriptor(\.weight, order: .reverse)]
+        )
+
+        guard let allSets = try? context.fetch(descriptor) else { return false }
+
+        // Find max weight for this exercise name
+        let maxPreviousWeight = allSets
+            .filter { $0.workoutExercise?.exercise?.name == exerciseName }
+            .map { $0.weight }
+            .max() ?? 0
+
+        return newWeight > maxPreviousWeight
     }
 
     /// Start rest timer between sets
