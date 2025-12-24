@@ -105,6 +105,23 @@ struct SettingsView: View {
                     Text("Notifications")
                 }
 
+                // Features Section
+                Section {
+                    NavigationLink {
+                        WaterIntakeSettingsView()
+                    } label: {
+                        Label("Water Intake", systemImage: "drop.fill")
+                    }
+
+                    NavigationLink {
+                        MusicSettingsView()
+                    } label: {
+                        Label("Music", systemImage: "music.note")
+                    }
+                } header: {
+                    Text("Features")
+                }
+
                 // Integrations Section
                 Section {
                     NavigationLink {
@@ -681,6 +698,254 @@ struct SubscriptionFeatureRow: View {
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(color)
+        }
+    }
+}
+
+// MARK: - Water Intake Settings View
+struct WaterIntakeSettingsView: View {
+    @AppStorage("waterIntakeEnabled") private var waterIntakeEnabled = true
+    @AppStorage("waterGoalOz") private var waterGoalOz: Double = 64
+    @AppStorage("waterReminderEnabled") private var waterReminderEnabled = false
+    @AppStorage("waterReminderInterval") private var waterReminderInterval: Double = 2
+
+    var body: some View {
+        List {
+            // Enable/Disable Section
+            Section {
+                Toggle(isOn: $waterIntakeEnabled) {
+                    Label("Track Water Intake", systemImage: "drop.fill")
+                }
+                .tint(Color.accentBlue)
+            } footer: {
+                Text("When enabled, water intake tracking will appear in the Health tab and home screen.")
+            }
+
+            if waterIntakeEnabled {
+                // Goal Section
+                Section {
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Daily Goal")
+                                .font(.subheadline)
+                            Spacer()
+                            Text("\(Int(waterGoalOz)) oz")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.accentBlue)
+                        }
+
+                        Slider(value: $waterGoalOz, in: 32...128, step: 8) {
+                            Text("Goal")
+                        }
+                        .tint(Color.accentBlue)
+
+                        // Quick presets
+                        HStack(spacing: 8) {
+                            ForEach([48, 64, 80, 96], id: \.self) { oz in
+                                Button {
+                                    withAnimation {
+                                        waterGoalOz = Double(oz)
+                                    }
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                } label: {
+                                    Text("\(oz)oz")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(waterGoalOz == Double(oz) ? .white : .primary)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(waterGoalOz == Double(oz) ? Color.accentBlue : Color(.systemGray5))
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } header: {
+                    Text("Daily Goal")
+                } footer: {
+                    Text("Recommended: 64oz (8 glasses) for most adults. Increase for active days or hot weather.")
+                }
+
+                // Reminders Section
+                Section {
+                    Toggle(isOn: $waterReminderEnabled) {
+                        Label("Hydration Reminders", systemImage: "bell.fill")
+                    }
+                    .tint(Color.accentBlue)
+
+                    if waterReminderEnabled {
+                        Picker(selection: $waterReminderInterval) {
+                            Text("Every hour").tag(1.0)
+                            Text("Every 2 hours").tag(2.0)
+                            Text("Every 3 hours").tag(3.0)
+                            Text("Every 4 hours").tag(4.0)
+                        } label: {
+                            Label("Reminder Frequency", systemImage: "clock")
+                        }
+                    }
+                } header: {
+                    Text("Reminders")
+                } footer: {
+                    Text("Get gentle reminders to stay hydrated throughout the day.")
+                }
+
+                // Container sizes info
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ContainerSizeRow(name: "Glass", size: "8 oz", icon: "cup.and.saucer.fill")
+                        ContainerSizeRow(name: "Small Bottle", size: "16 oz", icon: "waterbottle.fill")
+                        ContainerSizeRow(name: "Medium Bottle", size: "24 oz", icon: "waterbottle.fill")
+                        ContainerSizeRow(name: "Large Bottle", size: "32 oz", icon: "waterbottle.fill")
+                        ContainerSizeRow(name: "XL Bottle", size: "64 oz", icon: "waterbottle.fill")
+                    }
+                } header: {
+                    Text("Quick Add Sizes")
+                } footer: {
+                    Text("Tap these buttons in the Water Intake card to quickly log your intake.")
+                }
+            }
+        }
+        .navigationTitle("Water Intake")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct ContainerSizeRow: View {
+    let name: String
+    let size: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(Color.accentBlue)
+                .frame(width: 24)
+
+            Text(name)
+                .font(.subheadline)
+
+            Spacer()
+
+            Text(size)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Music Settings View
+struct MusicSettingsView: View {
+    @AppStorage("musicEnabled") private var musicEnabled = true
+    @AppStorage("musicProvider") private var musicProvider: String = "Apple Music"
+    @AppStorage("showMusicDuringWorkout") private var showMusicDuringWorkout = true
+    @AppStorage("autoPlayOnWorkoutStart") private var autoPlayOnWorkoutStart = false
+
+    @StateObject private var musicService = MusicService.shared
+
+    var body: some View {
+        List {
+            // Enable/Disable Section
+            Section {
+                Toggle(isOn: $musicEnabled) {
+                    Label("Music Integration", systemImage: "music.note")
+                }
+                .tint(Color.brandPrimary)
+            } footer: {
+                Text("Enable music controls during workouts and access to workout playlists.")
+            }
+
+            if musicEnabled {
+                // Provider Selection
+                Section {
+                    ForEach(MusicService.MusicProvider.allCases) { provider in
+                        Button {
+                            musicProvider = provider.rawValue
+                            musicService.selectedProvider = provider
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: provider.icon)
+                                    .font(.title3)
+                                    .foregroundStyle(provider.color)
+                                    .frame(width: 32)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(provider.rawValue)
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.primary)
+
+                                    if musicService.isAppInstalled(provider) {
+                                        Text("Installed")
+                                            .font(.caption2)
+                                            .foregroundStyle(.green)
+                                    } else {
+                                        Text("Not Installed")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+
+                                Spacer()
+
+                                if musicProvider == provider.rawValue {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(provider.color)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } header: {
+                    Text("Music App")
+                } footer: {
+                    Text("Select your preferred music app for workout playlists.")
+                }
+
+                // Workout options
+                Section {
+                    Toggle(isOn: $showMusicDuringWorkout) {
+                        Label("Show During Workout", systemImage: "speaker.wave.2.fill")
+                    }
+                    .tint(Color.brandPrimary)
+
+                    Toggle(isOn: $autoPlayOnWorkoutStart) {
+                        Label("Auto-Play on Start", systemImage: "play.fill")
+                    }
+                    .tint(Color.brandPrimary)
+                } header: {
+                    Text("Workout Options")
+                } footer: {
+                    Text("Show music controls during active workouts and optionally start playback automatically.")
+                }
+
+                // Open music app
+                Section {
+                    Button {
+                        musicService.openMusicApp()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Label("Open \(musicProvider)", systemImage: "arrow.up.forward.app")
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Music")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // Sync provider selection
+            if let provider = MusicService.MusicProvider.allCases.first(where: { $0.rawValue == musicProvider }) {
+                musicService.selectedProvider = provider
+            }
         }
     }
 }

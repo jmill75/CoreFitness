@@ -11,6 +11,12 @@ import SwiftUI
 @main
 struct CoreFitnessWidgetsBundle: WidgetBundle {
     var body: some Widget {
+        // Main app widgets
+        WaterIntakeWidget()
+        TodayWorkoutWidget()
+        HealthStatsWidget()
+
+        // Legacy widgets
         CoreFitnessWidgets()
         CoreFitnessWidgetsControl()
         WorkoutLiveActivity()
