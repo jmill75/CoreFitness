@@ -49,7 +49,14 @@ struct AchievementWallView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             if let image = shareImage {
-                ShareSheet(items: [image])
+                ShareSheet(items: [
+                    image,
+                    "Check out my achievements on CoreFitness! 💪"
+                ])
+            } else {
+                ShareSheet(items: [
+                    "I've unlocked \(earnedCount) achievements and earned \(earnedPoints) points on CoreFitness! 🏆"
+                ])
             }
         }
     }
@@ -92,6 +99,7 @@ struct AchievementWallView: View {
 
     // MARK: - Share Image Generation
 
+    @MainActor
     private func generateShareImage() {
         let earnedAchievements = achievements.filter { isAchievementEarned($0.id) }
 
@@ -102,13 +110,33 @@ struct AchievementWallView: View {
             totalPoints: totalPoints,
             topAchievements: Array(earnedAchievements.prefix(6))
         )
+        .frame(width: 320)
+        .background(Color.white)
 
         let renderer = ImageRenderer(content: shareCard)
-        renderer.scale = 3.0
+        renderer.scale = UIScreen.main.scale
 
         if let image = renderer.uiImage {
             shareImage = image
-            showShareSheet = true
+            DispatchQueue.main.async {
+                self.showShareSheet = true
+            }
+        } else {
+            // Fallback: Share text if image generation fails
+            let text = "I've unlocked \(earnedCount) achievements and earned \(earnedPoints) points on CoreFitness!"
+            shareImage = nil
+            // Create a simple fallback
+            let fallbackView = Text(text)
+                .padding()
+                .background(Color.white)
+            let fallbackRenderer = ImageRenderer(content: fallbackView)
+            fallbackRenderer.scale = UIScreen.main.scale
+            if let fallbackImage = fallbackRenderer.uiImage {
+                shareImage = fallbackImage
+                DispatchQueue.main.async {
+                    self.showShareSheet = true
+                }
+            }
         }
     }
 }

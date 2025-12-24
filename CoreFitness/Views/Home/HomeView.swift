@@ -5,6 +5,7 @@ struct HomeView: View {
     // MARK: - Environment
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var healthKitManager: HealthKitManager
+    @EnvironmentObject var navigationState: NavigationState
 
     // MARK: - Bindings
     @Binding var selectedTab: Tab
@@ -40,8 +41,20 @@ struct HomeView: View {
                         // Today's Recovery - Improved Hero Card
                         TodayRecoveryCard(selectedTab: $selectedTab)
 
-                        // Quick Stats Row
-                        QuickStatsRow(selectedTab: $selectedTab)
+                        // Quick Options Grid
+                        QuickOptionsGrid(
+                            onCheckIn: {
+                                showDailyCheckIn = true
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                            },
+                            onWaterIntake: {
+                                showWaterIntake = true
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                            },
+                            selectedTab: $selectedTab
+                        )
 
                         // Today's Workout Card
                         TodayWorkoutCard()
@@ -67,6 +80,20 @@ struct HomeView: View {
             .task {
                 // Refresh health data when view appears
                 await healthKitManager.refreshData()
+            }
+            .onChange(of: navigationState.showWaterIntake) { _, newValue in
+                if newValue {
+                    showWaterIntake = true
+                    // Reset navigation state
+                    navigationState.showWaterIntake = false
+                }
+            }
+            .onChange(of: navigationState.showDailyCheckIn) { _, newValue in
+                if newValue {
+                    showDailyCheckIn = true
+                    // Reset navigation state
+                    navigationState.showDailyCheckIn = false
+                }
             }
         }
     }
@@ -131,50 +158,114 @@ struct WelcomeHeader: View {
     }
 }
 
-// MARK: - Quick Stats Row
-struct QuickStatsRow: View {
+// MARK: - Quick Options Grid
+struct QuickOptionsGrid: View {
+    let onCheckIn: () -> Void
+    let onWaterIntake: () -> Void
     @Binding var selectedTab: Tab
 
     var body: some View {
-        HStack(spacing: 12) {
-            QuickStatCard(emoji: "🔥", value: "12", label: "Streak", selectedTab: $selectedTab)
-            QuickStatCard(emoji: "💪", value: "48", label: "Workouts", selectedTab: $selectedTab)
-            QuickStatCard(emoji: "🏆", value: "15", label: "Badges", selectedTab: $selectedTab)
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                QuickOptionCard(
+                    icon: "heart.text.square.fill",
+                    title: "Check-In",
+                    subtitle: "Log wellness",
+                    color: .accentRed,
+                    action: onCheckIn
+                )
+
+                QuickOptionCard(
+                    icon: "drop.fill",
+                    title: "Water",
+                    subtitle: "Track hydration",
+                    color: .accentBlue,
+                    action: onWaterIntake
+                )
+            }
+
+            HStack(spacing: 12) {
+                QuickOptionCard(
+                    icon: "figure.run",
+                    title: "Exercises",
+                    subtitle: "Browse library",
+                    color: .accentOrange
+                ) {
+                    selectedTab = .programs
+                }
+
+                QuickOptionCard(
+                    icon: "chart.bar.fill",
+                    title: "Progress",
+                    subtitle: "View stats",
+                    color: .accentGreen
+                ) {
+                    selectedTab = .progress
+                }
+            }
         }
     }
 }
 
-struct QuickStatCard: View {
-    let emoji: String
-    let value: String
-    let label: String
-    @Binding var selectedTab: Tab
+struct QuickOptionCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let action: () -> Void
+
+    @State private var isPressed = false
 
     var body: some View {
         Button {
             let impact = UIImpactFeedbackGenerator(style: .light)
             impact.impactOccurred()
-            selectedTab = .progress
+            action()
         } label: {
-            VStack(spacing: 6) {
-                Text(emoji)
-                    .font(.title3)
+            HStack(spacing: 12) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 44, height: 44)
 
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(color)
+                }
 
-                Text(label)
+                // Text
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
                     .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.tertiary)
             }
+            .padding(14)
             .frame(maxWidth: .infinity)
-            .frame(height: 90)
             .background(Color(.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
+        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
     }
 }
 

@@ -1,8 +1,68 @@
 import SwiftUI
 import SwiftData
+import UserNotifications
+
+// MARK: - Navigation State
+class NavigationState: ObservableObject {
+    static let shared = NavigationState()
+
+    @Published var showWaterIntake: Bool = false
+    @Published var showDailyCheckIn: Bool = false
+    @Published var pendingDeepLink: DeepLinkDestination?
+
+    enum DeepLinkDestination {
+        case waterIntake
+        case dailyCheckIn
+        case workout
+    }
+}
+
+// MARK: - App Delegate
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        // Set notification delegate
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+
+    // Handle notification tap when app is in foreground
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        // Show notification even when app is in foreground
+        completionHandler([.banner, .sound])
+    }
+
+    // Handle notification tap
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let identifier = response.notification.request.identifier
+
+        // Check if this is a daily check-in notification (for mood logging)
+        if identifier.contains("dailyCheckIn") || identifier.contains("mood") || identifier.contains("checkIn") {
+            DispatchQueue.main.async {
+                NavigationState.shared.showDailyCheckIn = true
+            }
+        }
+
+        completionHandler()
+    }
+}
 
 @main
 struct CoreFitnessApp: App {
+
+    // MARK: - App Delegate
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     // MARK: - State
     @StateObject private var authManager = AuthManager()
@@ -12,6 +72,7 @@ struct CoreFitnessApp: App {
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @StateObject private var fitnessDataService = FitnessDataService()
     @StateObject private var socialSharingService = SocialSharingService()
+    @StateObject private var navigationState = NavigationState.shared
     @AppStorage("hasRequestedHealthKit") private var hasRequestedHealthKit = false
 
     // MARK: - SwiftData Container
@@ -57,6 +118,7 @@ struct CoreFitnessApp: App {
                 .environmentObject(watchConnectivityManager)
                 .environmentObject(fitnessDataService)
                 .environmentObject(socialSharingService)
+                .environmentObject(navigationState)
                 .preferredColorScheme(themeManager.colorScheme)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
@@ -113,23 +175,7 @@ struct CoreFitnessApp: App {
 // NOTE: When you're ready to add Firebase:
 // 1. Add Firebase SDK via Swift Package Manager
 // 2. Download GoogleService-Info.plist from Firebase Console
-// 3. Uncomment the code below
-// 4. Set AuthManager.mockMode = false
+// 3. Add `import FirebaseCore` at the top
+// 4. Add `FirebaseApp.configure()` to AppDelegate.didFinishLaunchingWithOptions
+// 5. Set AuthManager.mockMode = false
 // ============================================
-
-/*
-import FirebaseCore
-
-// Add this to CoreFitnessApp:
-// @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-    ) -> Bool {
-        FirebaseApp.configure()
-        return true
-    }
-}
-*/

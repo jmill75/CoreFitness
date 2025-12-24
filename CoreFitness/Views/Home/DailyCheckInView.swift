@@ -13,8 +13,10 @@ struct DailyCheckInView: View {
     @State private var selectedPlans: Set<TodayPlanType> = [.workout]
     @State private var notes = ""
     @State private var isSaving = false
-    @State private var showConfetti = false
-    @State private var confettiPieces: [ConfettiPiece] = []
+    @State private var showSuccessOverlay = false
+    @State private var checkmarkScale: CGFloat = 0
+    @State private var checkmarkOpacity: Double = 0
+    @State private var ringProgress: CGFloat = 0
 
     var body: some View {
         NavigationStack {
@@ -52,15 +54,56 @@ struct DailyCheckInView: View {
                 .scrollIndicators(.hidden)
                 .background(Color(.systemGroupedBackground))
 
-                // Confetti overlay
-                if showConfetti {
-                    GeometryReader { geometry in
-                        ForEach(confettiPieces) { piece in
-                            ConfettiView(piece: piece, screenHeight: geometry.size.height)
+                // Success overlay
+                if showSuccessOverlay {
+                    ZStack {
+                        // Blurred background
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+
+                        VStack(spacing: 24) {
+                            // Animated checkmark circle
+                            ZStack {
+                                // Background ring
+                                Circle()
+                                    .stroke(Color.accentGreen.opacity(0.2), lineWidth: 8)
+                                    .frame(width: 120, height: 120)
+
+                                // Animated progress ring
+                                Circle()
+                                    .trim(from: 0, to: ringProgress)
+                                    .stroke(
+                                        Color.accentGreen,
+                                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                                    )
+                                    .frame(width: 120, height: 120)
+                                    .rotationEffect(.degrees(-90))
+
+                                // Checkmark
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 50, weight: .bold))
+                                    .foregroundStyle(Color.accentGreen)
+                                    .scaleEffect(checkmarkScale)
+                                    .opacity(checkmarkOpacity)
+                            }
+
+                            VStack(spacing: 8) {
+                                Text("Check-In Saved!")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+
+                                Text("Great job tracking your wellness!")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .opacity(checkmarkOpacity)
                         }
+                        .padding(40)
+                        .background(.regularMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 32))
+                        .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
                     }
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
+                    .transition(.opacity)
                 }
             }
             .navigationTitle("Daily Check-In")
@@ -79,30 +122,42 @@ struct DailyCheckInView: View {
         impactFeedback.impactOccurred()
 
         // TODO: Save to Firebase
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
-            let successFeedback = UINotificationFeedbackGenerator()
-            successFeedback.notificationOccurred(.success)
-            triggerConfetti()
+            showSuccessAnimation()
         }
     }
 
-    private func triggerConfetti() {
-        showConfetti = true
-        confettiPieces = (0..<50).map { _ in
-            ConfettiPiece(
-                id: UUID(),
-                x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                color: [Color.accentRed, Color.accentOrange, Color.accentYellow, Color.accentGreen, Color.accentBlue, Color.accentTeal].randomElement()!,
-                size: CGFloat.random(in: 8...14),
-                rotation: Double.random(in: 0...360),
-                delay: Double.random(in: 0...0.3)
-            )
+    private func showSuccessAnimation() {
+        // Show overlay
+        withAnimation(.easeOut(duration: 0.2)) {
+            showSuccessOverlay = true
         }
 
-        // Dismiss after confetti
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            dismiss()
+        // Animate ring
+        withAnimation(.easeOut(duration: 0.6)) {
+            ringProgress = 1.0
+        }
+
+        // Pop in checkmark after ring completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            let successFeedback = UINotificationFeedbackGenerator()
+            successFeedback.notificationOccurred(.success)
+
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
+                checkmarkScale = 1.0
+                checkmarkOpacity = 1.0
+            }
+        }
+
+        // Dismiss after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                showSuccessOverlay = false
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                dismiss()
+            }
         }
     }
 }
@@ -166,21 +221,22 @@ struct CheckInHeaderCard: View {
     @State private var waveRotation: Double = 0
     @State private var popScale: CGFloat = 1.0
     @State private var handOpacity: Double = 1.0
-    @State private var handHeight: CGFloat = 60
-    @State private var textOffset: CGFloat = 0
+    @State private var showHand: Bool = true
 
     var body: some View {
         VStack(spacing: 16) {
             // Animated Waving Hand
-            Text("👋")
-                .font(.system(size: 50))
-                .rotationEffect(.degrees(waveRotation), anchor: .bottomTrailing)
-                .scaleEffect(popScale)
-                .opacity(handOpacity)
-                .frame(height: handHeight)
-                .onAppear {
-                    startWaveAnimation()
-                }
+            if showHand {
+                Text("👋")
+                    .font(.system(size: 50))
+                    .rotationEffect(.degrees(waveRotation), anchor: .bottomTrailing)
+                    .scaleEffect(popScale)
+                    .opacity(handOpacity)
+                    .transition(.scale.combined(with: .opacity))
+                    .onAppear {
+                        startWaveAnimation()
+                    }
+            }
 
             VStack(spacing: 8) {
                 Text("How are you feeling?")
@@ -189,10 +245,9 @@ struct CheckInHeaderCard: View {
 
                 Text("Your daily check-in helps personalize your experience and track your wellness journey.")
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(.primary.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
-            .offset(y: textOffset)
 
             // Date badge
             HStack(spacing: 6) {
@@ -204,16 +259,20 @@ struct CheckInHeaderCard: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(.white.opacity(0.2))
+            .background(Color.accentTeal.opacity(0.2))
             .clipShape(Capsule())
-            .offset(y: textOffset)
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
         .padding(24)
         .frame(maxWidth: .infinity)
-        .background(AppGradients.sunset)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: Color.accentOrange.opacity(0.3), radius: 15, y: 8)
+        .background(
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color(.tertiarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.accentTeal.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 
     private func startWaveAnimation() {
@@ -242,15 +301,15 @@ struct CheckInHeaderCard: View {
             }
         }
 
-        // Fade out hand and move text up
+        // Fade out hand - content stays centered
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            withAnimation(.easeInOut(duration: 0.6)) {
+            withAnimation(.easeInOut(duration: 0.5)) {
                 handOpacity = 0
-                popScale = 0.5
             }
-            withAnimation(.easeInOut(duration: 0.8)) {
-                handHeight = 0
-                textOffset = -20
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showHand = false
+                }
             }
         }
     }
@@ -568,7 +627,7 @@ struct NotesCard: View {
     }
 }
 
-// MARK: - Check-In Slider Content (Apple Glass Style)
+// MARK: - Check-In Slider Content (Apple Native Style)
 struct CheckInSliderContent: View {
 
     let title: String
@@ -593,13 +652,13 @@ struct CheckInSliderContent: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                // Icon with glass background
+                // Icon with background
                 ZStack {
                     Circle()
-                        .fill(.ultraThinMaterial)
+                        .fill(color.opacity(0.15))
                         .frame(width: 36, height: 36)
                     Image(systemName: icon)
                         .font(.callout)
@@ -613,7 +672,7 @@ struct CheckInSliderContent: View {
 
                 Spacer()
 
-                // Value badge with glass effect
+                // Value badge
                 Text(labels[Int(value)])
                     .font(.caption)
                     .fontWeight(.bold)
@@ -623,52 +682,48 @@ struct CheckInSliderContent: View {
                     .background(
                         Capsule()
                             .fill(sliderColor.gradient)
-                            .shadow(color: sliderColor.opacity(0.4), radius: 4, y: 2)
                     )
             }
 
-            // Slider with glass track
-            VStack(spacing: 8) {
-                GlassSlider(
-                    value: $value,
-                    in: 0...Double(labels.count - 1),
-                    step: 1,
-                    tint: sliderColor
-                )
-                .frame(height: 32)
+            // Native Apple Slider
+            Slider(
+                value: $value,
+                in: 0...Double(labels.count - 1),
+                step: 1
+            ) {
+                Text(title)
+            } minimumValueLabel: {
+                Text(labels.first ?? "")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } maximumValueLabel: {
+                Text(labels.last ?? "")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .tint(sliderColor)
+            .onChange(of: value) { _, _ in
+                let impact = UIImpactFeedbackGenerator(style: .light)
+                impact.impactOccurred()
+            }
 
-                // Step indicators
-                HStack {
-                    ForEach(0..<labels.count, id: \.self) { index in
-                        if index > 0 { Spacer() }
-                        Circle()
-                            .fill(Int(value) == index ? sliderColor : Color.primary.opacity(0.2))
-                            .frame(width: 6, height: 6)
+            // Step indicators
+            HStack(spacing: 0) {
+                ForEach(0..<labels.count, id: \.self) { index in
+                    Circle()
+                        .fill(Int(value) == index ? sliderColor : Color.primary.opacity(0.2))
+                        .frame(width: 8, height: 8)
+                    if index < labels.count - 1 {
+                        Spacer()
                     }
                 }
-                .padding(.horizontal, 16)
             }
-
-            // Labels
-            HStack {
-                Text(labels.first ?? "")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(labels.last ?? "")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            .padding(.horizontal, 6)
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.05), radius: 8, y: 4)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
+                .fill(Color(.secondarySystemGroupedBackground))
         )
     }
 }

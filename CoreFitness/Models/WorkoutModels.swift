@@ -12,6 +12,14 @@ final class Exercise {
     var videoURL: String?
     var createdAt: Date
 
+    // Extended properties
+    var category: ExerciseCategory
+    var difficulty: Difficulty
+    var location: ExerciseLocation
+    var estimatedCaloriesPerMinute: Int
+    var isFavorite: Bool
+    var imageURL: String?
+
     // Relationships
     @Relationship(deleteRule: .cascade, inverse: \WorkoutExercise.exercise)
     var workoutExercises: [WorkoutExercise]?
@@ -21,15 +29,26 @@ final class Exercise {
         name: String,
         muscleGroup: MuscleGroup,
         equipment: Equipment = .bodyweight,
+        category: ExerciseCategory = .strength,
+        difficulty: Difficulty = .intermediate,
+        location: ExerciseLocation = .both,
+        estimatedCaloriesPerMinute: Int = 8,
         instructions: String? = nil,
-        videoURL: String? = nil
+        videoURL: String? = nil,
+        imageURL: String? = nil
     ) {
         self.id = id
         self.name = name
         self.muscleGroup = muscleGroup
         self.equipment = equipment
+        self.category = category
+        self.difficulty = difficulty
+        self.location = location
+        self.estimatedCaloriesPerMinute = estimatedCaloriesPerMinute
         self.instructions = instructions
         self.videoURL = videoURL
+        self.imageURL = imageURL
+        self.isFavorite = false
         self.createdAt = Date()
     }
 }
@@ -236,4 +255,67 @@ enum SessionStatus: String, Codable {
     case completed
     case paused
     case cancelled
+}
+
+enum ExerciseCategory: String, Codable, CaseIterable {
+    case strength = "Strength"
+    case cardio = "Cardio"
+    case yoga = "Yoga"
+    case pilates = "Pilates"
+    case hiit = "HIIT"
+    case stretching = "Stretching"
+    case running = "Running"
+    case cycling = "Cycling"
+    case swimming = "Swimming"
+    case calisthenics = "Calisthenics"
+
+    var displayName: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .strength: return "figure.strengthtraining.traditional"
+        case .cardio: return "heart.fill"
+        case .yoga: return "figure.yoga"
+        case .pilates: return "figure.pilates"
+        case .hiit: return "flame.fill"
+        case .stretching: return "figure.flexibility"
+        case .running: return "figure.run"
+        case .cycling: return "figure.outdoor.cycle"
+        case .swimming: return "figure.pool.swim"
+        case .calisthenics: return "figure.strengthtraining.functional"
+        }
+    }
+
+    var color: String {
+        switch self {
+        case .strength: return "accentBlue"
+        case .cardio: return "accentRed"
+        case .yoga: return "purple"
+        case .pilates: return "accentTeal"
+        case .hiit: return "accentOrange"
+        case .stretching: return "accentGreen"
+        case .running: return "accentYellow"
+        case .cycling: return "accentBlue"
+        case .swimming: return "accentTeal"
+        case .calisthenics: return "accentOrange"
+        }
+    }
+}
+
+enum ExerciseLocation: String, Codable, CaseIterable {
+    case home = "Home"
+    case gym = "Gym"
+    case outdoor = "Outdoor"
+    case both = "Anywhere"
+
+    var displayName: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .home: return "house.fill"
+        case .gym: return "dumbbell.fill"
+        case .outdoor: return "sun.max.fill"
+        case .both: return "mappin.and.ellipse"
+        }
+    }
 }
