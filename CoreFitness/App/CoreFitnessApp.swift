@@ -72,6 +72,7 @@ struct CoreFitnessApp: App {
     @StateObject private var watchConnectivityManager = WatchConnectivityManager.shared
     @StateObject private var fitnessDataService = FitnessDataService()
     @StateObject private var socialSharingService = SocialSharingService()
+    @StateObject private var waterIntakeManager = WaterIntakeManager()
     @StateObject private var navigationState = NavigationState.shared
     @AppStorage("hasRequestedHealthKit") private var hasRequestedHealthKit = false
 
@@ -122,6 +123,7 @@ struct CoreFitnessApp: App {
                 .environmentObject(watchConnectivityManager)
                 .environmentObject(fitnessDataService)
                 .environmentObject(socialSharingService)
+                .environmentObject(waterIntakeManager)
                 .environmentObject(navigationState)
                 .preferredColorScheme(themeManager.colorScheme)
                 .onAppear {
@@ -129,6 +131,7 @@ struct CoreFitnessApp: App {
                     workoutManager.setModelContext(context)
                     fitnessDataService.setModelContext(context)
                     socialSharingService.setModelContext(context)
+                    waterIntakeManager.setModelContext(context)
                     // Seed achievements on first launch
                     AchievementDefinitions.seedAchievements(in: context)
                 }

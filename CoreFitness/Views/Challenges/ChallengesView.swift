@@ -1,5 +1,7 @@
 import SwiftUI
 import SwiftData
+import Contacts
+import ContactsUI
 
 struct ChallengesView: View {
     @Environment(\.dismiss) private var dismiss
@@ -303,38 +305,41 @@ struct ChallengeTemplateCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 // Icon and duration
                 HStack {
                     Image(systemName: template.icon)
-                        .font(.title2)
+                        .font(.title3)
                         .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
+                        .frame(width: 36, height: 36)
                         .background(goalColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
 
                     Spacer()
 
                     Text("\(template.durationDays)d")
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.bold)
                         .foregroundStyle(goalColor)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
                         .background(goalColor.opacity(0.15))
                         .clipShape(Capsule())
                 }
 
-                // Title
+                // Title - fixed height area
                 Text(template.name)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .frame(height: 40, alignment: .topLeading)
 
-                // Badges
-                HStack(spacing: 6) {
+                Spacer(minLength: 0)
+
+                // Badges at bottom
+                HStack(spacing: 4) {
                     Text(template.difficulty.displayName)
                         .font(.caption2)
                         .fontWeight(.medium)
@@ -342,7 +347,7 @@ struct ChallengeTemplateCard: View {
 
                     Text("•")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
 
                     Image(systemName: template.location.icon)
                         .font(.caption2)
@@ -351,10 +356,11 @@ struct ChallengeTemplateCard: View {
                 }
                 .foregroundStyle(.secondary)
             }
-            .padding()
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(height: 140)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }
@@ -394,51 +400,253 @@ struct CreateChallengeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
 
-    @State private var name = ""
-    @State private var description = ""
-    @State private var durationDays = 30
-    @State private var selectedGoal: ChallengeGoalType = .fitness
-    @State private var selectedLocation: ChallengeLocation = .anywhere
+    @State private var selectedGoal: ChallengeGoalType?
+    @State private var selectedTemplate: ChallengeTemplate?
     @State private var startDate = Date()
+    @State private var selectedContacts: [SelectedContact] = []
+    @State private var showContactPicker = false
+    @State private var showConfirmationPopup = false
+
+    // Button animation states
+    @State private var buttonScale: CGFloat = 1.0
+    @State private var buttonGlow: CGFloat = 0.0
+
+    private var filteredTemplates: [ChallengeTemplate] {
+        guard let goal = selectedGoal else { return [] }
+        return ChallengeTemplate.templates.filter { $0.goalType == goal }
+    }
+
+    private func goalColor(_ goal: ChallengeGoalType) -> Color {
+        switch goal {
+        case .fitness: return .accentBlue
+        case .strength, .muscle: return .accentOrange
+        case .cardio: return .accentRed
+        case .flexibility: return .purple
+        case .weightLoss, .wellness: return .accentGreen
+        case .endurance: return .accentYellow
+        }
+    }
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Challenge Details") {
-                    TextField("Challenge Name", text: $name)
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Step 1: Choose Goal
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("1")
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                    .frame(width: 24, height: 24)
+                                    .background(Color.accentBlue)
+                                    .clipShape(Circle())
 
-                    TextField("Description (optional)", text: $description, axis: .vertical)
-                        .lineLimit(3...6)
-                }
+                                Text("Choose Your Goal")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
 
-                Section("Duration") {
-                    Picker("Days", selection: $durationDays) {
-                        Text("7 days").tag(7)
-                        Text("14 days").tag(14)
-                        Text("21 days").tag(21)
-                        Text("30 days").tag(30)
-                    }
-
-                    DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                }
-
-                Section("Goal") {
-                    Picker("Goal Type", selection: $selectedGoal) {
-                        ForEach(ChallengeGoalType.allCases, id: \.self) { goal in
-                            Label(goal.displayName, systemImage: goal.icon)
-                                .tag(goal)
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 12) {
+                                ForEach(ChallengeGoalType.allCases, id: \.self) { goal in
+                                    GoalSelectionCard(
+                                        goal: goal,
+                                        color: goalColor(goal),
+                                        isSelected: selectedGoal == goal
+                                    ) {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            if selectedGoal == goal {
+                                                selectedGoal = nil
+                                                selectedTemplate = nil
+                                            } else {
+                                                selectedGoal = goal
+                                                selectedTemplate = nil
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
-                }
+                        .padding(.horizontal)
 
-                Section("Location") {
-                    Picker("Where", selection: $selectedLocation) {
-                        ForEach(ChallengeLocation.allCases, id: \.self) { location in
-                            Label(location.displayName, systemImage: location.icon)
-                                .tag(location)
+                        // Step 2: Choose Challenge (shown after goal selection)
+                        if selectedGoal != nil {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("2")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(Color.accentOrange)
+                                        .clipShape(Circle())
+
+                                    Text("Select a Challenge")
+                                        .font(.headline)
+                                        .fontWeight(.bold)
+                                }
+
+                                if filteredTemplates.isEmpty {
+                                    Text("No challenges available for this goal yet.")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                } else {
+                                    VStack(spacing: 12) {
+                                        ForEach(filteredTemplates) { template in
+                                            ChallengeOptionCard(
+                                                template: template,
+                                                color: goalColor(selectedGoal!),
+                                                isSelected: selectedTemplate?.id == template.id
+                                            ) {
+                                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                    selectedTemplate = template
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                         }
+
+                        // Step 3: Start Date (shown after template selection)
+                        if selectedTemplate != nil {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("3")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(Color.accentGreen)
+                                        .clipShape(Circle())
+
+                                    Text("When to Start?")
+                                        .font(.headline)
+                                        .fontWeight(.bold)
+                                }
+
+                                DatePicker("Start Date", selection: $startDate, in: Date()..., displayedComponents: .date)
+                                    .datePickerStyle(.graphical)
+                                    .tint(goalColor(selectedGoal!))
+                                    .padding()
+                                    .background(Color(.secondarySystemGroupedBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                            }
+                            .padding(.horizontal)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+
+                        // Step 4: Invite Friends (shown after template selection)
+                        if selectedTemplate != nil {
+                            VStack(alignment: .leading, spacing: 16) {
+                                HStack {
+                                    Text("4")
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                        .frame(width: 24, height: 24)
+                                        .background(Color.purple)
+                                        .clipShape(Circle())
+
+                                    Text("Invite Friends & Family")
+                                        .font(.headline)
+                                        .fontWeight(.bold)
+
+                                    Text("(Optional)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                // Selected contacts display
+                                if !selectedContacts.isEmpty {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        HStack(spacing: 12) {
+                                            ForEach(selectedContacts) { contact in
+                                                SelectedContactChip(contact: contact) {
+                                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                        selectedContacts.removeAll { $0.id == contact.id }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Add friends button
+                                Button {
+                                    showContactPicker = true
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "person.badge.plus")
+                                            .font(.title2)
+                                            .foregroundStyle(Color.purple)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Add from Contacts")
+                                                .font(.subheadline)
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.primary)
+
+                                            Text(selectedContacts.isEmpty ? "Challenge your friends and family" : "\(selectedContacts.count) selected • Tap to add more")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .padding()
+                                    .background(Color(.secondarySystemGroupedBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.horizontal)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+
+                        Spacer(minLength: 120)
                     }
-                    .pickerStyle(.segmented)
+                    .padding(.top)
+                }
+                .background(Color(.systemGroupedBackground))
+
+                // Blur overlay and confirmation popup
+                if showConfirmationPopup {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showConfirmationPopup = false
+                            }
+                        }
+
+                    ChallengeConfirmationPopup(
+                        template: selectedTemplate,
+                        startDate: startDate,
+                        selectedContacts: selectedContacts,
+                        goalColor: selectedGoal != nil ? goalColor(selectedGoal!) : .accentBlue,
+                        onConfirm: {
+                            createChallenge()
+                        },
+                        onCancel: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                showConfirmationPopup = false
+                            }
+                        }
+                    )
+                    .transition(.scale(scale: 0.8).combined(with: .opacity))
                 }
             }
             .navigationTitle("Create Challenge")
@@ -447,41 +655,550 @@ struct CreateChallengeView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Create") {
-                        createChallenge()
+            }
+            .safeAreaInset(edge: .bottom) {
+                if selectedTemplate != nil {
+                    Button {
+                        // Animate button press
+                        withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
+                            buttonScale = 0.95
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                buttonScale = 1.05
+                            }
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                                buttonScale = 1.0
+                            }
+                            // Show confirmation popup
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                showConfirmationPopup = true
+                            }
+                        }
+
+                        let impact = UIImpactFeedbackGenerator(style: .medium)
+                        impact.impactOccurred()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "sparkles")
+                                .font(.headline)
+                            Text("Create Challenge")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(
+                            ZStack {
+                                goalColor(selectedGoal!)
+
+                                // Glow effect
+                                goalColor(selectedGoal!)
+                                    .blur(radius: 20)
+                                    .opacity(buttonGlow)
+                            }
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: goalColor(selectedGoal!).opacity(0.4), radius: 8, y: 4)
                     }
-                    .fontWeight(.semibold)
-                    .disabled(name.isEmpty)
+                    .scaleEffect(buttonScale)
+                    .padding()
+                    .background(.ultraThinMaterial)
+                    .onAppear {
+                        startButtonGlowAnimation()
+                    }
                 }
+            }
+            .sheet(isPresented: $showContactPicker) {
+                ContactPickerView(selectedContacts: $selectedContacts)
             }
         }
     }
 
+    private func startButtonGlowAnimation() {
+        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+            buttonGlow = 0.3
+        }
+    }
+
     private func createChallenge() {
+        guard let template = selectedTemplate else { return }
+
         let challenge = Challenge(
-            name: name,
-            description: description,
-            durationDays: durationDays,
+            name: template.name,
+            description: template.description,
+            durationDays: template.durationDays,
             startDate: startDate,
-            goalType: selectedGoal,
-            location: selectedLocation,
+            goalType: template.goalType,
+            location: .anywhere,
             creatorId: "current_user"
         )
 
-        let participant = ChallengeParticipant(
+        // Add current user as owner
+        let ownerParticipant = ChallengeParticipant(
             oderId: "current_user",
             displayName: "You",
             avatarEmoji: "💪",
             isOwner: true
         )
-        participant.challenge = challenge
+        ownerParticipant.challenge = challenge
+        modelContext.insert(ownerParticipant)
+
+        // Add selected contacts as participants
+        let emojis = ["😀", "🎯", "🔥", "⭐️", "🚀", "💫", "🌟", "✨"]
+        for (index, contact) in selectedContacts.prefix(5).enumerated() {
+            let participant = ChallengeParticipant(
+                oderId: contact.id,
+                displayName: contact.name,
+                avatarEmoji: emojis[index % emojis.count],
+                isOwner: false
+            )
+            participant.challenge = challenge
+            modelContext.insert(participant)
+        }
 
         modelContext.insert(challenge)
-        modelContext.insert(participant)
-
         try? modelContext.save()
+
+        let successFeedback = UINotificationFeedbackGenerator()
+        successFeedback.notificationOccurred(.success)
+
         dismiss()
+    }
+}
+
+// MARK: - Selected Contact Model
+struct SelectedContact: Identifiable, Equatable {
+    let id: String
+    let name: String
+    let initials: String
+}
+
+// MARK: - Selected Contact Chip
+struct SelectedContactChip: View {
+    let contact: SelectedContact
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(contact.initials)
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .frame(width: 28, height: 28)
+                .background(Color.purple)
+                .clipShape(Circle())
+
+            Text(contact.name)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .lineLimit(1)
+
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.leading, 4)
+        .padding(.trailing, 10)
+        .padding(.vertical, 6)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Contact Picker View
+struct ContactPickerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedContacts: [SelectedContact]
+
+    @State private var contacts: [CNContact] = []
+    @State private var searchText = ""
+    @State private var hasPermission = false
+    @State private var showPermissionDenied = false
+
+    private var filteredContacts: [CNContact] {
+        if searchText.isEmpty {
+            return contacts
+        }
+        return contacts.filter { contact in
+            let fullName = "\(contact.givenName) \(contact.familyName)".lowercased()
+            return fullName.contains(searchText.lowercased())
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if showPermissionDenied {
+                    VStack(spacing: 16) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.secondary)
+
+                        Text("Contacts Access Required")
+                            .font(.headline)
+
+                        Text("Please enable contacts access in Settings to invite friends to your challenge.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                } else {
+                    List {
+                        ForEach(filteredContacts, id: \.identifier) { contact in
+                            ContactRow(
+                                contact: contact,
+                                isSelected: selectedContacts.contains { $0.id == contact.identifier }
+                            ) {
+                                toggleContact(contact)
+                            }
+                        }
+                    }
+                    .searchable(text: $searchText, prompt: "Search contacts")
+                }
+            }
+            .navigationTitle("Select Friends")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .onAppear {
+            requestContactsPermission()
+        }
+    }
+
+    private func requestContactsPermission() {
+        let store = CNContactStore()
+
+        store.requestAccess(for: .contacts) { granted, error in
+            DispatchQueue.main.async {
+                if granted {
+                    hasPermission = true
+                    loadContacts()
+                } else {
+                    showPermissionDenied = true
+                }
+            }
+        }
+    }
+
+    private func loadContacts() {
+        let store = CNContactStore()
+        let keysToFetch: [CNKeyDescriptor] = [
+            CNContactIdentifierKey as CNKeyDescriptor,
+            CNContactGivenNameKey as CNKeyDescriptor,
+            CNContactFamilyNameKey as CNKeyDescriptor
+        ]
+
+        let request = CNContactFetchRequest(keysToFetch: keysToFetch)
+        request.sortOrder = .givenName
+
+        var fetchedContacts: [CNContact] = []
+
+        do {
+            try store.enumerateContacts(with: request) { contact, _ in
+                if !contact.givenName.isEmpty || !contact.familyName.isEmpty {
+                    fetchedContacts.append(contact)
+                }
+            }
+            contacts = fetchedContacts
+        } catch {
+            print("Failed to fetch contacts: \(error)")
+        }
+    }
+
+    private func toggleContact(_ contact: CNContact) {
+        let fullName = "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+        let initials = "\(contact.givenName.prefix(1))\(contact.familyName.prefix(1))".uppercased()
+
+        if let index = selectedContacts.firstIndex(where: { $0.id == contact.identifier }) {
+            selectedContacts.remove(at: index)
+        } else if selectedContacts.count < 5 {
+            let selectedContact = SelectedContact(
+                id: contact.identifier,
+                name: fullName,
+                initials: initials.isEmpty ? "?" : initials
+            )
+            selectedContacts.append(selectedContact)
+        }
+
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+    }
+}
+
+// MARK: - Contact Row
+struct ContactRow: View {
+    let contact: CNContact
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    private var fullName: String {
+        "\(contact.givenName) \(contact.familyName)".trimmingCharacters(in: .whitespaces)
+    }
+
+    private var initials: String {
+        let first = contact.givenName.prefix(1)
+        let last = contact.familyName.prefix(1)
+        return "\(first)\(last)".uppercased()
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                Text(initials)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Color.purple.opacity(0.8))
+                    .clipShape(Circle())
+
+                Text(fullName)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? Color.purple : Color.gray.opacity(0.3))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Challenge Confirmation Popup
+struct ChallengeConfirmationPopup: View {
+    let template: ChallengeTemplate?
+    let startDate: Date
+    let selectedContacts: [SelectedContact]
+    let goalColor: Color
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    @State private var animateIn = false
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Header icon
+            ZStack {
+                Circle()
+                    .fill(goalColor.opacity(0.15))
+                    .frame(width: 80, height: 80)
+
+                Image(systemName: template?.icon ?? "star.fill")
+                    .font(.system(size: 36))
+                    .foregroundStyle(goalColor)
+            }
+            .scaleEffect(animateIn ? 1 : 0.5)
+            .opacity(animateIn ? 1 : 0)
+
+            // Challenge name
+            Text(template?.name ?? "Challenge")
+                .font(.title3)
+                .fontWeight(.bold)
+                .multilineTextAlignment(.center)
+
+            // Details
+            VStack(spacing: 12) {
+                HStack {
+                    Image(systemName: "calendar")
+                        .foregroundStyle(goalColor)
+                    Text("Starts \(startDate.formatted(date: .abbreviated, time: .omitted))")
+                        .font(.subheadline)
+                    Spacer()
+                }
+
+                HStack {
+                    Image(systemName: "clock")
+                        .foregroundStyle(goalColor)
+                    Text("\(template?.durationDays ?? 0) days")
+                        .font(.subheadline)
+                    Spacer()
+                }
+
+                HStack {
+                    Image(systemName: "person.2")
+                        .foregroundStyle(goalColor)
+                    Text(selectedContacts.isEmpty ? "Just you" : "You + \(selectedContacts.count) friend\(selectedContacts.count == 1 ? "" : "s")")
+                        .font(.subheadline)
+                    Spacer()
+                }
+            }
+            .padding()
+            .background(Color(.tertiarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            // Participants preview
+            if !selectedContacts.isEmpty {
+                HStack(spacing: -8) {
+                    Text("💪")
+                        .font(.title2)
+                        .frame(width: 36, height: 36)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+
+                    ForEach(Array(selectedContacts.prefix(4).enumerated()), id: \.element.id) { index, contact in
+                        Text(contact.initials)
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Color.purple)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                    }
+                }
+            }
+
+            // Buttons
+            VStack(spacing: 10) {
+                Button(action: onConfirm) {
+                    HStack {
+                        Image(systemName: "checkmark")
+                            .fontWeight(.bold)
+                        Text("Let's Go!")
+                            .fontWeight(.bold)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(goalColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                Button(action: onCancel) {
+                    Text("Go Back")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(24)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
+        .padding(.horizontal, 32)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1)) {
+                animateIn = true
+            }
+        }
+    }
+}
+
+// MARK: - Goal Selection Card
+struct GoalSelectionCard: View {
+    let goal: ChallengeGoalType
+    let color: Color
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 10) {
+                Image(systemName: goal.icon)
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? .white : color)
+
+                Text(goal.displayName)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(isSelected ? .white : .primary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 80)
+            .background(isSelected ? color : color.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isSelected ? color : Color.clear, lineWidth: 2)
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Challenge Option Card
+struct ChallengeOptionCard: View {
+    let template: ChallengeTemplate
+    let color: Color
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 14) {
+                // Icon
+                Image(systemName: template.icon)
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? .white : color)
+                    .frame(width: 50, height: 50)
+                    .background(isSelected ? color : color.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(template.name)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    Text(template.description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+
+                    HStack(spacing: 8) {
+                        Label("\(template.durationDays) days", systemImage: "calendar")
+                        Label(template.difficulty.displayName, systemImage: "chart.bar.fill")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                // Selection indicator
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? color : Color.gray.opacity(0.3))
+            }
+            .padding()
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? color : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

@@ -68,6 +68,11 @@ class HealthKitManager: ObservableObject {
         // Workouts
         types.insert(HKObjectType.workoutType())
 
+        // Active Energy Burned (for workout data)
+        if let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
+            types.insert(activeEnergy)
+        }
+
         return types
     }()
 

@@ -147,6 +147,7 @@ struct QuickActionCard: View {
 // MARK: - Current Program Card (Hero)
 struct CurrentProgramCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.modelContext) private var modelContext
 
     @State private var showWorkoutExecution = false
@@ -205,11 +206,13 @@ struct CurrentProgramCard: View {
                 Button {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
-                    // Create sample workout if needed
+                    // Load or create sample workout if needed
                     if sampleWorkout == nil {
-                        sampleWorkout = SampleWorkoutData.createSampleWorkout(in: modelContext)
+                        sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
                     }
-                    showWorkoutExecution = true
+                    if sampleWorkout != nil {
+                        showWorkoutExecution = true
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "play.fill")
@@ -238,6 +241,8 @@ struct CurrentProgramCard: View {
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = sampleWorkout {
                 WorkoutExecutionView(workout: workout)
+                    .environmentObject(workoutManager)
+                    .environmentObject(themeManager)
             }
         }
         .onAppear {
@@ -251,45 +256,490 @@ struct CurrentProgramCard: View {
 
 // MARK: - Saved Programs Section
 struct SavedProgramsSection: View {
+    @State private var showSavedPrograms = false
+
+    // Sample data - replace with actual SwiftData query
+    private let programCount = 5
+    private let activeProgram = "Push Pull Legs"
 
     var body: some View {
         Button {
-            // Navigate to saved programs
+            showSavedPrograms = true
         } label: {
-            HStack(spacing: 14) {
-                Image(systemName: "folder.fill")
-                    .font(.title3)
-                    .foregroundStyle(Color.brandPrimary)
-                    .frame(width: 44, height: 44)
-                    .background(Color.brandPrimary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(spacing: 16) {
+                // Header row
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("My Programs")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Saved Programs")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-                    Text("3 programs")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        Text("\(programCount) saved programs")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 6) {
+                        Text("View All")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(Color.brandPrimary)
+                    .clipShape(Capsule())
                 }
 
-                Spacer()
+                // Active program indicator
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentGreen.opacity(0.15))
+                            .frame(width: 44, height: 44)
 
-                Text("See All")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.brandPrimary)
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(Color.accentGreen)
+                    }
 
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text("Active")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Color.accentGreen)
+                                .clipShape(Capsule())
+
+                            Spacer()
+                        }
+
+                        Text(activeProgram)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .background(Color(.tertiarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // Quick stats row
+                HStack(spacing: 0) {
+                    SavedProgramsStatItem(value: "12", label: "Workouts", icon: "figure.run")
+                    Divider().frame(height: 30)
+                    SavedProgramsStatItem(value: "8", label: "PRs Hit", icon: "trophy.fill")
+                    Divider().frame(height: 30)
+                    SavedProgramsStatItem(value: "3", label: "This Week", icon: "calendar")
+                }
             }
-            .padding(14)
+            .padding(16)
             .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
+        .sheet(isPresented: $showSavedPrograms) {
+            SavedProgramsDetailView()
+                .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+struct SavedProgramsStatItem: View {
+    let value: String
+    let label: String
+    let icon: String
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundStyle(Color.brandPrimary)
+                Text(value)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+            }
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Saved Programs Detail View
+struct SavedProgramsDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedFilter: ProgramFilter = .all
+    @State private var searchText = ""
+
+    enum ProgramFilter: String, CaseIterable {
+        case all = "All"
+        case active = "Active"
+        case userCreated = "My Programs"
+        case aiGenerated = "AI Created"
+        case imported = "Imported"
+    }
+
+    // Sample programs - replace with SwiftData query
+    private let samplePrograms: [SampleProgram] = [
+        SampleProgram(name: "Push Pull Legs", exercises: 18, duration: 60, difficulty: .intermediate, creationType: .userCreated, isActive: true, hasStarted: true, completedSessions: 12, prsHit: 5, createdAt: Date().addingTimeInterval(-86400 * 30)),
+        SampleProgram(name: "Full Body Strength", exercises: 12, duration: 45, difficulty: .beginner, creationType: .aiGenerated, isActive: false, hasStarted: true, completedSessions: 8, prsHit: 3, createdAt: Date().addingTimeInterval(-86400 * 14)),
+        SampleProgram(name: "HIIT Cardio Blast", exercises: 8, duration: 30, difficulty: .advanced, creationType: .preset, isActive: false, hasStarted: false, completedSessions: 0, prsHit: 0, createdAt: Date().addingTimeInterval(-86400 * 7)),
+        SampleProgram(name: "Upper Body Focus", exercises: 10, duration: 50, difficulty: .intermediate, creationType: .imported, isActive: false, hasStarted: true, completedSessions: 4, prsHit: 2, createdAt: Date().addingTimeInterval(-86400 * 21)),
+        SampleProgram(name: "Core & Mobility", exercises: 6, duration: 25, difficulty: .beginner, creationType: .userCreated, isActive: false, hasStarted: false, completedSessions: 0, prsHit: 0, createdAt: Date().addingTimeInterval(-86400 * 3))
+    ]
+
+    var filteredPrograms: [SampleProgram] {
+        var programs = samplePrograms
+
+        // Apply filter
+        switch selectedFilter {
+        case .all: break
+        case .active: programs = programs.filter { $0.isActive }
+        case .userCreated: programs = programs.filter { $0.creationType == .userCreated }
+        case .aiGenerated: programs = programs.filter { $0.creationType == .aiGenerated }
+        case .imported: programs = programs.filter { $0.creationType == .imported }
+        }
+
+        // Apply search
+        if !searchText.isEmpty {
+            programs = programs.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        }
+
+        return programs
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Filter chips
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(ProgramFilter.allCases, id: \.self) { filter in
+                                ProgramFilterChip(
+                                    title: filter.rawValue,
+                                    isSelected: selectedFilter == filter
+                                ) {
+                                    withAnimation(.spring(response: 0.3)) {
+                                        selectedFilter = filter
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+
+                    // Programs list
+                    LazyVStack(spacing: 12) {
+                        ForEach(filteredPrograms) { program in
+                            SavedProgramCard(program: program)
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    if filteredPrograms.isEmpty {
+                        VStack(spacing: 12) {
+                            Image(systemName: "folder.badge.questionmark")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.tertiary)
+                            Text("No programs found")
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                            Text("Try adjusting your filters or create a new program")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.top, 40)
+                    }
+                }
+                .padding(.vertical)
+            }
+            .searchable(text: $searchText, prompt: "Search programs")
+            .navigationTitle("My Programs")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button {
+                            // Create new program
+                        } label: {
+                            Label("Create Program", systemImage: "plus")
+                        }
+
+                        Button {
+                            // Import program
+                        } label: {
+                            Label("Import Program", systemImage: "square.and.arrow.down")
+                        }
+
+                        Button {
+                            // Generate with AI
+                        } label: {
+                            Label("Generate with AI", systemImage: "sparkles")
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(Color.brandPrimary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct ProgramFilterChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(isSelected ? .semibold : .medium)
+                .foregroundStyle(isSelected ? .white : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.brandPrimary : Color(.tertiarySystemGroupedBackground))
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// Sample program struct for preview
+struct SampleProgram: Identifiable {
+    let id = UUID()
+    let name: String
+    let exercises: Int
+    let duration: Int
+    let difficulty: Difficulty
+    let creationType: CreationType
+    let isActive: Bool
+    let hasStarted: Bool
+    let completedSessions: Int
+    let prsHit: Int
+    let createdAt: Date
+}
+
+struct SavedProgramCard: View {
+    let program: SampleProgram
+    @State private var isPressed = false
+
+    private var creationTypeColor: Color {
+        switch program.creationType {
+        case .userCreated: return .accentBlue
+        case .aiGenerated: return .purple
+        case .imported: return .accentOrange
+        case .preset: return .accentGreen
+        }
+    }
+
+    private var difficultyColor: Color {
+        switch program.difficulty {
+        case .beginner: return .accentGreen
+        case .intermediate: return .accentOrange
+        case .advanced: return .accentRed
+        }
+    }
+
+    var body: some View {
+        Button {
+            // Open program detail
+        } label: {
+            VStack(spacing: 0) {
+                // Main content
+                HStack(spacing: 14) {
+                    // Icon with gradient
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(
+                                LinearGradient(
+                                    colors: [creationTypeColor, creationTypeColor.opacity(0.7)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+
+                        Image(systemName: program.creationType.icon)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        // Title and active badge
+                        HStack(spacing: 8) {
+                            Text(program.name)
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+
+                            if program.isActive {
+                                Text("ACTIVE")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.accentGreen)
+                                    .clipShape(Capsule())
+                            }
+                        }
+
+                        // Info row
+                        HStack(spacing: 12) {
+                            Label("\(program.exercises)", systemImage: "figure.run")
+                            Label("\(program.duration) min", systemImage: "clock")
+                            Text(program.difficulty.rawValue)
+                                .foregroundStyle(difficultyColor)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                        // Tags row
+                        HStack(spacing: 8) {
+                            // Creation type
+                            HStack(spacing: 4) {
+                                Image(systemName: program.creationType.icon)
+                                Text(program.creationType.displayName)
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(creationTypeColor)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(creationTypeColor.opacity(0.12))
+                            .clipShape(Capsule())
+
+                            // Status
+                            if program.hasStarted {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                    Text("\(program.completedSessions) sessions")
+                                }
+                                .font(.caption2)
+                                .foregroundStyle(Color.accentGreen)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.accentGreen.opacity(0.12))
+                                .clipShape(Capsule())
+                            } else {
+                                Text("Not started")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.tertiarySystemGroupedBackground))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(16)
+
+                // Bottom stats bar
+                if program.hasStarted {
+                    Divider()
+                    HStack(spacing: 0) {
+                        ProgramStatItem(
+                            icon: "trophy.fill",
+                            value: "\(program.prsHit)",
+                            label: "PRs",
+                            color: .accentOrange
+                        )
+
+                        Divider().frame(height: 24)
+
+                        ProgramStatItem(
+                            icon: "calendar",
+                            value: program.createdAt.formatted(.dateTime.month(.abbreviated).day()),
+                            label: "Created",
+                            color: .secondary
+                        )
+
+                        Divider().frame(height: 24)
+
+                        ProgramStatItem(
+                            icon: "flame.fill",
+                            value: "\(program.completedSessions)",
+                            label: "Sessions",
+                            color: .accentRed
+                        )
+                    }
+                    .padding(.vertical, 10)
+                    .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+                }
+            }
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
+    }
+}
+
+struct ProgramStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundStyle(color)
+                Text(value)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -955,7 +1405,7 @@ struct ExerciseDetailView: View {
 
                         ExerciseStatCard(
                             icon: "flame.fill",
-                            value: "\(exercise.estimatedCaloriesPerMinute)",
+                            value: "\(exercise.caloriesPerMinute)",
                             label: "Cal/min"
                         )
 

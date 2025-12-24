@@ -524,53 +524,42 @@ enum WaterIntakeSize: CaseIterable, Identifiable {
 struct WaterIntakeCard: View {
 
     @Binding var showDetail: Bool
-    @State private var totalOunces: Double = 40  // Current intake in oz
+    @EnvironmentObject var waterManager: WaterIntakeManager
     @State private var showAddSheet = false
     @State private var animateProgress = false
-    private let goalOunces: Double = 64  // 64oz daily goal
-
-    private var progressPercentage: Double {
-        min(totalOunces / goalOunces, 1.0)
-    }
-
-    private var glassesEquivalent: Int {
-        Int(totalOunces / 8)
-    }
+    @State private var checkmarkScale: CGFloat = 0
+    @State private var checkmarkRotation: Double = 0
+    @State private var showCheckmark = false
+    @State private var checkmarkBounce: CGFloat = 1.0
 
     var body: some View {
         VStack(spacing: 20) {
-            // Header with tap to see details
-            Button {
-                showDetail = true
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            } label: {
-                HStack {
-                    Image(systemName: "drop.fill")
-                        .font(.title2)
-                        .foregroundStyle(Color.accentBlue)
+            // Header
+            HStack {
+                Image(systemName: "drop.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.accentBlue)
 
-                    Text("Water Intake")
-                        .font(.headline)
+                Text("Water Intake")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                HStack(spacing: 4) {
+                    Text("\(Int(waterManager.ringProgress * 100))%")
+                        .font(.subheadline)
                         .fontWeight(.bold)
-                        .foregroundStyle(.primary)
-
-                    Spacer()
-
-                    HStack(spacing: 4) {
-                        Text("\(Int(progressPercentage * 100))%")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(totalOunces >= goalOunces ? Color.accentGreen : Color.accentBlue)
-                    .clipShape(Capsule())
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
                 }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(waterManager.hasReachedGoal ? Color.accentGreen : Color.accentBlue)
+                .clipShape(Capsule())
             }
-            .buttonStyle(.plain)
 
             // Current intake display with animated ring
             HStack(spacing: 24) {
@@ -581,10 +570,10 @@ struct WaterIntakeCard: View {
                         .frame(width: 80, height: 80)
 
                     Circle()
-                        .trim(from: 0, to: animateProgress ? progressPercentage : 0)
+                        .trim(from: 0, to: animateProgress ? waterManager.ringProgress : 0)
                         .stroke(
                             LinearGradient(
-                                colors: [Color.accentBlue, totalOunces >= goalOunces ? Color.accentGreen : Color.accentTeal],
+                                colors: [Color.accentBlue, waterManager.hasReachedGoal ? Color.accentGreen : Color.accentTeal],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -594,7 +583,7 @@ struct WaterIntakeCard: View {
                         .rotationEffect(.degrees(-90))
 
                     VStack(spacing: 0) {
-                        Text("\(Int(totalOunces))")
+                        Text("\(Int(waterManager.totalOunces))")
                             .font(.system(size: 24, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.accentBlue)
                         Text("oz")
@@ -611,26 +600,52 @@ struct WaterIntakeCard: View {
                 // Intake info
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
-                        Text("\(Int(totalOunces))")
+                        Text("\(Int(waterManager.totalOunces))")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
                             .foregroundStyle(Color.accentBlue)
-                        Text("/ \(Int(goalOunces)) oz")
+                        Text("/ \(Int(waterManager.goalOunces)) oz")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
 
-                    Text("\(glassesEquivalent) glasses equivalent")
+                    Text("\(Int(waterManager.totalOunces / 8)) glasses equivalent")
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    if totalOunces >= goalOunces {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
+                    if waterManager.hasReachedGoal {
+                        HStack(spacing: 6) {
+                            ZStack {
+                                // Glow effect behind checkmark
+                                Circle()
+                                    .fill(Color.accentGreen.opacity(0.3))
+                                    .frame(width: 28, height: 28)
+                                    .blur(radius: 4)
+                                    .scaleEffect(showCheckmark ? 1.3 * checkmarkBounce : 0)
+
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(Color.accentGreen)
+                                    .scaleEffect(checkmarkScale * checkmarkBounce)
+                                    .rotationEffect(.degrees(checkmarkRotation))
+                            }
+
                             Text("Goal reached!")
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(Color.accentGreen)
+                                .opacity(showCheckmark ? 1 : 0)
+                                .offset(x: showCheckmark ? 0 : -10)
                         }
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color.accentGreen)
+                        .onAppear {
+                            startCheckmarkAnimation()
+                            startContinuousBounce()
+                        }
+                        .onChange(of: waterManager.hasReachedGoal) { _, newValue in
+                            if newValue {
+                                startCheckmarkAnimation()
+                                startContinuousBounce()
+                            }
+                        }
                     }
                 }
 
@@ -649,7 +664,7 @@ struct WaterIntakeCard: View {
                     ForEach(WaterIntakeSize.allCases) { size in
                         WaterQuickAddButton(size: size) {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                totalOunces += size.ounces
+                                waterManager.addWater(ounces: size.ounces)
                                 animateProgress = false
                             }
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -673,13 +688,13 @@ struct WaterIntakeCard: View {
                     RoundedRectangle(cornerRadius: 6)
                         .fill(
                             LinearGradient(
-                                colors: [Color.accentBlue, totalOunces >= goalOunces ? Color.accentGreen : Color.accentTeal],
+                                colors: [Color.accentBlue, waterManager.hasReachedGoal ? Color.accentGreen : Color.accentTeal],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
-                        .frame(width: geometry.size.width * progressPercentage, height: 10)
-                        .animation(.spring(response: 0.4), value: totalOunces)
+                        .frame(width: geometry.size.width * waterManager.ringProgress, height: 10)
+                        .animation(.spring(response: 0.4), value: waterManager.totalOunces)
                 }
             }
             .frame(height: 10)
@@ -687,6 +702,55 @@ struct WaterIntakeCard: View {
         .padding(20)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            showDetail = true
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    }
+
+    // MARK: - Checkmark Animation
+    private func startCheckmarkAnimation() {
+        // Reset
+        checkmarkScale = 0
+        checkmarkRotation = -45
+        showCheckmark = false
+
+        // Haptic feedback
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+
+        // Animate checkmark bouncing in
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0)) {
+            checkmarkScale = 1.3
+            checkmarkRotation = 10
+            showCheckmark = true
+        }
+
+        // Bounce back
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                checkmarkScale = 0.85
+                checkmarkRotation = -5
+            }
+        }
+
+        // Settle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                checkmarkScale = 1.0
+                checkmarkRotation = 0
+            }
+        }
+    }
+
+    // MARK: - Continuous Bounce
+    private func startContinuousBounce() {
+        // Start subtle continuous bounce after initial animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+                checkmarkBounce = 1.12
+            }
+        }
     }
 }
 
@@ -726,6 +790,8 @@ struct WaterQuickAddButton: View {
 struct MoodTrackerCard: View {
 
     @Binding var showDetail: Bool
+    @State private var bounceValues: [Int: Bool] = [:]
+    @State private var hasStartedAnimation = false
 
     var body: some View {
         Button {
@@ -753,21 +819,32 @@ struct MoodTrackerCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Mood grid
+                // Mood grid with animated emojis
                 HStack(spacing: 0) {
-                    ForEach(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], id: \.self) { day in
+                    ForEach(Array(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].enumerated()), id: \.offset) { index, day in
                         VStack(spacing: 8) {
                             Text(moodEmoji(for: day))
                                 .font(.title2)
-                            Text(day.prefix(1))
+                                .scaleEffect(bounceValues[index] == true ? 1.2 : 1.0)
+                                .rotationEffect(.degrees(bounceValues[index] == true ? -5 : 0))
+                            Text(dayAbbreviation(for: day))
                                 .font(.caption2)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(day == "Sun" ? Color.accentYellow.opacity(0.15) : Color.clear)
+                        .background(moodColor(for: day).opacity(0.25))
                         .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .onAppear {
+                            // Start animation for each day with staggered delay
+                            if index == 0 && !hasStartedAnimation {
+                                hasStartedAnimation = true
+                                for i in 0..<7 {
+                                    startBounceAnimation(for: i)
+                                }
+                            }
+                        }
                     }
                 }
                 .padding()
@@ -801,6 +878,54 @@ struct MoodTrackerCard: View {
         default: return "😐"
         }
     }
+
+    private func dayAbbreviation(for day: String) -> String {
+        switch day {
+        case "Mon": return "M"
+        case "Tue": return "Tu"
+        case "Wed": return "W"
+        case "Thu": return "Th"
+        case "Fri": return "F"
+        case "Sat": return "Sa"
+        case "Sun": return "Su"
+        default: return ""
+        }
+    }
+
+    private func moodColor(for day: String) -> Color {
+        let emoji = moodEmoji(for: day)
+        switch emoji {
+        case "😄", "🤩": return .accentGreen
+        case "😊": return .accentBlue
+        case "😐": return .accentOrange
+        case "😔": return .accentRed
+        case "😴": return .accentTeal
+        default: return .gray
+        }
+    }
+
+    private func startBounceAnimation(for index: Int) {
+        // Stagger the animation start for each emoji
+        let delay = Double(index) * 0.15
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                bounceValues[index] = true
+            }
+
+            // Return to normal
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    bounceValues[index] = false
+                }
+            }
+        }
+
+        // Repeat animation periodically
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.0 + delay) {
+            startBounceAnimation(for: index)
+        }
+    }
 }
 
 struct MoodSummaryPill: View {
@@ -828,6 +953,11 @@ struct MoodSummaryPill: View {
 // MARK: - Mood Detail View (30 Days)
 struct MoodDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var emojiScale: CGFloat = 0.3
+    @State private var emojiRotation: Double = 0
+    @State private var emojiOffset: CGFloat = -30
+    @State private var emojiOpacity: Double = 0
+    @State private var glowOpacity: Double = 0
 
     // Mood types with their properties
     private let moodTypes: [(emoji: String, label: String, color: Color)] = [
@@ -862,10 +992,27 @@ struct MoodDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Summary header
+                    // Summary header with animated emoji
                     VStack(spacing: 12) {
-                        Text(moodTypes[dominantMood].emoji)
-                            .font(.system(size: 60))
+                        ZStack {
+                            // Glow effect behind emoji
+                            Circle()
+                                .fill(moodTypes[dominantMood].color.opacity(0.3))
+                                .frame(width: 100, height: 100)
+                                .blur(radius: 20)
+                                .scaleEffect(emojiScale * 1.2)
+                                .opacity(glowOpacity)
+
+                            Text(moodTypes[dominantMood].emoji)
+                                .font(.system(size: 80))
+                                .scaleEffect(emojiScale)
+                                .rotationEffect(.degrees(emojiRotation))
+                                .offset(y: emojiOffset)
+                                .opacity(emojiOpacity)
+                        }
+                        .onAppear {
+                            startEmojiAnimation()
+                        }
 
                         Text("Mostly \(moodTypes[dominantMood].label)")
                             .font(.title2)
@@ -906,19 +1053,21 @@ struct MoodDetailView: View {
 
                         // Calendar grid (5 rows x 7 columns, showing last 30 days)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
-                            // Day labels
-                            ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                            // Day labels - use unique string IDs
+                            ForEach(Array(["Su", "M", "Tu", "W", "Th", "F", "Sa"].enumerated()), id: \.offset) { index, day in
                                 Text(day)
                                     .font(.caption2)
                                     .fontWeight(.medium)
                                     .foregroundStyle(.secondary)
                                     .frame(height: 20)
+                                    .id("day-\(index)")
                             }
 
                             // Empty cells for alignment (assuming we start mid-week)
-                            ForEach(0..<2, id: \.self) { _ in
+                            ForEach(0..<2, id: \.self) { index in
                                 Color.clear
                                     .frame(height: 44)
+                                    .id("empty-\(index)")
                             }
 
                             // Mood cells
@@ -934,36 +1083,9 @@ struct MoodDetailView: View {
                                 .frame(maxWidth: .infinity)
                                 .background(moodTypes[dailyMoods[index]].color.opacity(0.15))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .id("mood-\(index)")
                             }
                         }
-                    }
-                    .padding()
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .padding(.horizontal)
-
-                    // Weekly pattern
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Weekly Pattern")
-                            .font(.headline)
-                            .fontWeight(.bold)
-
-                        HStack(spacing: 0) {
-                            ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { day in
-                                VStack(spacing: 8) {
-                                    Text(averageMoodEmoji(for: day))
-                                        .font(.title2)
-                                    Text(day.prefix(1))
-                                        .font(.caption2)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                        }
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .padding()
                     .background(.regularMaterial)
@@ -987,17 +1109,56 @@ struct MoodDetailView: View {
         }
     }
 
-    private func averageMoodEmoji(for day: String) -> String {
-        // Return typical mood for each day based on sample data
-        switch day {
-        case "Sun": return "😴"
-        case "Mon": return "😊"
-        case "Tue": return "😄"
-        case "Wed": return "😐"
-        case "Thu": return "😊"
-        case "Fri": return "😄"
-        case "Sat": return "😄"
-        default: return "😐"
+    private func startEmojiAnimation() {
+        // Dramatic entrance - drop in and bounce
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.5)) {
+            emojiScale = 1.4
+            emojiOffset = 0
+            emojiOpacity = 1.0
+            glowOpacity = 0.8
+        }
+
+        // First bounce back
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.4)) {
+                emojiScale = 0.9
+                emojiRotation = -15
+            }
+        }
+
+        // Second bounce
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                emojiScale = 1.15
+                emojiRotation = 10
+            }
+        }
+
+        // Settle to normal size
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                emojiScale = 1.0
+                emojiRotation = 0
+                glowOpacity = 0.5
+            }
+        }
+
+        // Start continuous pulsing animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                emojiScale = 1.15
+                glowOpacity = 0.8
+            }
+
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                emojiRotation = 8
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                    emojiRotation = -8
+                }
+            }
         }
     }
 }
@@ -1222,6 +1383,17 @@ struct RecoveryFactorPillHealth: View {
 struct WaterIntakeDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
+    // Water droplet animation state - 25 droplets for full screen rain
+    private let dropletCount = 25
+    @State private var dropletYPositions: [CGFloat] = Array(repeating: -100, count: 25)
+    @State private var dropletOpacities: [Double] = Array(repeating: 0, count: 25)
+    @State private var hasAnimated = false
+
+    // Pre-computed random values for each droplet
+    private let dropletXPositions: [CGFloat] = (0..<25).map { _ in CGFloat.random(in: -180...180) }
+    private let dropletSizes: [CGFloat] = (0..<25).map { _ in CGFloat.random(in: 16...32) }
+    private let dropletDelays: [Double] = (0..<25).map { _ in Double.random(in: 0...0.8) }
+
     private let chartHeight: CGFloat = 200
     private let goalOz: Double = 64  // 64oz daily goal
 
@@ -1366,32 +1538,94 @@ struct WaterIntakeDetailView: View {
                         }
                         .padding(.horizontal)
 
-                        // Bar chart
-                        HStack(alignment: .bottom, spacing: 4) {
-                            ForEach(0..<dailyData.count, id: \.self) { index in
-                                let value = dailyData[index]
-                                let height = (value / 80.0) * chartHeight
-                                let metGoal = value >= goalOz
+                        // Bar chart with Y-axis labels
+                        HStack(alignment: .top, spacing: 8) {
+                            // Y-axis labels
+                            VStack(alignment: .trailing) {
+                                Text("80oz")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("60oz")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("40oz")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("20oz")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("0")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(width: 28, height: chartHeight)
 
-                                VStack(spacing: 4) {
-                                    RoundedRectangle(cornerRadius: 3)
-                                        .fill(
-                                            metGoal ?
-                                            LinearGradient(colors: [Color.accentGreen, Color.accentGreen.opacity(0.7)], startPoint: .top, endPoint: .bottom) :
-                                            LinearGradient(colors: [Color.accentBlue, Color.accentBlue.opacity(0.5)], startPoint: .top, endPoint: .bottom)
-                                        )
-                                        .frame(height: max(height, 8))
+                            // Chart area with grid and bars
+                            ZStack(alignment: .bottom) {
+                                // Grid lines
+                                VStack(spacing: 0) {
+                                    ForEach(0..<4, id: \.self) { _ in
+                                        Divider()
+                                            .background(Color.gray.opacity(0.2))
+                                        Spacer()
+                                    }
+                                    Divider()
+                                        .background(Color.gray.opacity(0.2))
                                 }
-                                .frame(maxWidth: .infinity)
+                                .frame(height: chartHeight)
+
+                                // Goal line at 64oz
+                                Rectangle()
+                                    .fill(Color.accentGreen.opacity(0.6))
+                                    .frame(height: 2)
+                                    .offset(y: -chartHeight * (goalOz / 80.0))
+
+                                // Bars
+                                HStack(alignment: .bottom, spacing: 2) {
+                                    ForEach(0..<dailyData.count, id: \.self) { index in
+                                        let value = dailyData[index]
+                                        let height = (value / 80.0) * chartHeight
+                                        let metGoal = value >= goalOz
+
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(
+                                                metGoal ?
+                                                LinearGradient(colors: [Color.accentGreen, Color.accentGreen.opacity(0.7)], startPoint: .top, endPoint: .bottom) :
+                                                LinearGradient(colors: [Color.accentBlue, Color.accentBlue.opacity(0.5)], startPoint: .top, endPoint: .bottom)
+                                            )
+                                            .frame(height: max(height, 4))
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                }
+                                .frame(height: chartHeight)
                             }
                         }
-                        .frame(height: chartHeight)
                         .padding(.horizontal)
 
-                        // Goal line indicator
+                        // X-axis week labels
+                        HStack(spacing: 0) {
+                            Spacer().frame(width: 36)
+                            ForEach(0..<4, id: \.self) { week in
+                                Text("Week \(week + 1)")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            Text("W5")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+                        }
+                        .padding(.horizontal)
+
+                        // Legend
                         HStack {
                             Rectangle()
-                                .fill(Color.accentGreen.opacity(0.5))
+                                .fill(Color.accentGreen.opacity(0.6))
                                 .frame(width: 20, height: 2)
                             Text("Goal: \(Int(goalOz))oz")
                                 .font(.caption)
@@ -1492,6 +1726,78 @@ struct WaterIntakeDetailView: View {
                     .foregroundStyle(Color.accentBlue)
                 }
             }
+            .overlay {
+                // Water droplet rain animation overlay - full screen
+                if !hasAnimated {
+                    GeometryReader { geometry in
+                        ZStack {
+                            ForEach(0..<dropletCount, id: \.self) { index in
+                                Image(systemName: "drop.fill")
+                                    .font(.system(size: dropletSizes[index]))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.accentBlue.opacity(0.9),
+                                                Color.accentTeal.opacity(0.7)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .shadow(color: Color.accentBlue.opacity(0.3), radius: 2, y: 2)
+                                    .position(
+                                        x: geometry.size.width / 2 + dropletXPositions[index],
+                                        y: dropletYPositions[index]
+                                    )
+                                    .opacity(dropletOpacities[index])
+                            }
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                }
+            }
+            .onAppear {
+                if !hasAnimated {
+                    startRainAnimation()
+                }
+            }
+        }
+    }
+
+    // MARK: - Rain Animation
+    private func startRainAnimation() {
+        // Animate each droplet falling from top to bottom with staggered timing
+        for index in 0..<dropletCount {
+            let delay = dropletDelays[index]
+            let fallDuration = Double.random(in: 1.2...1.8)
+            let startY: CGFloat = -50
+            let endY: CGFloat = UIScreen.main.bounds.height + 100
+
+            // Start falling
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                // Fade in
+                withAnimation(.easeOut(duration: 0.2)) {
+                    dropletOpacities[index] = Double.random(in: 0.6...1.0)
+                }
+
+                // Fall down
+                withAnimation(.easeIn(duration: fallDuration)) {
+                    dropletYPositions[index] = endY
+                }
+            }
+
+            // Fade out near bottom
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay + fallDuration - 0.3) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    dropletOpacities[index] = 0
+                }
+            }
+        }
+
+        // Mark as animated after all droplets finish
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            hasAnimated = true
         }
     }
 }

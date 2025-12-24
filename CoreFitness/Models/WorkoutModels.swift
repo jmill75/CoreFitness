@@ -12,17 +12,22 @@ final class Exercise {
     var videoURL: String?
     var createdAt: Date
 
-    // Extended properties
-    var category: ExerciseCategory
-    var difficulty: Difficulty
-    var location: ExerciseLocation
-    var estimatedCaloriesPerMinute: Int
-    var isFavorite: Bool
+    // Extended properties - defaults support migration from existing data
+    var category: ExerciseCategory = ExerciseCategory.strength
+    var difficulty: Difficulty = Difficulty.intermediate
+    var location: ExerciseLocation = ExerciseLocation.both
+    var estimatedCaloriesPerMinute: Int?
+    var isFavorite: Bool = false
     var imageURL: String?
 
     // Relationships
     @Relationship(deleteRule: .cascade, inverse: \WorkoutExercise.exercise)
     var workoutExercises: [WorkoutExercise]?
+
+    // Computed property to provide a safe default
+    var caloriesPerMinute: Int {
+        estimatedCaloriesPerMinute ?? 8
+    }
 
     init(
         id: UUID = UUID(),
@@ -32,7 +37,7 @@ final class Exercise {
         category: ExerciseCategory = .strength,
         difficulty: Difficulty = .intermediate,
         location: ExerciseLocation = .both,
-        estimatedCaloriesPerMinute: Int = 8,
+        estimatedCaloriesPerMinute: Int? = 8,
         instructions: String? = nil,
         videoURL: String? = nil,
         imageURL: String? = nil
@@ -64,6 +69,17 @@ final class Workout {
     var createdAt: Date
     var updatedAt: Date
 
+    // Program management properties - defaults support migration
+    var creationType: CreationType?
+    var isActive: Bool = false
+    var isQuickWorkout: Bool = false
+    var personalRecordsCount: Int = 0
+
+    // Safe accessor for creationType with default
+    var safeCreationType: CreationType {
+        creationType ?? .userCreated
+    }
+
     // Relationships
     @Relationship(deleteRule: .cascade, inverse: \WorkoutExercise.workout)
     var exercises: [WorkoutExercise]?
@@ -79,18 +95,38 @@ final class Workout {
         exercises?.count ?? 0
     }
 
+    var hasBeenStarted: Bool {
+        (sessions?.count ?? 0) > 0
+    }
+
+    var completedSessionsCount: Int {
+        sessions?.filter { $0.status == .completed }.count ?? 0
+    }
+
+    var lastSessionDate: Date? {
+        sessions?.filter { $0.status == .completed }
+            .sorted { $0.completedAt ?? Date.distantPast > $1.completedAt ?? Date.distantPast }
+            .first?.completedAt
+    }
+
     init(
         id: UUID = UUID(),
         name: String,
         description: String? = nil,
         estimatedDuration: Int = 45,
-        difficulty: Difficulty = .intermediate
+        difficulty: Difficulty = .intermediate,
+        creationType: CreationType = .userCreated,
+        isQuickWorkout: Bool = false
     ) {
         self.id = id
         self.name = name
         self.workoutDescription = description
         self.estimatedDuration = estimatedDuration
         self.difficulty = difficulty
+        self.creationType = creationType
+        self.isQuickWorkout = isQuickWorkout
+        self.isActive = false
+        self.personalRecordsCount = 0
         self.createdAt = Date()
         self.updatedAt = Date()
     }
@@ -255,6 +291,33 @@ enum SessionStatus: String, Codable {
     case completed
     case paused
     case cancelled
+}
+
+enum CreationType: String, Codable, CaseIterable {
+    case userCreated = "User Created"
+    case aiGenerated = "AI Generated"
+    case imported = "Imported"
+    case preset = "Preset"
+
+    var displayName: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .userCreated: return "person.fill"
+        case .aiGenerated: return "sparkles"
+        case .imported: return "square.and.arrow.down.fill"
+        case .preset: return "star.fill"
+        }
+    }
+
+    var color: String {
+        switch self {
+        case .userCreated: return "accentBlue"
+        case .aiGenerated: return "purple"
+        case .imported: return "accentOrange"
+        case .preset: return "accentGreen"
+        }
+    }
 }
 
 enum ExerciseCategory: String, Codable, CaseIterable {

@@ -41,6 +41,9 @@ struct HomeView: View {
                         // Today's Recovery - Improved Hero Card
                         TodayRecoveryCard(selectedTab: $selectedTab)
 
+                        // Today's Workout Card
+                        TodayWorkoutCard()
+
                         // Quick Options Grid
                         QuickOptionsGrid(
                             onCheckIn: {
@@ -55,9 +58,6 @@ struct HomeView: View {
                             },
                             selectedTab: $selectedTab
                         )
-
-                        // Today's Workout Card
-                        TodayWorkoutCard()
                     }
                     .padding()
                     .padding(.bottom, 80)
@@ -165,52 +165,54 @@ struct QuickOptionsGrid: View {
     @Binding var selectedTab: Tab
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            Text("Quick Actions")
+                .font(.headline)
+                .fontWeight(.bold)
+
+            // 4 buttons in a row
             HStack(spacing: 12) {
-                QuickOptionCard(
+                QuickActionButton(
                     icon: "heart.text.square.fill",
                     title: "Check-In",
-                    subtitle: "Log wellness",
                     color: .accentRed,
                     action: onCheckIn
                 )
 
-                QuickOptionCard(
+                QuickActionButton(
                     icon: "drop.fill",
                     title: "Water",
-                    subtitle: "Track hydration",
                     color: .accentBlue,
                     action: onWaterIntake
                 )
-            }
 
-            HStack(spacing: 12) {
-                QuickOptionCard(
+                QuickActionButton(
                     icon: "figure.run",
                     title: "Exercises",
-                    subtitle: "Browse library",
                     color: .accentOrange
                 ) {
                     selectedTab = .programs
                 }
 
-                QuickOptionCard(
+                QuickActionButton(
                     icon: "chart.bar.fill",
                     title: "Progress",
-                    subtitle: "View stats",
                     color: .accentGreen
                 ) {
                     selectedTab = .progress
                 }
             }
         }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 }
 
-struct QuickOptionCard: View {
+struct QuickActionButton: View {
     let icon: String
     let title: String
-    let subtitle: String
     let color: Color
     let action: () -> Void
 
@@ -222,12 +224,12 @@ struct QuickOptionCard: View {
             impact.impactOccurred()
             action()
         } label: {
-            HStack(spacing: 12) {
-                // Icon
+            VStack(spacing: 8) {
+                // Icon circle
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 50, height: 50)
 
                     Image(systemName: icon)
                         .font(.title3)
@@ -235,32 +237,21 @@ struct QuickOptionCard: View {
                         .foregroundStyle(color)
                 }
 
-                // Text
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.primary)
-
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
+                // Title
+                Text(title)
                     .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.tertiary)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
-            .padding(14)
             .frame(maxWidth: .infinity)
-            .background(Color(.secondarySystemGroupedBackground))
+            .padding(.vertical, 12)
+            .background(color.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.97 : 1.0)
+        .scaleEffect(isPressed ? 0.95 : 1.0)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 isPressed = pressing
@@ -518,6 +509,7 @@ struct TodayWorkoutCard: View {
     @State private var sampleWorkout: Workout?
 
     var body: some View {
+        // Workout Card Content
         VStack(alignment: .leading, spacing: 20) {
             // Section Header
             HStack {
@@ -531,87 +523,84 @@ struct TodayWorkoutCard: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Workout Card Content
-            VStack(alignment: .leading, spacing: 20) {
-                // Header Row
-                HStack(spacing: 16) {
-                    // Workout Icon
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentOrange.opacity(0.15))
-                            .frame(width: 64, height: 64)
+            // Header Row
+            HStack(spacing: 16) {
+                // Workout Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.accentOrange.opacity(0.15))
+                        .frame(width: 64, height: 64)
 
-                        Image(systemName: "figure.strengthtraining.traditional")
-                            .font(.title)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(Color.accentOrange)
-                    }
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.title)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.accentOrange)
+                }
 
-                    // Workout Info
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Upper Body Strength")
-                            .font(.title3)
-                            .fontWeight(.bold)
+                // Workout Info
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Upper Body Strength")
+                        .font(.title3)
+                        .fontWeight(.bold)
 
-                        HStack(spacing: 16) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "clock")
-                                    .font(.caption)
-                                Text("45 min")
-                            }
-                            HStack(spacing: 6) {
-                                Image(systemName: "list.bullet")
-                                    .font(.caption)
-                                Text("6 exercises")
-                            }
+                    HStack(spacing: 16) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock")
+                                .font(.caption)
+                            Text("45 min")
                         }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            Image(systemName: "list.bullet")
+                                .font(.caption)
+                            Text("6 exercises")
+                        }
                     }
-
-                    Spacer()
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 }
 
-                // Exercise Pills
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ExercisePreviewPill(name: "Bench Press", sets: 4)
-                        ExercisePreviewPill(name: "Rows", sets: 4)
-                        ExercisePreviewPill(name: "Shoulder Press", sets: 3)
-                        ExercisePreviewPill(name: "+3 more", sets: 0)
-                    }
-                }
-
-                // Start Button
-                Button {
-                    startWorkout()
-                } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "play.fill")
-                            .font(.headline)
-                        Text("Start Workout")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(
-                        LinearGradient(
-                            colors: [.accentOrange, .accentOrange.opacity(0.85)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: .accentOrange.opacity(0.3), radius: 8, y: 4)
-                }
-                .buttonStyle(.plain)
+                Spacer()
             }
-            .padding(20)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Exercise Pills
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ExercisePreviewPill(name: "Bench Press", sets: 4)
+                    ExercisePreviewPill(name: "Rows", sets: 4)
+                    ExercisePreviewPill(name: "Shoulder Press", sets: 3)
+                    ExercisePreviewPill(name: "+3 more", sets: 0)
+                }
+            }
+
+            // Start Button
+            Button {
+                startWorkout()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "play.fill")
+                        .font(.headline)
+                    Text("Start Workout")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(
+                    LinearGradient(
+                        colors: [.accentOrange, .accentOrange.opacity(0.85)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .shadow(color: .accentOrange.opacity(0.3), radius: 8, y: 4)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = sampleWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -679,81 +668,80 @@ struct ExercisePreviewPill: View {
 // MARK: - Water Intake Tracking View
 struct QuickWaterIntakeView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var fitnessDataService: FitnessDataService
+    @EnvironmentObject var waterManager: WaterIntakeManager
 
-    // State
-    @State private var todayIntake: Double = 0 // glasses
-    @State private var dailyGoal: Double = 8 // glasses
-    @State private var showCustomAmount = false
-    @State private var customAmount: String = ""
+    // Local animation state
     @State private var showAddAnimation = false
-    @State private var lastAddedAmount: Int = 0
-
-    private let glassSize: Double = 8 // oz per glass
-
-    private var progressPercentage: Double {
-        guard dailyGoal > 0 else { return 0 }
-        return min(1.0, todayIntake / dailyGoal)
-    }
-
-    private var remainingGlasses: Int {
-        max(0, Int(dailyGoal - todayIntake))
-    }
+    @State private var animateProgress = false
+    @State private var showCelebration = false
 
     private let hydrationTips: [(icon: String, tip: String)] = [
-        ("sunrise.fill", "Drink a glass of water first thing in the morning"),
+        ("sunrise.fill", "Drink water first thing in the morning"),
         ("clock.fill", "Set reminders every 2 hours to stay hydrated"),
-        ("fork.knife", "Have a glass before each meal to aid digestion"),
+        ("fork.knife", "Have water before each meal to aid digestion"),
         ("figure.run", "Drink extra water before and after exercise")
     ]
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 28) {
+                VStack(spacing: 24) {
                     // Today's Progress Hero
                     ZStack {
                         // Background gradient
                         RoundedRectangle(cornerRadius: 28)
                             .fill(
                                 LinearGradient(
-                                    colors: [Color.accentBlue, Color.accentBlue.opacity(0.7)],
+                                    colors: [Color.accentBlue, Color.accentTeal],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
 
+                        // Celebration water droplets
+                        if showCelebration {
+                            WaterDropletCelebration()
+                        }
+
                         VStack(spacing: 20) {
                             // Large progress ring
                             ZStack {
-                                // Background ring
+                                // Background ring with segments
                                 Circle()
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 16)
-                                    .frame(width: 160, height: 160)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 14)
+                                    .frame(width: 150, height: 150)
 
-                                // Progress ring
+                                // Segmented progress ring (red to green)
                                 Circle()
-                                    .trim(from: 0, to: progressPercentage)
+                                    .trim(from: 0, to: animateProgress ? waterManager.ringProgress : 0)
                                     .stroke(
-                                        Color.white,
-                                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
+                                        AngularGradient(
+                                            gradient: Gradient(colors: [
+                                                Color.red,
+                                                Color.orange,
+                                                Color.yellow,
+                                                Color.accentGreen
+                                            ]),
+                                            center: .center,
+                                            startAngle: .degrees(-90),
+                                            endAngle: .degrees(270)
+                                        ),
+                                        style: StrokeStyle(lineWidth: 14, lineCap: .round)
                                     )
-                                    .frame(width: 160, height: 160)
+                                    .frame(width: 150, height: 150)
                                     .rotationEffect(.degrees(-90))
-                                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progressPercentage)
 
                                 // Center content
-                                VStack(spacing: 4) {
+                                VStack(spacing: 2) {
                                     HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                        Text("\(Int(todayIntake))")
-                                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                                        Text("/\(Int(dailyGoal))")
-                                            .font(.title2)
+                                        Text("\(Int(waterManager.totalOunces))")
+                                            .font(.system(size: 42, weight: .bold, design: .rounded))
+                                        Text("oz")
+                                            .font(.title3)
                                             .fontWeight(.medium)
                                             .opacity(0.8)
                                     }
-                                    Text("glasses")
+                                    Text("of \(Int(waterManager.goalOunces)) oz")
                                         .font(.subheadline)
                                         .fontWeight(.medium)
                                         .opacity(0.8)
@@ -762,120 +750,90 @@ struct QuickWaterIntakeView: View {
 
                                 // Add animation overlay
                                 if showAddAnimation {
-                                    Text("+\(lastAddedAmount)")
-                                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.white)
-                                        .offset(y: -80)
+                                    Text("+\(Int(waterManager.lastAddedAmount)) oz")
+                                        .font(.system(size: 28, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [.yellow, .orange],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+                                        .shadow(color: .orange.opacity(0.8), radius: 8, x: 0, y: 0)
+                                        .shadow(color: .yellow.opacity(0.5), radius: 15, x: 0, y: 0)
+                                        .scaleEffect(1.1)
+                                        .offset(y: -90)
                                         .transition(.asymmetric(
-                                            insertion: .scale.combined(with: .opacity),
-                                            removal: .opacity.combined(with: .move(edge: .top))
+                                            insertion: .scale(scale: 0.5).combined(with: .opacity),
+                                            removal: .scale(scale: 1.5).combined(with: .opacity).combined(with: .move(edge: .top))
                                         ))
                                 }
                             }
 
                             // Status message
-                            if todayIntake >= dailyGoal {
+                            if waterManager.hasReachedGoal {
                                 HStack(spacing: 8) {
                                     Image(systemName: "checkmark.seal.fill")
                                     Text("Daily goal reached!")
                                 }
                                 .font(.headline)
                                 .foregroundStyle(.white)
+                                .scaleEffect(showCelebration ? 1.1 : 1.0)
+                                .animation(.spring(response: 0.3, dampingFraction: 0.5), value: showCelebration)
                             } else {
-                                Text("\(remainingGlasses) more glass\(remainingGlasses == 1 ? "" : "es") to reach your goal")
+                                Text("\(waterManager.remainingOunces) oz more to reach your goal")
                                     .font(.subheadline)
                                     .foregroundStyle(.white.opacity(0.9))
                             }
                         }
-                        .padding(32)
+                        .padding(28)
                     }
-                    .frame(height: 300)
+                    .frame(height: 280)
                     .padding(.horizontal)
                     .shadow(color: Color.accentBlue.opacity(0.3), radius: 16, y: 8)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
 
-                    // Quick Add Buttons
+                    // Quick Add Buttons - Bottle sizes
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Quick Add")
                             .font(.headline)
                             .fontWeight(.bold)
                             .padding(.horizontal)
 
-                        HStack(spacing: 12) {
-                            WaterAddButton(amount: 1, icon: "drop.fill") {
-                                addWater(glasses: 1)
-                            }
-                            WaterAddButton(amount: 2, icon: "drop.fill") {
-                                addWater(glasses: 2)
-                            }
-                            WaterAddButton(amount: 3, icon: "drop.fill") {
-                                addWater(glasses: 3)
-                            }
-
-                            // Custom amount button
-                            Button {
-                                showCustomAmount = true
-                            } label: {
-                                VStack(spacing: 8) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.title)
-                                        .foregroundStyle(Color.accentBlue)
-
-                                    Text("Custom")
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(.primary)
+                        HStack(spacing: 8) {
+                            ForEach(HomeWaterSize.allCases) { size in
+                                HomeWaterAddButton(size: size) {
+                                    addWater(ounces: size.ounces)
                                 }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 80)
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
                             }
-                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal)
                     }
 
-                    // Today's Log
+                    // Today's Stats
                     VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text("Today's Stats")
-                                .font(.headline)
-                                .fontWeight(.bold)
+                        Text("Today's Stats")
+                            .font(.headline)
+                            .fontWeight(.bold)
 
-                            Spacer()
-
-                            if todayIntake > 0 {
-                                Button {
-                                    removeLastGlass()
-                                } label: {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "minus.circle")
-                                        Text("Undo")
-                                    }
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-
-                        HStack(spacing: 16) {
+                        HStack(spacing: 12) {
                             TodayWaterStatBox(
                                 icon: "drop.fill",
-                                value: "\(Int(todayIntake * glassSize))",
+                                value: "\(Int(waterManager.totalOunces))",
                                 unit: "oz",
                                 label: "Total",
                                 color: .accentBlue
                             )
                             TodayWaterStatBox(
                                 icon: "percent",
-                                value: "\(Int(progressPercentage * 100))",
+                                value: "\(Int(waterManager.progressPercentage * 100))",
                                 unit: "%",
                                 label: "Progress",
-                                color: progressPercentage >= 1 ? .accentGreen : .accentOrange
+                                color: waterManager.progressPercentage >= 1 ? .accentGreen : .accentOrange
                             )
                             TodayWaterStatBox(
                                 icon: "target",
-                                value: "\(Int(dailyGoal * glassSize))",
+                                value: "\(Int(waterManager.goalOunces))",
                                 unit: "oz",
                                 label: "Goal",
                                 color: .accentTeal
@@ -935,32 +893,28 @@ struct QuickWaterIntakeView: View {
                     .foregroundStyle(Color.accentBlue)
                 }
             }
-            .alert("Add Water", isPresented: $showCustomAmount) {
-                TextField("Glasses", text: $customAmount)
-                    .keyboardType(.numberPad)
-                Button("Cancel", role: .cancel) {
-                    customAmount = ""
-                }
-                Button("Add") {
-                    if let amount = Int(customAmount), amount > 0 {
-                        addWater(glasses: amount)
-                    }
-                    customAmount = ""
-                }
-            } message: {
-                Text("Enter the number of glasses to add")
-            }
             .onAppear {
-                loadTodayData()
+                waterManager.loadTodayData()
+                withAnimation(.easeOut(duration: 0.8)) {
+                    animateProgress = true
+                }
             }
         }
     }
 
     // MARK: - Actions
 
-    private func addWater(glasses: Int) {
-        lastAddedAmount = glasses
-        todayIntake += Double(glasses)
+    private func addWater(ounces: Double) {
+        let previousTotal = waterManager.totalOunces
+        waterManager.addWater(ounces: ounces)
+
+        // Reset and re-animate progress
+        animateProgress = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                animateProgress = true
+            }
+        }
 
         // Haptic feedback
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -977,75 +931,104 @@ struct QuickWaterIntakeView: View {
             }
         }
 
-        // Save to database
-        saveWaterIntake()
-
-        // Extra haptic for goal completion
-        if todayIntake >= dailyGoal && todayIntake - Double(glasses) < dailyGoal {
+        // Celebration and extra haptic for goal completion
+        if waterManager.hasReachedGoal && previousTotal < waterManager.goalOunces {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-        }
-    }
 
-    private func removeLastGlass() {
-        guard todayIntake > 0 else { return }
-        todayIntake = max(0, todayIntake - 1)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        saveWaterIntake()
-    }
+            // Trigger celebration animation
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                showCelebration = true
+            }
 
-    private func loadTodayData() {
-        let todayData = fitnessDataService.getOrCreateHealthData(for: Date())
-        if let intake = todayData.waterIntake {
-            todayIntake = intake / glassSize // Convert oz to glasses
+            // Hide celebration after a few seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                withAnimation(.easeOut(duration: 0.5)) {
+                    showCelebration = false
+                }
+            }
         }
-        if let goal = todayData.waterGoal {
-            dailyGoal = goal / glassSize // Convert oz to glasses
-        }
-    }
-
-    private func saveWaterIntake() {
-        let todayData = fitnessDataService.getOrCreateHealthData(for: Date())
-        todayData.waterIntake = todayIntake * glassSize // Store in oz
-        todayData.waterGoal = dailyGoal * glassSize // Store in oz
-        try? modelContext.save()
     }
 }
 
-// MARK: - Water Add Button
-struct WaterAddButton: View {
-    let amount: Int
-    let icon: String
+// MARK: - Home Water Size (Bottle sizes)
+enum HomeWaterSize: CaseIterable, Identifiable {
+    case glass      // 8oz
+    case small      // 16oz
+    case medium     // 24oz
+    case large      // 32oz
+    case extraLarge // 64oz
+
+    var id: String { displaySize }
+
+    var ounces: Double {
+        switch self {
+        case .glass: return 8
+        case .small: return 16
+        case .medium: return 24
+        case .large: return 32
+        case .extraLarge: return 64
+        }
+    }
+
+    var displaySize: String {
+        switch self {
+        case .glass: return "8oz"
+        case .small: return "16oz"
+        case .medium: return "24oz"
+        case .large: return "32oz"
+        case .extraLarge: return "64oz"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .glass: return "drop.fill"
+        case .small: return "waterbottle.fill"
+        case .medium: return "waterbottle.fill"
+        case .large: return "waterbottle.fill"
+        case .extraLarge: return "waterbottle.fill"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .glass: return "Glass"
+        case .small: return "Small"
+        case .medium: return "Medium"
+        case .large: return "Large"
+        case .extraLarge: return "XL"
+        }
+    }
+}
+
+// MARK: - Home Water Add Button
+struct HomeWaterAddButton: View {
+    let size: HomeWaterSize
     let action: () -> Void
 
     @State private var isPressed = false
 
     var body: some View {
-        Button {
-            action()
-        } label: {
-            VStack(spacing: 8) {
-                HStack(spacing: 2) {
-                    ForEach(0..<min(amount, 3), id: \.self) { _ in
-                        Image(systemName: icon)
-                            .font(.caption)
-                            .foregroundStyle(Color.accentBlue)
-                    }
-                }
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: size.icon)
+                    .font(.system(size: size == .glass ? 16 : 20))
+                    .fontWeight(.medium)
+                    .foregroundStyle(Color.accentBlue)
 
-                Text("+\(amount)")
-                    .font(.title3)
-                    .fontWeight(.bold)
+                Text(size.displaySize)
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
 
-                Text("glass\(amount == 1 ? "" : "es")")
-                    .font(.caption2)
+                Text(size.label)
+                    .font(.system(size: 9))
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 80)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .frame(height: 75)
+            .background(Color.accentBlue.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .scaleEffect(isPressed ? 0.92 : 1.0)
         }
         .buttonStyle(.plain)
         .pressEvents {
@@ -1139,6 +1122,72 @@ struct WaterStatBox: View {
         .padding(.vertical, 16)
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// MARK: - Water Droplet Celebration
+struct WaterDropletCelebration: View {
+    @State private var droplets: [WaterDroplet] = []
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                ForEach(droplets) { droplet in
+                    WaterDropletView(droplet: droplet)
+                }
+            }
+            .onAppear {
+                createDroplets(in: geometry.size)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func createDroplets(in size: CGSize) {
+        droplets = (0..<25).map { index in
+            WaterDroplet(
+                id: index,
+                x: CGFloat.random(in: 0...size.width),
+                startY: CGFloat.random(in: -50...(-20)),
+                endY: size.height + 50,
+                size: CGFloat.random(in: 8...18),
+                delay: Double(index) * 0.08,
+                duration: Double.random(in: 1.5...2.5),
+                opacity: Double.random(in: 0.5...0.9)
+            )
+        }
+    }
+}
+
+struct WaterDroplet: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let startY: CGFloat
+    let endY: CGFloat
+    let size: CGFloat
+    let delay: Double
+    let duration: Double
+    let opacity: Double
+}
+
+struct WaterDropletView: View {
+    let droplet: WaterDroplet
+    @State private var yPosition: CGFloat = 0
+    @State private var isAnimating = false
+
+    var body: some View {
+        Image(systemName: "drop.fill")
+            .font(.system(size: droplet.size))
+            .foregroundStyle(.white.opacity(droplet.opacity))
+            .position(x: droplet.x, y: isAnimating ? droplet.endY : droplet.startY)
+            .onAppear {
+                withAnimation(
+                    .easeIn(duration: droplet.duration)
+                    .delay(droplet.delay)
+                ) {
+                    isAnimating = true
+                }
+            }
     }
 }
 

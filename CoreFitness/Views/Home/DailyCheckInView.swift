@@ -430,7 +430,7 @@ struct TodaysPlanCard: View {
                     Text("Today's Plan")
                         .font(.headline)
                         .fontWeight(.bold)
-                    Text("Select all that apply")
+                    Text(selectedPlans.contains(.restDay) ? "Rest day selected" : "Select all that apply")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -503,13 +503,30 @@ struct TodaysPlanCard: View {
 
     private func togglePlan(_ plan: TodayPlanType) {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            if selectedPlans.contains(plan) {
-                // Don't allow deselecting if it's the only one selected
-                if selectedPlans.count > 1 {
-                    selectedPlans.remove(plan)
+            if plan == .restDay {
+                // Rest is exclusive - if selecting rest, clear everything else
+                if selectedPlans.contains(.restDay) {
+                    // Already selected, don't allow deselecting if only one
+                    if selectedPlans.count > 1 {
+                        selectedPlans.remove(.restDay)
+                    }
+                } else {
+                    // Selecting rest clears all other selections
+                    selectedPlans.removeAll()
+                    selectedPlans.insert(.restDay)
                 }
             } else {
-                selectedPlans.insert(plan)
+                // Non-rest option selected
+                if selectedPlans.contains(plan) {
+                    // Don't allow deselecting if it's the only one selected
+                    if selectedPlans.count > 1 {
+                        selectedPlans.remove(plan)
+                    }
+                } else {
+                    // If rest is currently selected, remove it first
+                    selectedPlans.remove(.restDay)
+                    selectedPlans.insert(plan)
+                }
             }
         }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()

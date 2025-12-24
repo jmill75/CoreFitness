@@ -299,65 +299,7 @@ struct AnimatedProgressBar: View {
     }
 }
 
-// MARK: - Celebration Confetti
-struct ConfettiView: View {
-    @Binding var isActive: Bool
-
-    var body: some View {
-        ZStack {
-            ForEach(0..<30, id: \.self) { index in
-                ConfettiPiece(index: index, isActive: isActive)
-            }
-        }
-    }
-}
-
-struct ConfettiPiece: View {
-    let index: Int
-    let isActive: Bool
-
-    @State private var xOffset: CGFloat = 0
-    @State private var yOffset: CGFloat = 0
-    @State private var rotation: Double = 0
-    @State private var opacity: Double = 0
-
-    private let colors: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .pink]
-
-    var body: some View {
-        Circle()
-            .fill(colors[index % colors.count])
-            .frame(width: CGFloat.random(in: 6...12), height: CGFloat.random(in: 6...12))
-            .offset(x: xOffset, y: yOffset)
-            .rotationEffect(.degrees(rotation))
-            .opacity(opacity)
-            .onChange(of: isActive) { _, newValue in
-                if newValue {
-                    startAnimation()
-                }
-            }
-    }
-
-    private func startAnimation() {
-        let randomX = CGFloat.random(in: -150...150)
-        let randomY = CGFloat.random(in: -300...-100)
-        let randomRotation = Double.random(in: 0...360)
-        let duration = Double.random(in: 1.5...2.5)
-
-        withAnimation(.linear(duration: 0.1)) {
-            opacity = 1
-        }
-
-        withAnimation(.easeOut(duration: duration)) {
-            xOffset = randomX
-            yOffset = randomY + 400
-            rotation = randomRotation
-        }
-
-        withAnimation(.linear(duration: 0.3).delay(duration - 0.3)) {
-            opacity = 0
-        }
-    }
-}
+// Note: ConfettiView and ConfettiPiece are defined in DailyCheckInView.swift
 
 // MARK: - Floating Action Button
 struct FloatingActionButton: View {
@@ -446,30 +388,4 @@ struct LoadingDots: View {
     }
 }
 
-// MARK: - Skeleton Loading View
-struct SkeletonView: View {
-    let height: CGFloat
-
-    @State private var isAnimating = false
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        Color(.systemGray5),
-                        Color(.systemGray4),
-                        Color(.systemGray5)
-                    ],
-                    startPoint: isAnimating ? .trailing : .leading,
-                    endPoint: isAnimating ? .leading : .trailing
-                )
-            )
-            .frame(height: height)
-            .onAppear {
-                withAnimation(.linear(duration: 1.0).repeatForever(autoreverses: true)) {
-                    isAnimating = true
-                }
-            }
-    }
-}
+// Note: SkeletonView is defined in SectionCard.swift

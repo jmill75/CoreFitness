@@ -69,6 +69,8 @@ struct WorkoutExecutionView: View {
         .preferredColorScheme(.dark)
         .sheet(isPresented: $workoutManager.showWorkoutComplete) {
             WorkoutCompleteView()
+                .environmentObject(workoutManager)
+                .environmentObject(themeManager)
                 .interactiveDismissDisabled()
                 .onDisappear {
                     isDismissing = true
@@ -132,50 +134,59 @@ struct SetCompleteFeedbackView: View {
     let setNumber: Int
     @State private var showCheckmark = false
     @State private var ringScale: CGFloat = 0.5
+    @State private var glowPulse: CGFloat = 1.0
 
     var body: some View {
         ZStack {
-            // Semi-transparent background
-            Color.black.opacity(0.4)
+            // Blurred background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+
+            // Extra tint for contrast
+            Color.black.opacity(0.3)
                 .ignoresSafeArea()
 
             // Success ring
             ZStack {
-                // Outer glow
+                // Pulsing outer glow
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color.green.opacity(0.4), Color.clear],
+                            colors: [Color.green.opacity(0.5), Color.green.opacity(0.2), Color.clear],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 100
+                            endRadius: 120
                         )
                     )
-                    .frame(width: 200, height: 200)
-                    .scaleEffect(ringScale)
+                    .frame(width: 240, height: 240)
+                    .scaleEffect(ringScale * glowPulse)
 
                 // Ring
                 Circle()
-                    .stroke(Color.green, lineWidth: 6)
+                    .stroke(Color.green, lineWidth: 8)
                     .frame(width: 120, height: 120)
                     .scaleEffect(ringScale)
+                    .shadow(color: .green.opacity(0.6), radius: 10)
 
                 // Checkmark
                 Image(systemName: "checkmark")
                     .font(.system(size: 56, weight: .bold))
                     .foregroundStyle(.green)
                     .scaleEffect(showCheckmark ? 1 : 0)
+                    .shadow(color: .green.opacity(0.5), radius: 8)
             }
 
             // Set text
             VStack {
                 Spacer()
 
-                Text("SET \(setNumber)")
+                Text("SET \(setNumber) COMPLETE")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                     .opacity(showCheckmark ? 1 : 0)
                     .offset(y: showCheckmark ? 0 : 20)
+                    .shadow(color: .black.opacity(0.3), radius: 4)
 
                 Spacer()
                     .frame(height: 100)
@@ -185,6 +196,11 @@ struct SetCompleteFeedbackView: View {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 ringScale = 1.0
                 showCheckmark = true
+            }
+
+            // Start pulse animation
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                glowPulse = 1.1
             }
         }
     }

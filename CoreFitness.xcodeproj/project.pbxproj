@@ -12,6 +12,12 @@
 		73F1A7F62EFB5CF60037175B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73F1A7F52EFB5CF60037175B /* WidgetKit.framework */; };
 		73F1A7F82EFB5CF60037175B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73F1A7F72EFB5CF60037175B /* SwiftUI.framework */; };
 		73F1A8052EFB5CF80037175B /* CoreFitnessWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 73F1A7F32EFB5CF60037175B /* CoreFitnessWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		73F1AB6D2EFC32DA0037175B /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 73F1AB6C2EFC32DA0037175B /* Info.plist */; };
+		73F1ABCF2EFC33440037175B /* CoreFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F1ABCE2EFC33440037175B /* CoreFitnessTests.swift */; };
+		73F1ABD12EFC33810037175B /* BUILD_FIX_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD02EFC33810037175B /* BUILD_FIX_SUMMARY.md */; };
+		73F1ABD32EFC33900037175B /* cleanup_build.sh in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD22EFC33900037175B /* cleanup_build.sh */; };
+		73F1ABD52EFC33B00037175B /* PRE_BUILD_CHECKLIST.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD42EFC33B00037175B /* PRE_BUILD_CHECKLIST.md */; };
+		73F1ABD72EFC33CA0037175B /* QUICK_START.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD62EFC33CA0037175B /* QUICK_START.md */; };
 		A1000001 /* CoreFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CoreFitnessApp.swift */; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* ContentView.swift */; };
 		A1000003 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* AuthManager.swift */; };
@@ -29,7 +35,6 @@
 		A1000016 /* AppDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000016 /* AppDesignSystem.swift */; };
 		A1000017 /* ProgressTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000017 /* ProgressTabView.swift */; };
 		A1000020 /* WorkoutModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000020 /* WorkoutModels.swift */; };
-		A1000050 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050 /* WorkoutActivityAttributes.swift */; };
 		A1000021 /* WorkoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000021 /* WorkoutManager.swift */; };
 		A1000022 /* WorkoutExecutionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000022 /* WorkoutExecutionView.swift */; };
 		A1000023 /* CountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000023 /* CountdownView.swift */; };
@@ -41,15 +46,19 @@
 		A1000029 /* WorkoutCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000029 /* WorkoutCompleteView.swift */; };
 		A100002A /* SampleWorkoutData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002A /* SampleWorkoutData.swift */; };
 		A100002B /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200002C /* LiveActivityManager.swift */; };
+		A1000050 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000050 /* WorkoutActivityAttributes.swift */; };
 		A1000051 /* FitnessDataModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000051 /* FitnessDataModels.swift */; };
 		A1000052 /* AchievementDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000052 /* AchievementDefinitions.swift */; };
 		A1000053 /* FitnessDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053 /* FitnessDataService.swift */; };
 		A1000054 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054 /* SocialSharingService.swift */; };
+		A100005E /* WaterIntakeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005E /* WaterIntakeManager.swift */; };
 		A1000055 /* DebugDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055 /* DebugDataView.swift */; };
 		A1000056 /* AchievementWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056 /* AchievementWallView.swift */; };
 		A1000057 /* ChallengeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057 /* ChallengeModels.swift */; };
 		A1000058 /* ExerciseData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000058 /* ExerciseData.swift */; };
 		A1000059 /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000059 /* ChallengesView.swift */; };
+		A100005A /* MusicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005A /* MusicService.swift */; };
+		A100005B /* AnimatedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005B /* AnimatedComponents.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -117,6 +126,12 @@
 		73F1A7F32EFB5CF60037175B /* CoreFitnessWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CoreFitnessWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		73F1A7F52EFB5CF60037175B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		73F1A7F72EFB5CF60037175B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		73F1AB6C2EFC32DA0037175B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		73F1ABCE2EFC33440037175B /* CoreFitnessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreFitnessTests.swift; sourceTree = "<group>"; };
+		73F1ABD02EFC33810037175B /* BUILD_FIX_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BUILD_FIX_SUMMARY.md; sourceTree = "<group>"; };
+		73F1ABD22EFC33900037175B /* cleanup_build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = cleanup_build.sh; sourceTree = "<group>"; };
+		73F1ABD42EFC33B00037175B /* PRE_BUILD_CHECKLIST.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PRE_BUILD_CHECKLIST.md; sourceTree = "<group>"; };
+		73F1ABD62EFC33CA0037175B /* QUICK_START.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICK_START.md; sourceTree = "<group>"; };
 		A2000001 /* CoreFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreFitnessApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A2000003 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
@@ -135,7 +150,6 @@
 		A2000016 /* AppDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDesignSystem.swift; sourceTree = "<group>"; };
 		A2000017 /* ProgressTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressTabView.swift; sourceTree = "<group>"; };
 		A2000020 /* WorkoutModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutModels.swift; sourceTree = "<group>"; };
-		A2000050 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
 		A2000021 /* WorkoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutManager.swift; sourceTree = "<group>"; };
 		A2000022 /* WorkoutExecutionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutExecutionView.swift; sourceTree = "<group>"; };
 		A2000023 /* CountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownView.swift; sourceTree = "<group>"; };
@@ -148,6 +162,7 @@
 		A200002A /* SampleWorkoutData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleWorkoutData.swift; sourceTree = "<group>"; };
 		A200002B /* CoreFitness.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoreFitness.entitlements; sourceTree = "<group>"; };
 		A200002C /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
+		A2000050 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
 		A2000051 /* FitnessDataModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessDataModels.swift; sourceTree = "<group>"; };
 		A2000052 /* AchievementDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementDefinitions.swift; sourceTree = "<group>"; };
 		A2000053 /* FitnessDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessDataService.swift; sourceTree = "<group>"; };
@@ -157,6 +172,9 @@
 		A2000057 /* ChallengeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeModels.swift; sourceTree = "<group>"; };
 		A2000058 /* ExerciseData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseData.swift; sourceTree = "<group>"; };
 		A2000059 /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
+		A200005A /* MusicService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicService.swift; sourceTree = "<group>"; };
+		A200005B /* AnimatedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedComponents.swift; sourceTree = "<group>"; };
+		A200005E /* WaterIntakeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterIntakeManager.swift; sourceTree = "<group>"; };
 		A3000001 /* CoreFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -237,6 +255,12 @@
 				73F1A7F92EFB5CF60037175B /* CoreFitnessWidgets */,
 				73F1A7F42EFB5CF60037175B /* Frameworks */,
 				A5000003 /* Products */,
+				73F1AB6C2EFC32DA0037175B /* Info.plist */,
+				73F1ABCE2EFC33440037175B /* CoreFitnessTests.swift */,
+				73F1ABD02EFC33810037175B /* BUILD_FIX_SUMMARY.md */,
+				73F1ABD22EFC33900037175B /* cleanup_build.sh */,
+				73F1ABD42EFC33B00037175B /* PRE_BUILD_CHECKLIST.md */,
+				73F1ABD62EFC33CA0037175B /* QUICK_START.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -313,6 +337,8 @@
 				A200002C /* LiveActivityManager.swift */,
 				A2000053 /* FitnessDataService.swift */,
 				A2000054 /* SocialSharingService.swift */,
+				A200005A /* MusicService.swift */,
+				A200005E /* WaterIntakeManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -379,6 +405,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000015 /* SectionCard.swift */,
+				A200005B /* AnimatedComponents.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -742,6 +769,9 @@
 				A1000057 /* ChallengeModels.swift in Sources */,
 				A1000058 /* ExerciseData.swift in Sources */,
 				A1000059 /* ChallengesView.swift in Sources */,
+				A100005A /* MusicService.swift in Sources */,
+				A100005B /* AnimatedComponents.swift in Sources */,
+				A100005E /* WaterIntakeManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
