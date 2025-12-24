@@ -46,6 +46,7 @@
 		A1000053 /* FitnessDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053 /* FitnessDataService.swift */; };
 		A1000054 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054 /* SocialSharingService.swift */; };
 		A1000055 /* DebugDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055 /* DebugDataView.swift */; };
+		A1000056 /* AchievementWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056 /* AchievementWallView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -149,6 +150,7 @@
 		A2000053 /* FitnessDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitnessDataService.swift; sourceTree = "<group>"; };
 		A2000054 /* SocialSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingService.swift; sourceTree = "<group>"; };
 		A2000055 /* DebugDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugDataView.swift; sourceTree = "<group>"; };
+		A2000056 /* AchievementWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementWallView.swift; sourceTree = "<group>"; };
 		A3000001 /* CoreFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -386,6 +388,7 @@
 			isa = PBXGroup;
 			children = (
 				A2000017 /* ProgressTabView.swift */,
+				A2000056 /* AchievementWallView.swift */,
 			);
 			path = Progress;
 			sourceTree = "<group>";
@@ -718,6 +721,7 @@
 				A1000053 /* FitnessDataService.swift in Sources */,
 				A1000054 /* SocialSharingService.swift in Sources */,
 				A1000055 /* DebugDataView.swift in Sources */,
+				A1000056 /* AchievementWallView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

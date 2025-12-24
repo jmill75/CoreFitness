@@ -110,7 +110,235 @@ struct WorkoutExecutionView: View {
             }
         }
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: workoutManager.showPRCelebration)
+        .overlay {
+            if workoutManager.showSetCompleteFeedback {
+                SetCompleteFeedbackView(setNumber: workoutManager.completedSetNumber)
+                    .transition(.opacity.combined(with: .scale(scale: 1.2)))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: workoutManager.showSetCompleteFeedback)
+        .overlay {
+            if workoutManager.showExerciseCompleteFeedback {
+                ExerciseCompleteFeedbackView(exerciseName: workoutManager.completedExerciseName)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showExerciseCompleteFeedback)
     }
+}
+
+// MARK: - Set Complete Feedback View
+struct SetCompleteFeedbackView: View {
+    let setNumber: Int
+    @State private var showCheckmark = false
+    @State private var ringScale: CGFloat = 0.5
+
+    var body: some View {
+        ZStack {
+            // Semi-transparent background
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+
+            // Success ring
+            ZStack {
+                // Outer glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.green.opacity(0.4), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .scaleEffect(ringScale)
+
+                // Ring
+                Circle()
+                    .stroke(Color.green, lineWidth: 6)
+                    .frame(width: 120, height: 120)
+                    .scaleEffect(ringScale)
+
+                // Checkmark
+                Image(systemName: "checkmark")
+                    .font(.system(size: 56, weight: .bold))
+                    .foregroundStyle(.green)
+                    .scaleEffect(showCheckmark ? 1 : 0)
+            }
+
+            // Set text
+            VStack {
+                Spacer()
+
+                Text("SET \(setNumber)")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .opacity(showCheckmark ? 1 : 0)
+                    .offset(y: showCheckmark ? 0 : 20)
+
+                Spacer()
+                    .frame(height: 100)
+            }
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                ringScale = 1.0
+                showCheckmark = true
+            }
+        }
+    }
+}
+
+// MARK: - Exercise Complete Feedback View
+struct ExerciseCompleteFeedbackView: View {
+    let exerciseName: String
+    @State private var showContent = false
+    @State private var particles: [CelebrationParticle] = []
+    @State private var pulseScale: CGFloat = 1.0
+
+    var body: some View {
+        ZStack {
+            // Dark overlay
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+
+            // Celebration particles
+            ForEach(particles) { particle in
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+                    .position(particle.position)
+                    .opacity(particle.opacity)
+            }
+
+            // Main content
+            VStack(spacing: 20) {
+                // Star burst with glow
+                ZStack {
+                    // Pulsing glow
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.yellow.opacity(0.5), Color.orange.opacity(0.2), Color.clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 120
+                            )
+                        )
+                        .frame(width: 240, height: 240)
+                        .scaleEffect(pulseScale)
+
+                    // Star icon
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 80))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.yellow, .orange],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .scaleEffect(showContent ? 1 : 0)
+                        .rotationEffect(.degrees(showContent ? 0 : -30))
+                }
+
+                // Exercise Complete text
+                Text("EXERCISE COMPLETE!")
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.yellow, .orange],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .scaleEffect(showContent ? 1 : 0.5)
+                    .opacity(showContent ? 1 : 0)
+
+                // Exercise name
+                Text(exerciseName)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .opacity(showContent ? 1 : 0)
+                    .offset(y: showContent ? 0 : 20)
+            }
+        }
+        .onAppear {
+            // Animate content in
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                showContent = true
+            }
+
+            // Start pulse animation
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                pulseScale = 1.15
+            }
+
+            // Launch celebration particles
+            launchCelebration()
+        }
+    }
+
+    private func launchCelebration() {
+        let colors: [Color] = [.yellow, .orange, .green, .cyan, .pink]
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        let center = CGPoint(x: screenWidth / 2, y: screenHeight / 2 - 50)
+
+        // Create burst of particles
+        for i in 0..<30 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.02) {
+                let angle = Double.random(in: 0...2 * .pi)
+                let distance = CGFloat.random(in: 100...250)
+                let endX = center.x + cos(angle) * distance
+                let endY = center.y + sin(angle) * distance
+
+                var particle = CelebrationParticle(
+                    id: UUID(),
+                    position: center,
+                    color: colors.randomElement() ?? .yellow,
+                    size: CGFloat.random(in: 6...14),
+                    opacity: 1.0
+                )
+
+                particles.append(particle)
+                let index = particles.count - 1
+
+                // Animate outward
+                withAnimation(.easeOut(duration: 0.6)) {
+                    if index < particles.count {
+                        particles[index].position = CGPoint(x: endX, y: endY)
+                    }
+                }
+
+                // Fade out
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    withAnimation(.easeIn(duration: 0.4)) {
+                        if index < particles.count {
+                            particles[index].opacity = 0
+                        }
+                    }
+                }
+
+                // Remove
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                    if let idx = particles.firstIndex(where: { $0.id == particle.id }) {
+                        particles.remove(at: idx)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CelebrationParticle: Identifiable {
+    let id: UUID
+    var position: CGPoint
+    var color: Color
+    var size: CGFloat
+    var opacity: Double
 }
 
 // MARK: - PR Celebration View with Fireworks

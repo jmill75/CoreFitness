@@ -10,7 +10,7 @@ struct DailyCheckInView: View {
     @State private var soreness: Double = 2
     @State private var stress: Double = 2
     @State private var sleepQuality: Double = 3
-    @State private var selectedPlan: TodayPlanType = .workout
+    @State private var selectedPlans: Set<TodayPlanType> = [.workout]
     @State private var notes = ""
     @State private var isSaving = false
     @State private var showConfetti = false
@@ -35,7 +35,7 @@ struct DailyCheckInView: View {
                         PhysicalStatusCard(soreness: $soreness)
 
                         // Today's Plan Section
-                        TodaysPlanCard(selectedPlan: $selectedPlan)
+                        TodaysPlanCard(selectedPlans: $selectedPlans)
 
                         // Notes Section
                         NotesCard(notes: $notes)
@@ -359,7 +359,7 @@ struct PhysicalStatusCard: View {
 // MARK: - Today's Plan Card
 struct TodaysPlanCard: View {
 
-    @Binding var selectedPlan: TodayPlanType
+    @Binding var selectedPlans: Set<TodayPlanType>
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -371,26 +371,68 @@ struct TodaysPlanCard: View {
                     Text("Today's Plan")
                         .font(.headline)
                         .fontWeight(.bold)
-                    Text("What's on the schedule?")
+                    Text("Select all that apply")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
+
+                // Selection count badge
+                if selectedPlans.count > 1 {
+                    Text("\(selectedPlans.count) selected")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.accentGreen)
+                        .clipShape(Capsule())
+                }
             }
 
-            // Plan Type Selector
-            HStack(spacing: 10) {
-                ForEach(TodayPlanType.allCases, id: \.self) { plan in
-                    PlanTypeButton(
-                        plan: plan,
-                        isSelected: selectedPlan == plan
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedPlan = plan
+            // Plan Type Selector (Multi-select) - 2 rows of 3
+            VStack(spacing: 10) {
+                // First row
+                HStack(spacing: 10) {
+                    ForEach(Array(TodayPlanType.allCases.prefix(3)), id: \.self) { plan in
+                        PlanTypeButton(
+                            plan: plan,
+                            isSelected: selectedPlans.contains(plan)
+                        ) {
+                            togglePlan(plan)
                         }
-                        let impact = UIImpactFeedbackGenerator(style: .light)
-                        impact.impactOccurred()
+                    }
+                }
+
+                // Second row
+                HStack(spacing: 10) {
+                    ForEach(Array(TodayPlanType.allCases.suffix(3)), id: \.self) { plan in
+                        PlanTypeButton(
+                            plan: plan,
+                            isSelected: selectedPlans.contains(plan)
+                        ) {
+                            togglePlan(plan)
+                        }
+                    }
+                }
+            }
+
+            // Show combined plan summary
+            if selectedPlans.count > 1 {
+                HStack(spacing: 8) {
+                    ForEach(Array(selectedPlans).sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { plan in
+                        HStack(spacing: 4) {
+                            Image(systemName: plan.icon)
+                                .font(.caption2)
+                            Text(plan.rawValue)
+                                .font(.caption)
+                        }
+                        .foregroundStyle(plan.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(plan.color.opacity(0.15))
+                        .clipShape(Capsule())
                     }
                 }
             }
@@ -399,19 +441,39 @@ struct TodaysPlanCard: View {
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
+
+    private func togglePlan(_ plan: TodayPlanType) {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            if selectedPlans.contains(plan) {
+                // Don't allow deselecting if it's the only one selected
+                if selectedPlans.count > 1 {
+                    selectedPlans.remove(plan)
+                }
+            } else {
+                selectedPlans.insert(plan)
+            }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
 }
 
 // MARK: - Today Plan Type
 enum TodayPlanType: String, CaseIterable {
-    case restDay = "Rest Day"
+    case restDay = "Rest"
     case workout = "Workout"
     case cardio = "Cardio"
+    case walking = "Walking"
+    case cycling = "Cycling"
+    case yoga = "Yoga"
 
     var icon: String {
         switch self {
         case .restDay: return "moon.zzz.fill"
         case .workout: return "figure.strengthtraining.traditional"
         case .cardio: return "figure.run"
+        case .walking: return "figure.walk"
+        case .cycling: return "figure.outdoor.cycle"
+        case .yoga: return "figure.yoga"
         }
     }
 
@@ -420,6 +482,9 @@ enum TodayPlanType: String, CaseIterable {
         case .restDay: return .accentBlue
         case .workout: return .accentOrange
         case .cardio: return .accentGreen
+        case .walking: return .accentTeal
+        case .cycling: return .accentYellow
+        case .yoga: return .purple
         }
     }
 }
@@ -432,26 +497,37 @@ struct PlanTypeButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: plan.icon)
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 8) {
+                    Image(systemName: plan.icon)
+                        .font(.title2)
+                        .fontWeight(.semibold)
 
-                Text(plan.rawValue)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    Text(plan.rawValue)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .foregroundStyle(isSelected ? .white : .primary)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(isSelected ? plan.color : Color(.systemGray5))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(isSelected ? plan.color : Color.clear, lineWidth: 2)
+                )
+
+                // Checkmark badge for selected items
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white, plan.color)
+                        .background(Circle().fill(plan.color))
+                        .offset(x: 6, y: -6)
+                }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .foregroundStyle(isSelected ? .white : .primary)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(isSelected ? plan.color : Color(.systemGray5))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .strokeBorder(isSelected ? plan.color : Color.clear, lineWidth: 2)
-            )
         }
         .buttonStyle(.plain)
     }

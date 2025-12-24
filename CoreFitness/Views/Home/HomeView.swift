@@ -585,195 +585,213 @@ struct ExercisePreviewPill: View {
     }
 }
 
-// MARK: - Water Intake Chart View
+// MARK: - Water Intake Tracking View
 struct QuickWaterIntakeView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var fitnessDataService: FitnessDataService
 
-    private let chartHeight: CGFloat = 180
-    private let goal: Int = 8
+    // State
+    @State private var todayIntake: Double = 0 // glasses
+    @State private var dailyGoal: Double = 8 // glasses
+    @State private var showCustomAmount = false
+    @State private var customAmount: String = ""
+    @State private var showAddAnimation = false
+    @State private var lastAddedAmount: Int = 0
 
-    // Sample 30-day water intake data (glasses per day)
-    private let dailyData: [Int] = [
-        6, 7, 5, 8, 7, 6, 8, 5, 7, 6,
-        8, 7, 6, 5, 7, 8, 6, 7, 5, 8,
-        7, 6, 8, 7, 5, 6, 8, 7, 6, 5
-    ]
+    private let glassSize: Double = 8 // oz per glass
 
-    private var average: Double {
-        Double(dailyData.reduce(0, +)) / Double(dailyData.count)
+    private var progressPercentage: Double {
+        guard dailyGoal > 0 else { return 0 }
+        return min(1.0, todayIntake / dailyGoal)
     }
 
-    private var daysMetGoal: Int {
-        dailyData.filter { $0 >= goal }.count
+    private var remainingGlasses: Int {
+        max(0, Int(dailyGoal - todayIntake))
     }
 
     private let hydrationTips: [(icon: String, tip: String)] = [
         ("sunrise.fill", "Drink a glass of water first thing in the morning"),
         ("clock.fill", "Set reminders every 2 hours to stay hydrated"),
         ("fork.knife", "Have a glass before each meal to aid digestion"),
-        ("figure.run", "Drink extra water before and after exercise"),
-        ("leaf.fill", "Add lemon or cucumber for natural flavor"),
-        ("moon.stars.fill", "Keep water by your bed for nighttime hydration")
+        ("figure.run", "Drink extra water before and after exercise")
     ]
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Header stats
-                    HStack(spacing: 16) {
-                        WaterStatBox(
-                            icon: "drop.fill",
-                            value: String(format: "%.1f", average),
-                            label: "Daily Avg",
-                            color: .accentBlue
-                        )
-                        WaterStatBox(
-                            icon: "checkmark.circle.fill",
-                            value: "\(daysMetGoal)",
-                            label: "Goals Met",
-                            color: .accentGreen
-                        )
-                        WaterStatBox(
-                            icon: "target",
-                            value: "\(goal)",
-                            label: "Daily Goal",
-                            color: .accentOrange
-                        )
-                    }
-                    .padding(.horizontal)
+                VStack(spacing: 28) {
+                    // Today's Progress Hero
+                    ZStack {
+                        // Background gradient
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.accentBlue, Color.accentBlue.opacity(0.7)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
 
-                    // 30-day chart
+                        VStack(spacing: 20) {
+                            // Large progress ring
+                            ZStack {
+                                // Background ring
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 16)
+                                    .frame(width: 160, height: 160)
+
+                                // Progress ring
+                                Circle()
+                                    .trim(from: 0, to: progressPercentage)
+                                    .stroke(
+                                        Color.white,
+                                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
+                                    )
+                                    .frame(width: 160, height: 160)
+                                    .rotationEffect(.degrees(-90))
+                                    .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progressPercentage)
+
+                                // Center content
+                                VStack(spacing: 4) {
+                                    HStack(alignment: .firstTextBaseline, spacing: 2) {
+                                        Text("\(Int(todayIntake))")
+                                            .font(.system(size: 48, weight: .bold, design: .rounded))
+                                        Text("/\(Int(dailyGoal))")
+                                            .font(.title2)
+                                            .fontWeight(.medium)
+                                            .opacity(0.8)
+                                    }
+                                    Text("glasses")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                        .opacity(0.8)
+                                }
+                                .foregroundStyle(.white)
+
+                                // Add animation overlay
+                                if showAddAnimation {
+                                    Text("+\(lastAddedAmount)")
+                                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.white)
+                                        .offset(y: -80)
+                                        .transition(.asymmetric(
+                                            insertion: .scale.combined(with: .opacity),
+                                            removal: .opacity.combined(with: .move(edge: .top))
+                                        ))
+                                }
+                            }
+
+                            // Status message
+                            if todayIntake >= dailyGoal {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.seal.fill")
+                                    Text("Daily goal reached!")
+                                }
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            } else {
+                                Text("\(remainingGlasses) more glass\(remainingGlasses == 1 ? "" : "es") to reach your goal")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.9))
+                            }
+                        }
+                        .padding(32)
+                    }
+                    .frame(height: 300)
+                    .padding(.horizontal)
+                    .shadow(color: Color.accentBlue.opacity(0.3), radius: 16, y: 8)
+
+                    // Quick Add Buttons
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Last 30 Days")
+                        Text("Quick Add")
                             .font(.headline)
                             .fontWeight(.bold)
                             .padding(.horizontal)
 
-                        // Chart with Y-axis
-                        HStack(alignment: .top, spacing: 8) {
-                            // Y-axis labels
-                            VStack {
-                                Text("10")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("8")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("5")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("0")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                        HStack(spacing: 12) {
+                            WaterAddButton(amount: 1, icon: "drop.fill") {
+                                addWater(glasses: 1)
                             }
-                            .frame(width: 24, height: chartHeight)
+                            WaterAddButton(amount: 2, icon: "drop.fill") {
+                                addWater(glasses: 2)
+                            }
+                            WaterAddButton(amount: 3, icon: "drop.fill") {
+                                addWater(glasses: 3)
+                            }
 
-                            // Chart
-                            GeometryReader { geometry in
-                                let width = geometry.size.width
-                                let stepX = width / CGFloat(dailyData.count - 1)
+                            // Custom amount button
+                            Button {
+                                showCustomAmount = true
+                            } label: {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.title)
+                                        .foregroundStyle(Color.accentBlue)
 
-                                ZStack {
-                                    // Goal line
-                                    Path { path in
-                                        let goalY = chartHeight - (CGFloat(goal) / 10.0) * chartHeight
-                                        path.move(to: CGPoint(x: 0, y: goalY))
-                                        path.addLine(to: CGPoint(x: width, y: goalY))
-                                    }
-                                    .stroke(Color.accentGreen.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5, 5]))
-
-                                    // Grid lines
-                                    VStack(spacing: 0) {
-                                        ForEach(0..<4) { _ in
-                                            Divider()
-                                                .background(Color.gray.opacity(0.2))
-                                            Spacer()
-                                        }
-                                    }
-
-                                    // Gradient fill
-                                    Path { path in
-                                        path.move(to: CGPoint(x: 0, y: chartHeight))
-                                        for (index, value) in dailyData.enumerated() {
-                                            let x = CGFloat(index) * stepX
-                                            let y = chartHeight - (CGFloat(value) / 10.0) * chartHeight
-                                            path.addLine(to: CGPoint(x: x, y: y))
-                                        }
-                                        path.addLine(to: CGPoint(x: width, y: chartHeight))
-                                        path.closeSubpath()
-                                    }
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.accentBlue.opacity(0.4), Color.accentBlue.opacity(0.05)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
-
-                                    // Line
-                                    Path { path in
-                                        for (index, value) in dailyData.enumerated() {
-                                            let x = CGFloat(index) * stepX
-                                            let y = chartHeight - (CGFloat(value) / 10.0) * chartHeight
-                                            if index == 0 {
-                                                path.move(to: CGPoint(x: x, y: y))
-                                            } else {
-                                                path.addLine(to: CGPoint(x: x, y: y))
-                                            }
-                                        }
-                                    }
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: [Color.accentBlue, Color.accentBlue.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        ),
-                                        style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
-                                    )
-
-                                    // Data points
-                                    ForEach(0..<dailyData.count, id: \.self) { index in
-                                        let x = CGFloat(index) * stepX
-                                        let y = chartHeight - (CGFloat(dailyData[index]) / 10.0) * chartHeight
-
-                                        Circle()
-                                            .fill(dailyData[index] >= goal ? Color.accentGreen : Color.accentBlue)
-                                            .frame(width: 6, height: 6)
-                                            .position(x: x, y: y)
-                                    }
+                                    Text("Custom")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.primary)
                                 }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 80)
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
                             }
-                            .frame(height: chartHeight)
-                            .padding(.trailing, 8)
-                        }
-                        .padding(.horizontal)
-
-                        // Legend
-                        HStack(spacing: 16) {
-                            HStack(spacing: 6) {
-                                Circle()
-                                    .fill(Color.accentGreen)
-                                    .frame(width: 8, height: 8)
-                                Text("Goal met")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack(spacing: 6) {
-                                Rectangle()
-                                    .fill(Color.accentGreen.opacity(0.5))
-                                    .frame(width: 16, height: 2)
-                                Text("Goal line (8 glasses)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal)
                     }
-                    .padding(.vertical)
+
+                    // Today's Log
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Today's Stats")
+                                .font(.headline)
+                                .fontWeight(.bold)
+
+                            Spacer()
+
+                            if todayIntake > 0 {
+                                Button {
+                                    removeLastGlass()
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "minus.circle")
+                                        Text("Undo")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+
+                        HStack(spacing: 16) {
+                            TodayWaterStatBox(
+                                icon: "drop.fill",
+                                value: "\(Int(todayIntake * glassSize))",
+                                unit: "oz",
+                                label: "Total",
+                                color: .accentBlue
+                            )
+                            TodayWaterStatBox(
+                                icon: "percent",
+                                value: "\(Int(progressPercentage * 100))",
+                                unit: "%",
+                                label: "Progress",
+                                color: progressPercentage >= 1 ? .accentGreen : .accentOrange
+                            )
+                            TodayWaterStatBox(
+                                icon: "target",
+                                value: "\(Int(dailyGoal * glassSize))",
+                                unit: "oz",
+                                label: "Goal",
+                                color: .accentTeal
+                            )
+                        }
+                    }
+                    .padding()
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .padding(.horizontal)
@@ -826,7 +844,183 @@ struct QuickWaterIntakeView: View {
                     .foregroundStyle(Color.accentBlue)
                 }
             }
+            .alert("Add Water", isPresented: $showCustomAmount) {
+                TextField("Glasses", text: $customAmount)
+                    .keyboardType(.numberPad)
+                Button("Cancel", role: .cancel) {
+                    customAmount = ""
+                }
+                Button("Add") {
+                    if let amount = Int(customAmount), amount > 0 {
+                        addWater(glasses: amount)
+                    }
+                    customAmount = ""
+                }
+            } message: {
+                Text("Enter the number of glasses to add")
+            }
+            .onAppear {
+                loadTodayData()
+            }
         }
+    }
+
+    // MARK: - Actions
+
+    private func addWater(glasses: Int) {
+        lastAddedAmount = glasses
+        todayIntake += Double(glasses)
+
+        // Haptic feedback
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+
+        // Show animation
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            showAddAnimation = true
+        }
+
+        // Hide animation after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation {
+                showAddAnimation = false
+            }
+        }
+
+        // Save to database
+        saveWaterIntake()
+
+        // Extra haptic for goal completion
+        if todayIntake >= dailyGoal && todayIntake - Double(glasses) < dailyGoal {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+    }
+
+    private func removeLastGlass() {
+        guard todayIntake > 0 else { return }
+        todayIntake = max(0, todayIntake - 1)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        saveWaterIntake()
+    }
+
+    private func loadTodayData() {
+        let todayData = fitnessDataService.getOrCreateHealthData(for: Date())
+        if let intake = todayData.waterIntake {
+            todayIntake = intake / glassSize // Convert oz to glasses
+        }
+        if let goal = todayData.waterGoal {
+            dailyGoal = goal / glassSize // Convert oz to glasses
+        }
+    }
+
+    private func saveWaterIntake() {
+        let todayData = fitnessDataService.getOrCreateHealthData(for: Date())
+        todayData.waterIntake = todayIntake * glassSize // Store in oz
+        todayData.waterGoal = dailyGoal * glassSize // Store in oz
+        try? modelContext.save()
+    }
+}
+
+// MARK: - Water Add Button
+struct WaterAddButton: View {
+    let amount: Int
+    let icon: String
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            VStack(spacing: 8) {
+                HStack(spacing: 2) {
+                    ForEach(0..<min(amount, 3), id: \.self) { _ in
+                        Image(systemName: icon)
+                            .font(.caption)
+                            .foregroundStyle(Color.accentBlue)
+                    }
+                }
+
+                Text("+\(amount)")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
+
+                Text("glass\(amount == 1 ? "" : "es")")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 80)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .pressEvents {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = true
+            }
+        } onRelease: {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                isPressed = false
+            }
+        }
+    }
+}
+
+// MARK: - Today Water Stat Box
+struct TodayWaterStatBox: View {
+    let icon: String
+    let value: String
+    let unit: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(color)
+
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Text(unit)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color(.tertiarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Press Events Modifier
+struct PressEventsModifier: ViewModifier {
+    var onPress: () -> Void
+    var onRelease: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in onPress() }
+                    .onEnded { _ in onRelease() }
+            )
+    }
+}
+
+extension View {
+    func pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
+        modifier(PressEventsModifier(onPress: onPress, onRelease: onRelease))
     }
 }
 

@@ -44,6 +44,12 @@ class WorkoutManager: ObservableObject {
     @Published var prExerciseName: String = ""
     @Published var prWeight: Double = 0
 
+    // Set/Exercise Completion Feedback
+    @Published var showSetCompleteFeedback: Bool = false
+    @Published var showExerciseCompleteFeedback: Bool = false
+    @Published var completedSetNumber: Int = 0
+    @Published var completedExerciseName: String = ""
+
     // MARK: - Private Properties
     private var timer: Timer?
     private var restTimer: Timer?
@@ -422,7 +428,11 @@ class WorkoutManager: ObservableObject {
 
         showSetLogger = false
 
-        // Show PR celebration if new record
+        // Store completed set info for feedback
+        completedSetNumber = currentSetNumber
+        completedExerciseName = exerciseName
+
+        // Show PR celebration if new record (takes priority)
         if isPR && weight > 0 {
             prExerciseName = exerciseName
             prWeight = weight
@@ -437,11 +447,53 @@ class WorkoutManager: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
                 self?.handlePostSetAction()
             }
+        } else if isLastSet {
+            // Exercise complete - grand celebration!
+            showExerciseCompleteFeedback = true
+            triggerExerciseCompleteHaptic()
+
+            // Capture whether this is the last exercise before the delay
+            let wasLastExercise = isLastExercise
+
+            // Delay to show exercise complete feedback, then advance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) { [weak self] in
+                self?.showExerciseCompleteFeedback = false
+                if wasLastExercise {
+                    self?.completeWorkout()
+                } else {
+                    self?.nextExercise()
+                }
+            }
         } else {
-            // Normal haptic feedback
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            // Proceed immediately
-            handlePostSetAction()
+            // Regular set complete feedback
+            showSetCompleteFeedback = true
+            triggerSetCompleteHaptic()
+
+            // Brief feedback then proceed
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
+                self?.showSetCompleteFeedback = false
+                self?.handlePostSetAction()
+            }
+        }
+    }
+
+    /// Haptic feedback for set completion
+    private func triggerSetCompleteHaptic() {
+        let generator = UIImpactFeedbackGenerator(style: .heavy)
+        generator.impactOccurred()
+    }
+
+    /// Haptic feedback for exercise completion (more intense)
+    private func triggerExerciseCompleteHaptic() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+
+        // Double tap pattern for more impact
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         }
     }
 

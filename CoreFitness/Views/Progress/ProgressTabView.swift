@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct ProgressTabView: View {
 
@@ -97,6 +98,9 @@ struct StatOverviewCard: View {
 
 // MARK: - Achievements Section
 struct AchievementsSection: View {
+    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
+    @Query private var userAchievements: [UserAchievement]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -106,25 +110,89 @@ struct AchievementsSection: View {
 
                 Spacer()
 
-                Text("See All")
+                NavigationLink {
+                    AchievementWallView()
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("See All")
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                    }
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(Color.brandPrimary)
+                }
+            }
+
+            // Score summary
+            HStack(spacing: 16) {
+                HStack(spacing: 6) {
+                    Image(systemName: "trophy.fill")
+                        .foregroundStyle(Color.accentYellow)
+                    Text("\(earnedCount)/\(totalCount)")
+                        .fontWeight(.semibold)
+                }
+                .font(.subheadline)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .foregroundStyle(Color.accentYellow)
+                        .font(.caption)
+                    Text("\(earnedPoints) pts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    AchievementBadge(emoji: "🏆", title: "First Workout", earned: true)
-                    AchievementBadge(emoji: "🔥", title: "7 Day Streak", earned: true)
-                    AchievementBadge(emoji: "💯", title: "Perfect Week", earned: true)
-                    AchievementBadge(emoji: "🦁", title: "Beast Mode", earned: false)
-                    AchievementBadge(emoji: "⚡", title: "Speed Demon", earned: false)
+                    ForEach(displayAchievements, id: \.id) { achievement in
+                        AchievementBadge(
+                            emoji: achievement.emoji,
+                            title: achievement.name,
+                            earned: isAchievementEarned(achievement.id)
+                        )
+                    }
                 }
             }
         }
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var earnedCount: Int {
+        userAchievements.filter { $0.isComplete }.count
+    }
+
+    private var totalCount: Int {
+        achievements.filter { !$0.isSecret || isAchievementEarned($0.id) }.count
+    }
+
+    private var earnedPoints: Int {
+        userAchievements
+            .filter { $0.isComplete }
+            .compactMap { userAchievement in
+                achievements.first { $0.id == userAchievement.achievementId }?.points
+            }
+            .reduce(0, +)
+    }
+
+    private var displayAchievements: [Achievement] {
+        // Show mix of earned and next to earn
+        let earned = achievements.filter { isAchievementEarned($0.id) }
+        let unearned = achievements.filter { !isAchievementEarned($0.id) && !$0.isSecret }
+
+        var display: [Achievement] = []
+        display.append(contentsOf: earned.prefix(3))
+        display.append(contentsOf: unearned.prefix(2))
+        return display
+    }
+
+    private func isAchievementEarned(_ id: String) -> Bool {
+        userAchievements.first { $0.achievementId == id }?.isComplete ?? false
     }
 }
 
