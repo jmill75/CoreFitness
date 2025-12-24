@@ -94,7 +94,11 @@ struct CoreFitnessApp: App {
             WorkoutShare.self,
             WeeklySummary.self,
             MonthlySummary.self,
-            UserProfile.self
+            UserProfile.self,
+            // Challenge Models
+            Challenge.self,
+            ChallengeParticipant.self,
+            ChallengeDayLog.self
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,

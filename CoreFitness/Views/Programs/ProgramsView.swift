@@ -295,6 +295,7 @@ struct SavedProgramsSection: View {
 
 // MARK: - Discover Programs Section
 struct DiscoverProgramsSection: View {
+    @State private var showChallenges = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -313,12 +314,18 @@ struct DiscoverProgramsSection: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    DiscoverProgramCard(
-                        title: "30-Day Challenge",
-                        subtitle: "Build consistency",
-                        icon: "trophy.fill",
-                        gradient: AppGradients.success
-                    )
+                    // Challenges - tappable
+                    Button {
+                        showChallenges = true
+                    } label: {
+                        DiscoverProgramCard(
+                            title: "Challenges",
+                            subtitle: "Compete with friends",
+                            icon: "trophy.fill",
+                            gradient: AppGradients.success
+                        )
+                    }
+                    .buttonStyle(.plain)
 
                     DiscoverProgramCard(
                         title: "Muscle Builder",
@@ -346,6 +353,10 @@ struct DiscoverProgramsSection: View {
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .sheet(isPresented: $showChallenges) {
+            ChallengesView()
+                .presentationBackground(.regularMaterial)
+        }
     }
 }
 

@@ -47,6 +47,9 @@
 		A1000054 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054 /* SocialSharingService.swift */; };
 		A1000055 /* DebugDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055 /* DebugDataView.swift */; };
 		A1000056 /* AchievementWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056 /* AchievementWallView.swift */; };
+		A1000057 /* ChallengeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057 /* ChallengeModels.swift */; };
+		A1000058 /* ExerciseData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000058 /* ExerciseData.swift */; };
+		A1000059 /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000059 /* ChallengesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -151,6 +154,9 @@
 		A2000054 /* SocialSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialSharingService.swift; sourceTree = "<group>"; };
 		A2000055 /* DebugDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugDataView.swift; sourceTree = "<group>"; };
 		A2000056 /* AchievementWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AchievementWallView.swift; sourceTree = "<group>"; };
+		A2000057 /* ChallengeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengeModels.swift; sourceTree = "<group>"; };
+		A2000058 /* ExerciseData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseData.swift; sourceTree = "<group>"; };
+		A2000059 /* ChallengesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChallengesView.swift; sourceTree = "<group>"; };
 		A3000001 /* CoreFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -291,6 +297,7 @@
 				A5000011 /* Settings */,
 				A5000012 /* Onboarding */,
 				A5000021 /* Workout */,
+				A5000022 /* Challenges */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -400,6 +407,8 @@
 				A2000050 /* WorkoutActivityAttributes.swift */,
 				A2000051 /* FitnessDataModels.swift */,
 				A2000052 /* AchievementDefinitions.swift */,
+				A2000057 /* ChallengeModels.swift */,
+				A2000058 /* ExerciseData.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -418,6 +427,14 @@
 				A200002A /* SampleWorkoutData.swift */,
 			);
 			path = Workout;
+			sourceTree = "<group>";
+		};
+		A5000022 /* Challenges */ = {
+			isa = PBXGroup;
+			children = (
+				A2000059 /* ChallengesView.swift */,
+			);
+			path = Challenges;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -722,6 +739,9 @@
 				A1000054 /* SocialSharingService.swift in Sources */,
 				A1000055 /* DebugDataView.swift in Sources */,
 				A1000056 /* AchievementWallView.swift in Sources */,
+				A1000057 /* ChallengeModels.swift in Sources */,
+				A1000058 /* ExerciseData.swift in Sources */,
+				A1000059 /* ChallengesView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
