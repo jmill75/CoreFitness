@@ -13,7 +13,7 @@ struct HealthView: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 28) {
                         // Recovery Status - Hero Card
                         RecoveryStatusCard()
                             .id("top")

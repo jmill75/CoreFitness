@@ -158,6 +158,27 @@ struct SettingsView: View {
                     }
                 }
 
+                // Developer Section
+                #if DEBUG
+                Section {
+                    NavigationLink {
+                        DebugDataView()
+                    } label: {
+                        Label("View All Data", systemImage: "ladybug.fill")
+                    }
+
+                    NavigationLink {
+                        DebugActionsView()
+                    } label: {
+                        Label("Debug Actions", systemImage: "hammer.fill")
+                    }
+                } header: {
+                    Text("Developer")
+                } footer: {
+                    Text("Debug tools for viewing and managing app data.")
+                }
+                #endif
+
                 // App Version
                 Section {
                     HStack {

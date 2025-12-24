@@ -30,6 +30,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     // MARK: - Callbacks
     var onSetCompleted: ((_ exerciseId: String, _ weight: Double, _ reps: Int) -> Void)?
     var onWorkoutControlAction: ((_ action: String) -> Void)?
+    var onSyncRequested: (() -> Void)?
 
     // MARK: - Computed Properties
     var connectionStatus: String {
@@ -307,6 +308,7 @@ extension WatchConnectivityManager: WCSessionDelegate {
 
         case "request_sync":
             // Watch is requesting current workout state
+            onSyncRequested?()
             NotificationCenter.default.post(name: .watchRequestedSync, object: nil)
 
         default:

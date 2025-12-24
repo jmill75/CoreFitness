@@ -17,7 +17,7 @@ struct HomeView: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 28) {
                         // Welcome Header
                         WelcomeHeader(
                             userName: authManager.currentUser?.displayName ?? "Champion",

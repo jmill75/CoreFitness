@@ -21,14 +21,13 @@ struct WorkoutExecutionView: View {
             Group {
                 switch workoutManager.currentPhase {
                 case .idle:
-                    ProgressView()
-                        .tint(.white)
-                        .onAppear {
-                            // Only start workout if not dismissing
-                            if !isDismissing {
-                                workoutManager.startWorkout(workout)
-                            }
-                        }
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Starting workout...")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
+                    }
 
                 case .countdown(let remaining):
                     // Don't show countdown when dismissing
@@ -53,6 +52,19 @@ struct WorkoutExecutionView: View {
                 }
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: workoutManager.currentPhase)
+        }
+        .onAppear {
+            // Start workout when view appears
+            if !isDismissing && workoutManager.currentPhase == .idle {
+                workoutManager.startWorkout(workout)
+            }
+        }
+        .task {
+            // Safety timeout - if still idle after 3 seconds, try starting again
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if !isDismissing && workoutManager.currentPhase == .idle {
+                workoutManager.startWorkout(workout)
+            }
         }
         .preferredColorScheme(.dark)
         .sheet(isPresented: $workoutManager.showWorkoutComplete) {

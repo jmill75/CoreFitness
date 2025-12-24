@@ -8,7 +8,7 @@ struct ProgressTabView: View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 20) {
+                    VStack(spacing: 28) {
                         // Stats Overview
                         StatsOverviewSection()
                             .id("top")

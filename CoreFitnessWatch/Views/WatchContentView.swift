@@ -19,18 +19,30 @@ struct WatchContentView: View {
     }
 
     private func setupCallbacks() {
+        // Workout started from iPhone
         connectivityManager.onWorkoutStarted = { name, exercise, totalSets in
             workoutState.isWorkoutActive = true
             workoutState.workoutName = name
             workoutState.currentExercise = exercise
             workoutState.totalSets = totalSets
             workoutState.currentSet = 1
+            // Start extended session to keep Watch app alive
+            workoutState.startExtendedSession()
+            // Start elapsed time tracking
+            workoutState.startElapsedTimer()
         }
 
+        // Countdown started (show 3-2-1-GO)
+        connectivityManager.onCountdownStarted = {
+            workoutState.startCountdown()
+        }
+
+        // Workout ended
         connectivityManager.onWorkoutEnded = { _, _ in
             workoutState.reset()
         }
 
+        // Exercise changed
         connectivityManager.onExerciseChanged = { exercise, setNumber, totalSets, weight, reps in
             workoutState.currentExercise = exercise
             workoutState.currentSet = setNumber
@@ -40,18 +52,40 @@ struct WatchContentView: View {
             workoutState.isResting = false
         }
 
+        // Rest timer started
         connectivityManager.onRestTimerStarted = { duration in
             workoutState.isResting = true
             workoutState.restTimeRemaining = duration
         }
 
+        // Rest timer ended
         connectivityManager.onRestTimerEnded = {
             workoutState.isResting = false
             workoutState.restTimeRemaining = 0
         }
 
-        connectivityManager.onHealthDataUpdate = { heartRate in
-            workoutState.heartRate = heartRate
+        // Health data update
+        connectivityManager.onHealthDataUpdate = { heartRate, calories, bloodOxygen in
+            if let hr = heartRate {
+                workoutState.heartRate = hr
+            }
+            if let cal = calories {
+                workoutState.caloriesBurned = cal
+            }
+            if let spo2 = bloodOxygen {
+                workoutState.bloodOxygen = spo2
+            }
+        }
+
+        // Elapsed time sync from iPhone
+        connectivityManager.onElapsedTimeUpdate = { time in
+            workoutState.elapsedTime = time
+        }
+
+        // Mirrored workout received from HealthKit (auto-launch scenario)
+        connectivityManager.onMirroredWorkoutReceived = {
+            // Request sync from iPhone to get workout details
+            connectivityManager.requestSync()
         }
     }
 }

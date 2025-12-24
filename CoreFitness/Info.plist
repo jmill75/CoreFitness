@@ -82,6 +82,19 @@
         <string>LaunchIcon</string>
     </dict>
 
+    <!-- URL Schemes for Deep Linking -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.corefitness.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>corefitness</string>
+            </array>
+        </dict>
+    </array>
+
     <!-- Status Bar -->
     <key>UIStatusBarStyle</key>
     <string>UIStatusBarStyleDefault</string>

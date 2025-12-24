@@ -138,6 +138,13 @@ class WorkoutManager: ObservableObject {
                 self?.handleWatchAction(action)
             }
         }
+
+        // Handle sync request from Watch (when Watch app launches or wakes)
+        watchManager.onSyncRequested = { [weak self] in
+            Task { @MainActor in
+                self?.sendWorkoutUpdateToWatch()
+            }
+        }
     }
 
     /// Handle actions from Watch
@@ -306,21 +313,23 @@ class WorkoutManager: ObservableObject {
 
     /// Start the 3-2-1-GO countdown
     private func startCountdown() {
-        var countdown = 3
-        currentPhase = .countdown(remaining: countdown)
+        currentPhase = .countdown(remaining: 3)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
 
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                guard let self = self else { return }
-                countdown -= 1
+        // Use DispatchQueue for more reliable timing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            guard let self = self, self.currentPhase != .idle else { return }
+            self.currentPhase = .countdown(remaining: 2)
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
 
-                if countdown > 0 {
-                    self.currentPhase = .countdown(remaining: countdown)
-                    // Haptic on each countdown number
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self = self, self.currentPhase != .idle else { return }
+                self.currentPhase = .countdown(remaining: 1)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    guard let self = self, self.currentPhase != .idle else { return }
                     // GO!
-                    self.countdownTimer?.invalidate()
                     UINotificationFeedbackGenerator().notificationOccurred(.success)
                     self.beginExercising()
                 }
