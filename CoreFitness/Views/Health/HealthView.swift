@@ -11,53 +11,70 @@ struct HealthView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 28) {
-                        // Recovery Status - Hero Card
-                        RecoveryStatusCard()
-                            .id("top")
-
-                        // Score Trend - Compact
-                        ScoreTrendCard()
-
-                        // Health Metrics Grid
-                        HealthMetricsSection()
-
-                        // Water Intake
-                        WaterIntakeCard(showDetail: $showWaterIntake)
-
-                        // Mood Tracker
-                        MoodTrackerCard(showDetail: $showMoodDetail)
-                    }
-                    .padding()
-                }
-                .scrollIndicators(.hidden)
-                .background(Color(.systemGroupedBackground))
-                .onAppear {
-                    proxy.scrollTo("top", anchor: .top)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "heart.fill")
-                            .font(.headline)
-                            .foregroundStyle(Color.accentRed)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header with + button
+                    HStack {
                         Text("Health")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+
+                        Spacer()
+
+                        // Quick Add Menu Button (same as Home/Programs)
+                        Menu {
+                            Button {
+                                showMoodDetail = true
+                            } label: {
+                                Label("Daily Check-in", systemImage: "heart.text.square")
+                            }
+
+                            Button {
+                                showWaterIntake = true
+                            } label: {
+                                Label("Log Water", systemImage: "drop.fill")
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .frame(width: 52, height: 52)
+                                .background(Color.accentBlue)
+                                .clipShape(Circle())
+                                .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
+                        }
                     }
+
+                    // Recovery Status - Hero Card
+                    RecoveryStatusCard()
+
+                    // Score Trend - Compact
+                    ScoreTrendCard()
+
+                    // Health Metrics Grid
+                    HealthMetricsSection()
+
+                    // Water Intake
+                    WaterIntakeCard(showDetail: $showWaterIntake)
+
+                    // Mood Tracker
+                    MoodTrackerCard(showDetail: $showMoodDetail)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 100)
             }
-            .sheet(isPresented: $showWaterIntake) {
+            .scrollIndicators(.hidden)
+            .background(Color(.systemGroupedBackground))
+            .toolbar(.hidden, for: .navigationBar)
+            .fullScreenCover(isPresented: $showWaterIntake) {
                 WaterIntakeDetailView()
-                    .presentationBackground(.regularMaterial)
+                    .background(.ultraThinMaterial)
             }
-            .sheet(isPresented: $showMoodDetail) {
+            .fullScreenCover(isPresented: $showMoodDetail) {
                 MoodDetailView()
-                    .presentationBackground(.regularMaterial)
+                    .background(.ultraThinMaterial)
             }
             .task {
                 // Refresh health data when view appears
@@ -950,7 +967,7 @@ struct MoodSummaryPill: View {
     }
 }
 
-// MARK: - Mood Detail View (30 Days)
+/// MARK: - Mood Detail View (30 Days)
 struct MoodDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var emojiScale: CGFloat = 0.3
@@ -958,6 +975,10 @@ struct MoodDetailView: View {
     @State private var emojiOffset: CGFloat = -30
     @State private var emojiOpacity: Double = 0
     @State private var glowOpacity: Double = 0
+
+    // Shimmer animation for 30-day grid
+    @State private var shimmerValues: [Int: Bool] = [:]
+    @State private var hasStartedGridAnimation = false
 
     // Mood types with their properties
     private let moodTypes: [(emoji: String, label: String, color: Color)] = [
@@ -1070,20 +1091,28 @@ struct MoodDetailView: View {
                                     .id("empty-\(index)")
                             }
 
-                            // Mood cells
+                            // Mood cells with shimmer animation
                             ForEach(0..<dailyMoods.count, id: \.self) { index in
                                 VStack(spacing: 2) {
                                     Text(moodTypes[dailyMoods[index]].emoji)
                                         .font(.title3)
+                                        .scaleEffect(shimmerValues[index] == true ? 1.3 : 1.0)
+                                        .rotationEffect(.degrees(shimmerValues[index] == true ? -8 : 0))
                                     Text("\(index + 1)")
                                         .font(.system(size: 9))
                                         .foregroundStyle(.secondary)
                                 }
                                 .frame(height: 44)
                                 .frame(maxWidth: .infinity)
-                                .background(moodTypes[dailyMoods[index]].color.opacity(0.15))
+                                .background(moodTypes[dailyMoods[index]].color.opacity(shimmerValues[index] == true ? 0.3 : 0.15))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                                 .id("mood-\(index)")
+                                .onAppear {
+                                    if index == 0 && !hasStartedGridAnimation {
+                                        hasStartedGridAnimation = true
+                                        startRandomShimmer()
+                                    }
+                                }
                             }
                         }
                     }
@@ -1095,8 +1124,6 @@ struct MoodDetailView: View {
                 .padding(.vertical)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Mood Tracker")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
@@ -1161,6 +1188,37 @@ struct MoodDetailView: View {
             }
         }
     }
+
+    // MARK: - Random Shimmer Animation for 30-Day Grid
+    private func startRandomShimmer() {
+        // Pick 2-3 random emojis to shimmer
+        let count = Int.random(in: 2...3)
+        let indices = (0..<dailyMoods.count).shuffled().prefix(count)
+
+        for (delay, index) in indices.enumerated() {
+            let staggerDelay = Double(delay) * 0.15
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + staggerDelay) {
+                // Animate in
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.5)) {
+                    shimmerValues[index] = true
+                }
+
+                // Animate out
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
+                        shimmerValues[index] = false
+                    }
+                }
+            }
+        }
+
+        // Repeat with random interval (2-4 seconds)
+        let nextInterval = Double.random(in: 2.0...4.0)
+        DispatchQueue.main.asyncAfter(deadline: .now() + nextInterval) {
+            startRandomShimmer()
+        }
+    }
 }
 
 struct MoodBreakdownRow: View {
@@ -1213,6 +1271,20 @@ struct MoodBreakdownRow: View {
 // MARK: - Recovery Status Card (Same as Home)
 struct RecoveryStatusCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
+
+    // Blue Ocean Theme
+    // Ring gradient: #60a5fa to #3b82f6
+    // Background: #1e40af to #1e3a8a
+    // Pill backgrounds: #60a5fa
+    // Icon colors: emoji colors (yellow moon, pink heart, red heart)
+    private let ringStart = Color(hex: "60a5fa")
+    private let ringEnd = Color(hex: "3b82f6")
+    private let bgStart = Color(hex: "1e40af")
+    private let bgEnd = Color(hex: "1e3a8a")
+    private let pillBgColor = Color(hex: "60a5fa")
+    private let sleepColor = Color(hex: "fcd34d")    // Yellow moon
+    private let hrvColor = Color(hex: "ec4899")      // Pink heart
+    private let hrColor = Color(hex: "ef4444")       // Red heart
 
     private var score: Int {
         healthKitManager.calculateOverallScore()
@@ -1283,22 +1355,27 @@ struct RecoveryStatusCard: View {
             }
 
             HStack(spacing: 24) {
-                // Large Score Ring
+                // Large Score Ring with gradient
                 ZStack {
                     // Background ring
                     Circle()
-                        .stroke(Color.white.opacity(0.2), lineWidth: 12)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 14)
                         .frame(width: 110, height: 110)
 
-                    // Progress ring
+                    // Green gradient progress ring
                     Circle()
                         .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
                         .stroke(
-                            Color.white,
-                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                            LinearGradient(
+                                colors: [ringStart, ringEnd],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 14, lineCap: .round)
                         )
                         .frame(width: 110, height: 110)
                         .rotationEffect(.degrees(-90))
+                        .shadow(color: ringStart.opacity(0.5), radius: 6)
 
                     // Score text
                     VStack(spacing: 2) {
@@ -1326,31 +1403,43 @@ struct RecoveryStatusCard: View {
                 Spacer(minLength: 0)
             }
 
-            // Recovery factors row
-            HStack(spacing: 12) {
+            // Recovery factors row with colored icons
+            HStack(spacing: 10) {
                 RecoveryFactorPillHealth(
                     icon: "moon.fill",
                     label: "Sleep",
-                    value: sleepStatus
+                    value: sleepStatus,
+                    iconColor: sleepColor,
+                    bgColor: pillBgColor
                 )
                 RecoveryFactorPillHealth(
                     icon: "waveform.path.ecg",
                     label: "HRV",
-                    value: hrvStatus
+                    value: hrvStatus,
+                    iconColor: hrvColor,
+                    bgColor: pillBgColor
                 )
                 RecoveryFactorPillHealth(
                     icon: "heart.fill",
                     label: "HR",
-                    value: hrStatus
+                    value: hrStatus,
+                    iconColor: hrColor,
+                    bgColor: pillBgColor
                 )
             }
         }
         .foregroundStyle(.white)
         .padding(20)
         .frame(maxWidth: .infinity)
-        .background(AppGradients.scoreGradient(for: score))
+        .background(
+            LinearGradient(
+                colors: [bgStart, bgEnd],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: scoreColor.opacity(0.3), radius: 12, y: 6)
+        .shadow(color: ringStart.opacity(0.3), radius: 12, y: 6)
     }
 }
 
@@ -1358,11 +1447,22 @@ struct RecoveryFactorPillHealth: View {
     let icon: String
     let label: String
     let value: String
+    let iconColor: Color
+    var bgColor: Color? = nil  // Optional separate bg color
 
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.caption)
+        HStack(spacing: 8) {
+            // Colored icon circle
+            ZStack {
+                Circle()
+                    .fill((bgColor ?? iconColor).opacity(0.3))
+                    .frame(width: 26, height: 26)
+
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
+
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
                     .font(.caption)
@@ -1372,9 +1472,10 @@ struct RecoveryFactorPillHealth: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.leading, 6)
+        .padding(.trailing, 12)
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.15))
+        .background(Color.white.opacity(0.12))
         .clipShape(Capsule())
     }
 }
@@ -1715,8 +1816,6 @@ struct WaterIntakeDetailView: View {
                 .padding(.vertical)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Water Intake")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
@@ -2055,8 +2154,6 @@ struct HealthMetricDetailView: View {
                 .padding(.bottom, 40)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle(metricType.rawValue)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {

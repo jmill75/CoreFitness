@@ -39,6 +39,10 @@
     <key>NSFaceIDUsageDescription</key>
     <string>CoreFitness uses Face ID to securely access your fitness data and settings.</string>
 
+    <!-- Contacts Usage (for challenge invites) -->
+    <key>NSContactsUsageDescription</key>
+    <string>CoreFitness uses your contacts to invite friends and family to fitness challenges.</string>
+
     <!-- Live Activities -->
     <key>NSSupportsLiveActivities</key>
     <true/>

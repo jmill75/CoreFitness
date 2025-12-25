@@ -490,17 +490,7 @@ struct PRCelebrationView: View {
     }
 
     private func playCelebrationSound() {
-        // Play a series of sounds for celebration effect
-        // 1057 = fanfare-like sound, 1025 = positive alert
-        AudioServicesPlaySystemSound(1025)
-
-        // Play additional sounds with delay for fanfare effect
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            AudioServicesPlaySystemSound(1025)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            AudioServicesPlaySystemSound(1025)
-        }
+        // Sound disabled - keeping haptics only
     }
 
     private func launchFireworks() {

@@ -9,6 +9,7 @@ struct SetLoggerSheet: View {
     @State private var weight: Double = 0
     @State private var selectedRPE: Int? = nil
 
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -86,40 +87,46 @@ struct SetLoggerSheet: View {
                             .tracking(1)
 
                         HStack(spacing: 16) {
-                            Button {
-                                if weight >= 5 { weight -= 5 }
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 50, height: 50)
-                                    Text("-5")
-                                        .font(.headline)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(.white)
+                            // -5 button with press-and-hold
+                            RepeatingButton(
+                                action: {
+                                    if weight >= 5 { weight -= 5 }
+                                },
+                                label: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 50, height: 50)
+                                        Text("-5")
+                                            .font(.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(.white)
+                                    }
                                 }
-                            }
+                            )
 
                             Text(themeManager.formatWeight(weight))
                                 .font(.system(size: 56, weight: .bold, design: .rounded))
                                 .foregroundStyle(.green)
                                 .frame(width: 150)
 
-                            Button {
-                                weight += 5
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.green.opacity(0.3))
-                                        .frame(width: 50, height: 50)
-                                    Text("+5")
-                                        .font(.headline)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(.green)
+                            // +5 button with press-and-hold
+                            RepeatingButton(
+                                action: {
+                                    weight += 5
+                                },
+                                label: {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.green.opacity(0.3))
+                                            .frame(width: 50, height: 50)
+                                        Text("+5")
+                                            .font(.headline)
+                                            .fontWeight(.bold)
+                                            .foregroundStyle(.green)
+                                    }
                                 }
-                            }
+                            )
                         }
 
                         // Quick weight adjustments
@@ -225,6 +232,44 @@ struct SetLoggerSheet: View {
         case 10: return .red
         default: return .gray
         }
+    }
+
+}
+
+// MARK: - Repeating Button (Press-and-Hold)
+struct RepeatingButton<Label: View>: View {
+    let action: () -> Void
+    @ViewBuilder let label: () -> Label
+
+    @State private var timer: Timer?
+    @State private var isPressed = false
+
+    var body: some View {
+        label()
+            .scaleEffect(isPressed ? 1.1 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: isPressed)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        if !isPressed {
+                            isPressed = true
+                            // Immediate action on press
+                            action()
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+                            // Start repeating after delay
+                            timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
+                                action()
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                        }
+                    }
+                    .onEnded { _ in
+                        isPressed = false
+                        timer?.invalidate()
+                        timer = nil
+                    }
+            )
     }
 }
 

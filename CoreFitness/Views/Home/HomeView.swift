@@ -68,9 +68,8 @@ struct HomeView: View {
                     proxy.scrollTo("top", anchor: .top)
                 }
             }
-            .sheet(isPresented: $showDailyCheckIn) {
+            .fullScreenCover(isPresented: $showDailyCheckIn) {
                 DailyCheckInView()
-                    .presentationBackground(.regularMaterial)
             }
             .sheet(isPresented: $showWaterIntake) {
                 QuickWaterIntakeView()
@@ -265,6 +264,20 @@ struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @Binding var selectedTab: Tab
 
+    // Blue Ocean Theme
+    // Ring gradient: #60a5fa to #3b82f6
+    // Background: #1e40af to #1e3a8a
+    // Pill backgrounds: #60a5fa
+    // Icon colors: emoji colors (yellow moon, pink heart, red heart)
+    private let ringStart = Color(hex: "60a5fa")
+    private let ringEnd = Color(hex: "3b82f6")
+    private let bgStart = Color(hex: "1e40af")
+    private let bgEnd = Color(hex: "1e3a8a")
+    private let pillBgColor = Color(hex: "60a5fa")
+    private let sleepColor = Color(hex: "fcd34d")    // Yellow moon
+    private let hrvColor = Color(hex: "ec4899")      // Pink heart
+    private let hrColor = Color(hex: "ef4444")       // Red heart
+
     private var score: Int {
         healthKitManager.calculateOverallScore()
     }
@@ -319,22 +332,27 @@ struct TodayRecoveryCard: View {
                 }
 
                 HStack(spacing: 24) {
-                    // Large Score Ring
+                    // Large Score Ring with gradient
                     ZStack {
                         // Background ring
                         Circle()
-                            .stroke(Color.white.opacity(0.2), lineWidth: 12)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 14)
                             .frame(width: 110, height: 110)
 
-                        // Progress ring
+                        // Green gradient progress ring
                         Circle()
                             .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
                             .stroke(
-                                Color.white,
-                                style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                                LinearGradient(
+                                    colors: [ringStart, ringEnd],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                style: StrokeStyle(lineWidth: 14, lineCap: .round)
                             )
                             .frame(width: 110, height: 110)
                             .rotationEffect(.degrees(-90))
+                            .shadow(color: ringStart.opacity(0.5), radius: 6)
 
                         // Score text
                         VStack(spacing: 2) {
@@ -362,31 +380,43 @@ struct TodayRecoveryCard: View {
                     Spacer(minLength: 0)
                 }
 
-                // Recovery factors row
-                HStack(spacing: 12) {
+                // Recovery factors row with colored icons
+                HStack(spacing: 10) {
                     RecoveryFactorPill(
                         icon: "moon.fill",
                         label: "Sleep",
-                        value: sleepStatus
+                        value: sleepStatus,
+                        iconColor: sleepColor,
+                        bgColor: pillBgColor
                     )
                     RecoveryFactorPill(
                         icon: "waveform.path.ecg",
                         label: "HRV",
-                        value: hrvStatus
+                        value: hrvStatus,
+                        iconColor: hrvColor,
+                        bgColor: pillBgColor
                     )
                     RecoveryFactorPill(
                         icon: "heart.fill",
                         label: "HR",
-                        value: hrStatus
+                        value: hrStatus,
+                        iconColor: hrColor,
+                        bgColor: pillBgColor
                     )
                 }
             }
             .foregroundStyle(.white)
             .padding(20)
             .frame(maxWidth: .infinity)
-            .background(AppGradients.scoreGradient(for: score))
+            .background(
+                LinearGradient(
+                    colors: [bgStart, bgEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: scoreColor.opacity(0.3), radius: 12, y: 6)
+            .shadow(color: ringStart.opacity(0.3), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
     }
@@ -417,11 +447,22 @@ struct RecoveryFactorPill: View {
     let icon: String
     let label: String
     let value: String
+    let iconColor: Color
+    var bgColor: Color? = nil  // Optional separate bg color
 
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.caption)
+        HStack(spacing: 8) {
+            // Colored icon circle
+            ZStack {
+                Circle()
+                    .fill((bgColor ?? iconColor).opacity(0.3))
+                    .frame(width: 26, height: 26)
+
+                Image(systemName: icon)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(iconColor)
+            }
+
             VStack(alignment: .leading, spacing: 1) {
                 Text(value)
                     .font(.caption)
@@ -431,9 +472,10 @@ struct RecoveryFactorPill: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
         }
-        .padding(.horizontal, 10)
+        .padding(.leading, 6)
+        .padding(.trailing, 12)
         .padding(.vertical, 8)
-        .background(Color.white.opacity(0.15))
+        .background(Color.white.opacity(0.12))
         .clipShape(Capsule())
     }
 }

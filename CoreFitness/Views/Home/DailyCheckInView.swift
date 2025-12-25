@@ -17,42 +17,69 @@ struct DailyCheckInView: View {
     @State private var checkmarkScale: CGFloat = 0
     @State private var checkmarkOpacity: Double = 0
     @State private var ringProgress: CGFloat = 0
+    @State private var hasCheckedInToday = false
+
+    // Check-in data storage
+    @AppStorage("lastCheckInDate") private var lastCheckInDateString: String = ""
+    @AppStorage("lastCheckInMood") private var savedMood: Double = 3
+    @AppStorage("lastCheckInSoreness") private var savedSoreness: Double = 2
+    @AppStorage("lastCheckInStress") private var savedStress: Double = 2
+    @AppStorage("lastCheckInSleep") private var savedSleepQuality: Double = 3
+
+    private var todayString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Hero Header Card
-                        CheckInHeaderCard()
+                        if hasCheckedInToday {
+                            // Already checked in view
+                            AlreadyCheckedInView(
+                                mood: savedMood,
+                                sleepQuality: savedSleepQuality,
+                                stress: savedStress,
+                                soreness: savedSoreness
+                            )
+                        } else {
+                            // Hero Header Card
+                            CheckInHeaderCard()
 
-                        // Wellness Metrics Section
-                        WellnessMetricsCard(
-                            mood: $mood,
-                            sleepQuality: $sleepQuality,
-                            stress: $stress
-                        )
+                            // Wellness Metrics Section
+                            WellnessMetricsCard(
+                                mood: $mood,
+                                sleepQuality: $sleepQuality,
+                                stress: $stress
+                            )
 
-                        // Physical Status Section
-                        PhysicalStatusCard(soreness: $soreness)
+                            // Physical Status Section
+                            PhysicalStatusCard(soreness: $soreness)
 
-                        // Today's Plan Section
-                        TodaysPlanCard(selectedPlans: $selectedPlans)
+                            // Today's Plan Section
+                            TodaysPlanCard(selectedPlans: $selectedPlans)
 
-                        // Notes Section
-                        NotesCard(notes: $notes)
+                            // Notes Section
+                            NotesCard(notes: $notes)
 
-                        // Save Button
-                        GradientButton(isSaving ? "Saving..." : "Save Check-In", icon: isSaving ? nil : "checkmark.circle.fill", gradient: AppGradients.primary) {
-                            saveCheckIn()
+                            // Save Button
+                            GradientButton(isSaving ? "Saving..." : "Save Check-In", icon: isSaving ? nil : "checkmark.circle.fill", gradient: AppGradients.primary) {
+                                saveCheckIn()
+                            }
+                            .disabled(isSaving)
+                            .padding(.top, 8)
                         }
-                        .disabled(isSaving)
-                        .padding(.top, 8)
                     }
                     .padding()
                 }
                 .scrollIndicators(.hidden)
                 .background(Color(.systemGroupedBackground))
+                .onAppear {
+                    checkIfAlreadyCheckedIn()
+                }
 
                 // Success overlay
                 if showSuccessOverlay {
@@ -116,12 +143,22 @@ struct DailyCheckInView: View {
         }
     }
 
+    private func checkIfAlreadyCheckedIn() {
+        hasCheckedInToday = lastCheckInDateString == todayString
+    }
+
     private func saveCheckIn() {
         isSaving = true
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
 
-        // TODO: Save to Firebase
+        // Save check-in data
+        lastCheckInDateString = todayString
+        savedMood = mood
+        savedSoreness = soreness
+        savedStress = stress
+        savedSleepQuality = sleepQuality
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
             showSuccessAnimation()
@@ -159,6 +196,145 @@ struct DailyCheckInView: View {
                 dismiss()
             }
         }
+    }
+}
+
+// MARK: - Already Checked In View
+struct AlreadyCheckedInView: View {
+    let mood: Double
+    let sleepQuality: Double
+    let stress: Double
+    let soreness: Double
+
+    private func moodLabel(_ value: Double) -> String {
+        switch Int(value) {
+        case 1: return "Very Low"
+        case 2: return "Low"
+        case 3: return "Moderate"
+        case 4: return "Good"
+        case 5: return "Excellent"
+        default: return "Moderate"
+        }
+    }
+
+    private func moodEmoji(_ value: Double) -> String {
+        switch Int(value) {
+        case 1: return "😔"
+        case 2: return "😐"
+        case 3: return "🙂"
+        case 4: return "😊"
+        case 5: return "😄"
+        default: return "🙂"
+        }
+    }
+
+    private func moodColor(_ value: Double) -> Color {
+        switch Int(value) {
+        case 1: return .red
+        case 2: return .orange
+        case 3: return .yellow
+        case 4: return .accentGreen
+        case 5: return .accentGreen
+        default: return .yellow
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 24) {
+            // Success Header
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.accentGreen.opacity(0.15))
+                        .frame(width: 100, height: 100)
+
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 50))
+                        .foregroundStyle(Color.accentGreen)
+                }
+
+                Text("Already Checked In Today")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("You've completed your daily check-in. Come back tomorrow!")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 20)
+
+            // Today's Summary Card
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Today's Summary")
+                    .font(.headline)
+                    .fontWeight(.bold)
+
+                // Metrics Grid
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    CheckInSummaryItem(
+                        label: "Mood",
+                        value: moodLabel(mood),
+                        emoji: moodEmoji(mood),
+                        color: moodColor(mood)
+                    )
+
+                    CheckInSummaryItem(
+                        label: "Sleep Quality",
+                        value: moodLabel(sleepQuality),
+                        emoji: sleepQuality >= 4 ? "😴" : "🥱",
+                        color: moodColor(sleepQuality)
+                    )
+
+                    CheckInSummaryItem(
+                        label: "Stress Level",
+                        value: moodLabel(stress),
+                        emoji: stress <= 2 ? "😌" : stress >= 4 ? "😰" : "😐",
+                        color: stress <= 2 ? .accentGreen : stress >= 4 ? .red : .orange
+                    )
+
+                    CheckInSummaryItem(
+                        label: "Soreness",
+                        value: moodLabel(soreness),
+                        emoji: soreness <= 2 ? "💪" : soreness >= 4 ? "🤕" : "😐",
+                        color: soreness <= 2 ? .accentGreen : soreness >= 4 ? .red : .orange
+                    )
+                }
+            }
+            .padding(20)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Check-In Summary Item
+struct CheckInSummaryItem: View {
+    let label: String
+    let value: String
+    let emoji: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(emoji)
+                .font(.title)
+
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(color)
+
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 

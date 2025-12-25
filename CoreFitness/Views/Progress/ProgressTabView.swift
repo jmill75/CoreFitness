@@ -10,9 +10,17 @@ struct ProgressTabView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 28) {
+                        // Header
+                        HStack {
+                            Text("Progress")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                            Spacer()
+                        }
+                        .id("top")
+
                         // Stats Overview
                         StatsOverviewSection()
-                            .id("top")
 
                         // Achievements/Badges
                         AchievementsSection()
@@ -31,19 +39,7 @@ struct ProgressTabView: View {
                     proxy.scrollTo("top", anchor: .top)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "trophy.fill")
-                            .font(.headline)
-                            .foregroundStyle(Color.accentYellow)
-                        Text("Progress")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
+            .navigationBarHidden(true)
         }
     }
 }

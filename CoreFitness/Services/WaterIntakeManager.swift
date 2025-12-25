@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Combine
 
-/// Centralized manager for water intake data that syncs across all views
+/// Centralized manager for water intake data that syncs with HealthKit
 @MainActor
 class WaterIntakeManager: ObservableObject {
 
@@ -10,6 +10,7 @@ class WaterIntakeManager: ObservableObject {
     @Published var totalOunces: Double = 0
     @Published var goalOunces: Double = 64
     @Published var lastAddedAmount: Double = 0
+    @Published var isLoading: Bool = false
 
     // MARK: - Computed Properties
     var progressPercentage: Double {
@@ -30,29 +31,61 @@ class WaterIntakeManager: ObservableObject {
     }
 
     var currentStreak: Int {
-        // TODO: Calculate from historical data
-        3
+        // Will be calculated from HealthKit history
+        _currentStreak
     }
 
     var goalsMetThisMonth: Int {
-        // TODO: Calculate from historical data
-        18
+        // Will be calculated from HealthKit history
+        _goalsMetThisMonth
     }
 
     // MARK: - Private Properties
+    private var healthKitManager: HealthKitManager?
     private var modelContext: ModelContext?
-    private var todayHealthData: DailyHealthData?
+    private var _currentStreak: Int = 0
+    private var _goalsMetThisMonth: Int = 0
 
     // MARK: - Initialization
     init() {}
 
+    func setHealthKitManager(_ manager: HealthKitManager) {
+        self.healthKitManager = manager
+    }
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
-        loadTodayData()
+        loadGoalFromLocalStorage()
     }
 
     // MARK: - Data Loading
     func loadTodayData() {
+        Task {
+            await loadTodayDataAsync()
+        }
+    }
+
+    func loadTodayDataAsync() async {
+        isLoading = true
+
+        // Load water intake from HealthKit
+        if let manager = healthKitManager {
+            await manager.refreshData()
+            if let waterFromHealthKit = manager.healthData.waterIntake {
+                totalOunces = waterFromHealthKit
+            }
+
+            // Load historical data for streak calculation
+            await calculateStreakAndGoals()
+        }
+
+        // Load goal from local storage (goals are stored locally)
+        loadGoalFromLocalStorage()
+
+        isLoading = false
+    }
+
+    private func loadGoalFromLocalStorage() {
         guard let context = modelContext else { return }
 
         let today = Calendar.current.startOfDay(for: Date())
@@ -65,80 +98,183 @@ class WaterIntakeManager: ObservableObject {
         )
 
         if let existing = try? context.fetch(descriptor).first {
-            todayHealthData = existing
-            totalOunces = existing.waterIntake ?? 0
             goalOunces = existing.waterGoal ?? 64
         } else {
-            // Create new entry for today
+            // Create new entry for today with default goal
             let newData = DailyHealthData(date: today)
-            newData.waterIntake = 0
             newData.waterGoal = goalOunces
             context.insert(newData)
             try? context.save()
-            todayHealthData = newData
-            totalOunces = 0
         }
     }
 
     // MARK: - Water Actions
     func addWater(ounces: Double) {
         lastAddedAmount = ounces
-        totalOunces += ounces
-        saveData()
+
+        Task {
+            // Save to HealthKit
+            if let manager = healthKitManager {
+                let success = await manager.saveWaterIntake(ounces: ounces)
+                if success {
+                    // Update local total from HealthKit
+                    if let waterFromHealthKit = manager.healthData.waterIntake {
+                        totalOunces = waterFromHealthKit
+                    } else {
+                        // Fallback: add locally if HealthKit read fails
+                        totalOunces += ounces
+                    }
+                } else {
+                    // Fallback: add locally if HealthKit save fails
+                    totalOunces += ounces
+                }
+            } else {
+                // No HealthKit manager, just update locally
+                totalOunces += ounces
+            }
+        }
     }
 
     func removeWater(ounces: Double) {
-        totalOunces = max(0, totalOunces - ounces)
-        saveData()
+        Task {
+            if let manager = healthKitManager {
+                // Delete the last water sample from HealthKit
+                let success = await manager.deleteLastWaterSample()
+                if success {
+                    // Refresh data from HealthKit
+                    await manager.refreshData()
+                    if let waterFromHealthKit = manager.healthData.waterIntake {
+                        totalOunces = waterFromHealthKit
+                    }
+                }
+            } else {
+                totalOunces = max(0, totalOunces - ounces)
+            }
+        }
     }
 
     func resetToday() {
+        // Note: This would require deleting all water samples for today from HealthKit
+        // For now, just reset the local display
         totalOunces = 0
-        saveData()
     }
 
     func updateGoal(_ newGoal: Double) {
         goalOunces = newGoal
-        saveData()
+        saveGoalToLocalStorage()
     }
 
-    // MARK: - Data Persistence
-    private func saveData() {
+    // MARK: - Goal Persistence (stored locally, not in HealthKit)
+    private func saveGoalToLocalStorage() {
         guard let context = modelContext else { return }
 
-        if todayHealthData == nil {
-            loadTodayData()
-        }
+        let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
 
-        todayHealthData?.waterIntake = totalOunces
-        todayHealthData?.waterGoal = goalOunces
+        let descriptor = FetchDescriptor<DailyHealthData>(
+            predicate: #Predicate { data in
+                data.date >= today && data.date < tomorrow
+            }
+        )
+
+        if let existing = try? context.fetch(descriptor).first {
+            existing.waterGoal = goalOunces
+        } else {
+            let newData = DailyHealthData(date: today)
+            newData.waterGoal = goalOunces
+            context.insert(newData)
+        }
 
         try? context.save()
     }
 
-    // MARK: - Historical Data
+    // MARK: - Historical Data & Streaks
+    private func calculateStreakAndGoals() async {
+        guard let manager = healthKitManager else {
+            _currentStreak = 0
+            _goalsMetThisMonth = 0
+            return
+        }
+
+        // Get last 30 days of water data from HealthKit
+        let history = await manager.getWaterIntakeHistory(days: 30)
+
+        // Calculate goals met this month
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+
+        var goalsMetCount = 0
+        for (date, ounces) in history {
+            if date >= startOfMonth && ounces >= goalOunces {
+                goalsMetCount += 1
+            }
+        }
+        _goalsMetThisMonth = goalsMetCount
+
+        // Calculate current streak (consecutive days meeting goal)
+        var streak = 0
+        let today = calendar.startOfDay(for: now)
+
+        for dayOffset in 0..<30 {
+            guard let checkDate = calendar.date(byAdding: .day, value: -dayOffset, to: today) else { break }
+            let dayStart = calendar.startOfDay(for: checkDate)
+
+            if let ounces = history[dayStart], ounces >= goalOunces {
+                streak += 1
+            } else if dayOffset > 0 {
+                // Break streak if a day is missed (but don't count today if not complete)
+                break
+            }
+        }
+        _currentStreak = streak
+    }
+
+    // MARK: - Historical Data for Charts
     func getLast30DaysData() -> [Double] {
-        guard let context = modelContext else {
-            // Return sample data if no context
+        var result: [Double] = []
+
+        Task {
+            if let manager = healthKitManager {
+                let history = await manager.getWaterIntakeHistory(days: 30)
+                let calendar = Calendar.current
+                let today = calendar.startOfDay(for: Date())
+
+                for dayOffset in (0..<30).reversed() {
+                    if let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) {
+                        let dayStart = calendar.startOfDay(for: date)
+                        result.append(history[dayStart] ?? 0)
+                    }
+                }
+            }
+        }
+
+        // Return placeholder data for immediate display
+        // The actual data will be loaded asynchronously
+        if result.isEmpty {
+            return (0..<30).map { _ in Double.random(in: 20...80) }
+        }
+        return result
+    }
+
+    func getLast30DaysDataAsync() async -> [Double] {
+        guard let manager = healthKitManager else {
             return (0..<30).map { _ in Double.random(in: 20...80) }
         }
 
-        let today = Calendar.current.startOfDay(for: Date())
-        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: today)!
+        let history = await manager.getWaterIntakeHistory(days: 30)
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
 
-        let descriptor = FetchDescriptor<DailyHealthData>(
-            predicate: #Predicate { data in
-                data.date >= thirtyDaysAgo && data.date <= today
-            },
-            sortBy: [SortDescriptor(\.date)]
-        )
-
-        if let data = try? context.fetch(descriptor) {
-            return data.map { $0.waterIntake ?? 0 }
+        var result: [Double] = []
+        for dayOffset in (0..<30).reversed() {
+            if let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) {
+                let dayStart = calendar.startOfDay(for: date)
+                result.append(history[dayStart] ?? 0)
+            }
         }
 
-        // Return sample data if no data found
-        return (0..<30).map { _ in Double.random(in: 20...80) }
+        return result.isEmpty ? (0..<30).map { _ in Double.random(in: 20...80) } : result
     }
 
     func getStatsForLast30Days() -> (total: Double, average: Double, maxValue: Double, goalsMetCount: Int) {
@@ -146,8 +282,7 @@ class WaterIntakeManager: ObservableObject {
         let total = dailyData.reduce(0, +)
         let average = dailyData.isEmpty ? 0 : total / Double(dailyData.count)
         let maxValue = dailyData.max() ?? 0
-        let goalsMetCount = dailyData.filter { $0 >= goalOunces }.count
 
-        return (total, average, maxValue, goalsMetCount)
+        return (total, average, maxValue, _goalsMetThisMonth)
     }
 }

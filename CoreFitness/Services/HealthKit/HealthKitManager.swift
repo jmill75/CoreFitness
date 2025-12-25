@@ -9,6 +9,7 @@ struct HealthData {
     var sleepHours: Double?
     var steps: Int?
     var activeCalories: Double?
+    var waterIntake: Double? // in fluid ounces
     var lastUpdated: Date?
 }
 
@@ -59,6 +60,11 @@ class HealthKitManager: ObservableObject {
             types.insert(calories)
         }
 
+        // Dietary Water
+        if let water = HKObjectType.quantityType(forIdentifier: .dietaryWater) {
+            types.insert(water)
+        }
+
         return types
     }()
 
@@ -71,6 +77,11 @@ class HealthKitManager: ObservableObject {
         // Active Energy Burned (for workout data)
         if let activeEnergy = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) {
             types.insert(activeEnergy)
+        }
+
+        // Dietary Water
+        if let water = HKObjectType.quantityType(forIdentifier: .dietaryWater) {
+            types.insert(water)
         }
 
         return types
@@ -110,9 +121,10 @@ class HealthKitManager: ObservableObject {
         async let sleep = fetchSleepData()
         async let steps = fetchSteps()
         async let calories = fetchActiveCalories()
+        async let water = fetchTodayWaterIntake()
 
-        let (hr, rhr, hrvValue, sleepHours, stepCount, cals) = await (
-            heartRate, restingHR, hrv, sleep, steps, calories
+        let (hr, rhr, hrvValue, sleepHours, stepCount, cals, waterOz) = await (
+            heartRate, restingHR, hrv, sleep, steps, calories, water
         )
 
         healthData = HealthData(
@@ -122,6 +134,7 @@ class HealthKitManager: ObservableObject {
             sleepHours: sleepHours,
             steps: stepCount,
             activeCalories: cals,
+            waterIntake: waterOz,
             lastUpdated: Date()
         )
 
@@ -287,6 +300,138 @@ class HealthKitManager: ObservableObject {
                 let value = statistics?.sumQuantity()?.doubleValue(for: HKUnit.kilocalorie())
                 continuation.resume(returning: value)
             }
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Fetch Today's Water Intake
+    private func fetchTodayWaterIntake() async -> Double? {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return nil
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: waterType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, statistics, _ in
+                // HealthKit stores water in liters, convert to fluid ounces
+                if let liters = statistics?.sumQuantity()?.doubleValue(for: HKUnit.liter()) {
+                    let fluidOunces = liters * 33.814 // 1 liter = 33.814 fl oz
+                    continuation.resume(returning: fluidOunces)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Save Water Intake to HealthKit
+    func saveWaterIntake(ounces: Double) async -> Bool {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return false
+        }
+
+        // Convert fluid ounces to liters for HealthKit
+        let liters = ounces / 33.814
+        let quantity = HKQuantity(unit: HKUnit.liter(), doubleValue: liters)
+        let sample = HKQuantitySample(
+            type: waterType,
+            quantity: quantity,
+            start: Date(),
+            end: Date()
+        )
+
+        do {
+            try await healthStore.save(sample)
+            // Refresh data after saving
+            await fetchTodayData()
+            return true
+        } catch {
+            print("Failed to save water intake: \(error)")
+            return false
+        }
+    }
+
+    // MARK: - Delete Water Sample (for undo functionality)
+    func deleteLastWaterSample() async -> Bool {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return false
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: waterType,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [sortDescriptor]
+            ) { [weak self] _, samples, _ in
+                guard let sample = samples?.first else {
+                    continuation.resume(returning: false)
+                    return
+                }
+
+                self?.healthStore.delete(sample) { success, error in
+                    if let error = error {
+                        print("Failed to delete water sample: \(error)")
+                    }
+                    continuation.resume(returning: success)
+                }
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Get Water Intake for Date Range
+    func getWaterIntakeHistory(days: Int) async -> [Date: Double] {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return [:]
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startDate = calendar.date(byAdding: .day, value: -days, to: calendar.startOfDay(for: now))!
+
+        var interval = DateComponents()
+        interval.day = 1
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: now, options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: waterType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum,
+                anchorDate: startDate,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, _ in
+                var waterByDate: [Date: Double] = [:]
+
+                results?.enumerateStatistics(from: startDate, to: now) { statistics, _ in
+                    if let liters = statistics.sumQuantity()?.doubleValue(for: HKUnit.liter()) {
+                        let fluidOunces = liters * 33.814
+                        waterByDate[statistics.startDate] = fluidOunces
+                    }
+                }
+
+                continuation.resume(returning: waterByDate)
+            }
+
             healthStore.execute(query)
         }
     }

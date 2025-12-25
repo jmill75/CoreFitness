@@ -12,10 +12,23 @@ final class Exercise {
     var videoURL: String?
     var createdAt: Date
 
-    // Extended properties - defaults support migration from existing data
-    var category: ExerciseCategory = ExerciseCategory.strength
-    var difficulty: Difficulty = Difficulty.intermediate
-    var location: ExerciseLocation = ExerciseLocation.both
+    // Extended properties - optional to support migration from existing data
+    var category: ExerciseCategory?
+    var difficulty: Difficulty?
+    var location: ExerciseLocation?
+
+    // Safe accessors with defaults
+    var safeCategory: ExerciseCategory {
+        category ?? .strength
+    }
+
+    var safeDifficulty: Difficulty {
+        difficulty ?? .intermediate
+    }
+
+    var safeLocation: ExerciseLocation {
+        location ?? .both
+    }
     var estimatedCaloriesPerMinute: Int?
     var isFavorite: Bool = false
     var imageURL: String?

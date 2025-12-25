@@ -5,69 +5,223 @@ import UniformTypeIdentifiers
 struct ProgramsView: View {
 
     // MARK: - State
+    @State private var showCreateProgram = false
     @State private var showAIWorkoutCreation = false
     @State private var showImportWorkout = false
     @State private var showExerciseLibrary = false
+    @State private var showChallenges = false
     @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 28) {
-                        // Current Active Program - Hero Card
-                        CurrentProgramCard()
-                            .id("top")
-
-                        // Quick Actions - Gradient Buttons
-                        QuickActionsSection(
-                            onAICreate: { showAIWorkoutCreation = true },
-                            onImportWorkout: { showImportWorkout = true },
-                            onExerciseLibrary: { showExerciseLibrary = true }
-                        )
-
-                        // Saved Programs Section
-                        SavedProgramsSection()
-
-                        // Discover Programs Section
-                        DiscoverProgramsSection()
-                    }
-                    .padding()
-                    .padding(.bottom, 80)
-                }
-                .scrollIndicators(.hidden)
-                .background(Color(.systemGroupedBackground))
-                .onAppear {
-                    proxy.scrollTo("top", anchor: .top)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "figure.run")
-                            .font(.headline)
-                            .foregroundStyle(Color.brandPrimary)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header with + button
+                    HStack {
                         Text("Programs")
-                            .font(.headline)
-                            .fontWeight(.semibold)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+
+                        Spacer()
+
+                        // Quick Add Menu Button (same as Home)
+                        Menu {
+                            Button {
+                                showCreateProgram = true
+                            } label: {
+                                Label("Create Program", systemImage: "plus")
+                            }
+
+                            Button {
+                                showAIWorkoutCreation = true
+                            } label: {
+                                Label("AI Create", systemImage: "sparkles")
+                            }
+
+                            Button {
+                                showImportWorkout = true
+                            } label: {
+                                Label("Import", systemImage: "doc.badge.plus")
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .frame(width: 52, height: 52)
+                                .background(Color.accentBlue)
+                                .clipShape(Circle())
+                                .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
+                        }
                     }
+
+                    // Search bar
+                    HStack(spacing: 10) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(.secondary)
+                        TextField("Search programs & exercises", text: $searchText)
+                            .font(.subheadline)
+                    }
+                    .padding(12)
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    // Current Active Program - Hero Card
+                    CurrentProgramCard()
+
+                    // Exercises Card
+                    ExercisesCard(onTap: { showExerciseLibrary = true })
+
+                    // My Programs Card
+                    SavedProgramsSection()
+
+                    // Challenges Card
+                    ChallengesCard(onTap: { showChallenges = true })
+
+                    // Discover Programs Section - 2x2 Grid
+                    DiscoverProgramsSection()
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 100)
+                .frame(maxWidth: .infinity)
             }
-            .searchable(text: $searchText, prompt: "Search programs & exercises")
-            .sheet(isPresented: $showAIWorkoutCreation) {
+            .scrollIndicators(.hidden)
+            .background(Color(.systemGroupedBackground))
+            .toolbar(.hidden, for: .navigationBar)
+            .fullScreenCover(isPresented: $showCreateProgram) {
+                CreateProgramView()
+                    .background(.ultraThinMaterial)
+            }
+            .fullScreenCover(isPresented: $showAIWorkoutCreation) {
                 AIWorkoutCreationView()
-                    .presentationBackground(.regularMaterial)
+                    .background(.ultraThinMaterial)
             }
-            .sheet(isPresented: $showImportWorkout) {
+            .fullScreenCover(isPresented: $showImportWorkout) {
                 ImportWorkoutView()
-                    .presentationBackground(.regularMaterial)
+                    .background(.ultraThinMaterial)
             }
-            .sheet(isPresented: $showExerciseLibrary) {
+            .fullScreenCover(isPresented: $showExerciseLibrary) {
                 ExerciseLibraryView()
-                    .presentationBackground(.regularMaterial)
+                    .background(.ultraThinMaterial)
+            }
+            .fullScreenCover(isPresented: $showChallenges) {
+                ChallengesView()
+                    .background(.ultraThinMaterial)
             }
         }
+    }
+}
+
+// MARK: - Exercises Card
+struct ExercisesCard: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+            onTap()
+        }) {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "0ea5e9"), Color(hex: "38bdf8")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: "dumbbell.fill")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Exercise Library")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+
+                    Text("Browse all exercises")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Challenges Card
+struct ChallengesCard: View {
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+            onTap()
+        }) {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "f97316"), Color(hex: "fb923c")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: "trophy.fill")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Challenges")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+
+                    Text("Compete with friends")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("View All")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color(hex: "f97316"))
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -79,25 +233,25 @@ struct QuickActionsSection: View {
     let onExerciseLibrary: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             QuickActionCard(
                 title: "AI Create",
                 icon: "sparkles",
-                gradient: AppGradients.primary,
+                gradientColors: [Color(hex: "6366f1"), Color(hex: "8b5cf6")],
                 action: onAICreate
             )
 
             QuickActionCard(
                 title: "Import",
                 icon: "doc.badge.plus",
-                gradient: AppGradients.energetic,
+                gradientColors: [Color(hex: "f97316"), Color(hex: "fb923c")],
                 action: onImportWorkout
             )
 
             QuickActionCard(
                 title: "Exercises",
-                icon: "figure.strengthtraining.traditional",
-                gradient: AppGradients.ocean,
+                icon: "dumbbell.fill",
+                gradientColors: [Color(hex: "0ea5e9"), Color(hex: "38bdf8")],
                 action: onExerciseLibrary
             )
         }
@@ -108,7 +262,7 @@ struct QuickActionCard: View {
 
     let title: String
     let icon: String
-    let gradient: LinearGradient
+    let gradientColors: [Color]
     let action: () -> Void
 
     @State private var isPressed = false
@@ -119,20 +273,35 @@ struct QuickActionCard: View {
             impactFeedback.impactOccurred()
             action()
         }) {
-            VStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            VStack(spacing: 8) {
+                // Gradient icon background
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: gradientColors,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                }
+
                 Text(title)
                     .font(.caption)
                     .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
             }
-            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(gradient)
+            .background(Color(.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: Color.brandPrimary.opacity(0.2), radius: 8, y: 4)
+            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
             .scaleEffect(isPressed ? 0.95 : 1.0)
         }
         .buttonStyle(.plain)
@@ -157,34 +326,52 @@ struct CurrentProgramCard: View {
     private let weekNumber: Int = 4
     private let totalWeeks: Int = 12
 
+    // Gradient colors matching the HTML mockup
+    private let gradientColors = [
+        Color(hex: "6366f1"),
+        Color(hex: "8b5cf6"),
+        Color(hex: "a855f7")
+    ]
+
     var body: some View {
         VStack(spacing: 16) {
-            // Header with progress
+            // Header with progress ring and info
             HStack(spacing: 16) {
                 // Progress Ring
                 ZStack {
                     Circle()
-                        .stroke(.white.opacity(0.2), lineWidth: 6)
-                        .frame(width: 60, height: 60)
+                        .stroke(.white.opacity(0.2), lineWidth: 7)
+                        .frame(width: 70, height: 70)
 
                     Circle()
                         .trim(from: 0, to: progress)
-                        .stroke(.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .frame(width: 60, height: 60)
+                        .stroke(.white, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .frame(width: 70, height: 70)
                         .rotationEffect(.degrees(-90))
 
                     Text("\(Int(progress * 100))%")
-                        .font(.caption)
+                        .font(.subheadline)
                         .fontWeight(.bold)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("12-Week Strength Builder")
                         .font(.headline)
                         .fontWeight(.bold)
+
                     Text("Week \(weekNumber) of \(totalWeeks) • 4 days/week")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.8))
+
+                    // Week progress dots
+                    HStack(spacing: 3) {
+                        ForEach(1...totalWeeks, id: \.self) { week in
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(weekDotColor(for: week))
+                                .frame(width: 14, height: 4)
+                                .shadow(color: week == weekNumber ? .white.opacity(0.6) : .clear, radius: 4)
+                        }
+                    }
                 }
 
                 Spacer()
@@ -193,7 +380,7 @@ struct CurrentProgramCard: View {
             // Today's Workout
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Today")
+                    Text("Today's Workout")
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.7))
                     Text("Upper Body Push")
@@ -206,7 +393,6 @@ struct CurrentProgramCard: View {
                 Button {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
-                    // Load or create sample workout if needed
                     if sampleWorkout == nil {
                         sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
                     }
@@ -221,8 +407,8 @@ struct CurrentProgramCard: View {
                             .font(.subheadline)
                             .fontWeight(.semibold)
                     }
-                    .foregroundStyle(Color.brandPrimary)
-                    .padding(.horizontal, 16)
+                    .foregroundStyle(Color(hex: "6366f1"))
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                     .background(.white)
                     .clipShape(Capsule())
@@ -230,14 +416,34 @@ struct CurrentProgramCard: View {
                 .buttonStyle(.plain)
             }
             .padding(14)
-            .background(.white.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .background(.white.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .foregroundStyle(.white)
-        .padding(18)
-        .background(AppGradients.primary)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.brandPrimary.opacity(0.25), radius: 10, y: 6)
+        .padding(20)
+        .background(
+            LinearGradient(
+                colors: gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            // Decorative circles
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.1))
+                    .frame(width: 200, height: 200)
+                    .offset(x: 100, y: -80)
+
+                Circle()
+                    .fill(.white.opacity(0.08))
+                    .frame(width: 150, height: 150)
+                    .offset(x: -80, y: 100)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+        )
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = sampleWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -246,10 +452,19 @@ struct CurrentProgramCard: View {
             }
         }
         .onAppear {
-            // Load or create sample workout
             if sampleWorkout == nil {
                 sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
             }
+        }
+    }
+
+    private func weekDotColor(for week: Int) -> Color {
+        if week < weekNumber {
+            return .white
+        } else if week == weekNumber {
+            return .white
+        } else {
+            return .white.opacity(0.3)
         }
     }
 }
@@ -258,105 +473,105 @@ struct CurrentProgramCard: View {
 struct SavedProgramsSection: View {
     @State private var showSavedPrograms = false
 
-    // Sample data - replace with actual SwiftData query
-    private let programCount = 5
-    private let activeProgram = "Push Pull Legs"
-
     var body: some View {
-        Button {
+        Button(action: {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
             showSavedPrograms = true
-        } label: {
-            VStack(spacing: 16) {
-                // Header row
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("My Programs")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
+        }) {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "8b5cf6"), Color(hex: "a855f7")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
 
-                        Text("\(programCount) saved programs")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    HStack(spacing: 6) {
-                        Text("View All")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(Color.brandPrimary)
-                    .clipShape(Capsule())
+                    Image(systemName: "folder.fill")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
                 }
 
-                // Active program indicator
-                HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentGreen.opacity(0.15))
-                            .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("My Programs")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
 
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(Color.accentGreen)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text("Active")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(Color.accentGreen)
-                                .clipShape(Capsule())
-
-                            Spacer()
-                        }
-
-                        Text(activeProgram)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.primary)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    Text("View all saved programs")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(12)
-                .background(Color(.tertiarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Quick stats row
-                HStack(spacing: 0) {
-                    SavedProgramsStatItem(value: "12", label: "Workouts", icon: "figure.run")
-                    Divider().frame(height: 30)
-                    SavedProgramsStatItem(value: "8", label: "PRs Hit", icon: "trophy.fill")
-                    Divider().frame(height: 30)
-                    SavedProgramsStatItem(value: "3", label: "This Week", icon: "calendar")
-                }
+                Spacer()
+
+                Text("View All")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color(hex: "8b5cf6"))
             }
             .padding(16)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
         }
         .buttonStyle(.plain)
-        .sheet(isPresented: $showSavedPrograms) {
+        .fullScreenCover(isPresented: $showSavedPrograms) {
             SavedProgramsDetailView()
-                .presentationDragIndicator(.visible)
+                .background(.ultraThinMaterial)
         }
+    }
+}
+
+// MARK: - Mini Program Card
+struct MiniProgramCard: View {
+    let name: String
+    let exercises: Int
+    let icon: String
+    let gradientColors: [Color]
+
+    var body: some View {
+        HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        LinearGradient(
+                            colors: gradientColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+
+                Text("\(exercises) exercises")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding(12)
+        .background(Color(.tertiarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -482,32 +697,6 @@ struct SavedProgramsDetailView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
-                }
-
-                ToolbarItem(placement: .topBarLeading) {
-                    Menu {
-                        Button {
-                            // Create new program
-                        } label: {
-                            Label("Create Program", systemImage: "plus")
-                        }
-
-                        Button {
-                            // Import program
-                        } label: {
-                            Label("Import Program", systemImage: "square.and.arrow.down")
-                        }
-
-                        Button {
-                            // Generate with AI
-                        } label: {
-                            Label("Generate with AI", systemImage: "sparkles")
-                        }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(Color.brandPrimary)
-                    }
                 }
             }
         }
@@ -747,108 +936,153 @@ struct ProgramStatItem: View {
 struct DiscoverProgramsSection: View {
     @State private var showChallenges = false
 
+    // Discover items with their colors
+    private let discoverItems: [(title: String, subtitle: String, icon: String, colors: [Color])] = [
+        ("Challenges", "Compete with friends", "trophy.fill", [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("Muscle Builder", "12 weeks • Advanced", "dumbbell.fill", [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("Fat Burner", "8 weeks • HIIT", "flame.fill", [Color(hex: "ef4444"), Color(hex: "dc2626")]),
+        ("Recovery", "4 weeks • Mobility", "leaf.fill", [Color(hex: "0ea5e9"), Color(hex: "0284c7")])
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 14) {
+            // Section Header
             HStack {
                 Text("Discover")
-                    .font(.headline)
+                    .font(.title3)
                     .fontWeight(.bold)
 
                 Spacer()
 
-                Text("Browse All")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.brandPrimary)
+                Text("Browse All →")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color(hex: "6366f1"))
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    // Challenges - tappable
+            // 2x2 Grid
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(discoverItems.indices, id: \.self) { index in
+                    let item = discoverItems[index]
                     Button {
-                        showChallenges = true
+                        if index == 0 {
+                            showChallenges = true
+                        }
                     } label: {
-                        DiscoverProgramCard(
-                            title: "Challenges",
-                            subtitle: "Compete with friends",
-                            icon: "trophy.fill",
-                            gradient: AppGradients.success
+                        DiscoverGridCard(
+                            title: item.title,
+                            subtitle: item.subtitle,
+                            icon: item.icon,
+                            gradientColors: item.colors
                         )
                     }
                     .buttonStyle(.plain)
-
-                    DiscoverProgramCard(
-                        title: "Muscle Builder",
-                        subtitle: "12 weeks • Advanced",
-                        icon: "figure.strengthtraining.traditional",
-                        gradient: AppGradients.energetic
-                    )
-
-                    DiscoverProgramCard(
-                        title: "Fat Burner",
-                        subtitle: "8 weeks • HIIT",
-                        icon: "flame.fill",
-                        gradient: AppGradients.health
-                    )
-
-                    DiscoverProgramCard(
-                        title: "Recovery Focus",
-                        subtitle: "4 weeks • Mobility",
-                        icon: "leaf.fill",
-                        gradient: AppGradients.ocean
-                    )
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .sheet(isPresented: $showChallenges) {
+        .fullScreenCover(isPresented: $showChallenges) {
             ChallengesView()
-                .presentationBackground(.regularMaterial)
         }
     }
 }
 
-struct DiscoverProgramCard: View {
-
+struct DiscoverGridCard: View {
     let title: String
     let subtitle: String
     let icon: String
-    let gradient: LinearGradient
+    let gradientColors: [Color]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .background(.white.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.white.opacity(0.2))
+                    .frame(width: 44, height: 44)
 
-            Spacer()
+                Image(systemName: icon)
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+            }
 
-            VStack(alignment: .leading, spacing: 4) {
+            // Text
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.bold)
                     .lineLimit(1)
+
                 Text(subtitle)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.white.opacity(0.8))
                     .lineLimit(1)
             }
+
+            Spacer()
         }
         .foregroundStyle(.white)
-        .frame(width: 140, height: 130)
-        .padding()
-        .background(gradient)
+        .padding(14)
+        .frame(height: 72)
+        .background(
+            LinearGradient(
+                colors: gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 
 // MARK: - Placeholder Views
+struct CreateProgramView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Hero illustration
+                ZStack {
+                    Circle()
+                        .fill(Color.accentBlue.opacity(0.1))
+                        .frame(width: 120, height: 120)
+
+                    Image(systemName: "plus.rectangle.on.folder")
+                        .font(.system(size: 50))
+                        .foregroundStyle(Color.accentBlue)
+                }
+                .padding(.top, 40)
+
+                Text("Create Program")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("Build a custom workout program by adding exercises and setting your schedule.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+
+                Spacer()
+
+                GradientButton("Coming Soon", icon: "plus", gradient: AppGradients.primary) {
+                    dismiss()
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 32)
+            }
+            .navigationTitle("Create Program")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    DismissButton { dismiss() }
+                }
+            }
+        }
+    }
+}
+
 struct AIWorkoutCreationView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -1071,15 +1305,15 @@ struct ExerciseLibraryView: View {
                 exercise.name.localizedCaseInsensitiveContains(searchText)
 
             // Category filter
-            let matchesCategory = selectedCategory == nil || exercise.category == selectedCategory
+            let matchesCategory = selectedCategory == nil || exercise.safeCategory == selectedCategory
 
             // Difficulty filter
-            let matchesDifficulty = selectedDifficulty == nil || exercise.difficulty == selectedDifficulty
+            let matchesDifficulty = selectedDifficulty == nil || exercise.safeDifficulty == selectedDifficulty
 
             // Location filter
             let matchesLocation = selectedLocation == nil ||
-                exercise.location == selectedLocation ||
-                exercise.location == .both
+                exercise.safeLocation == selectedLocation ||
+                exercise.safeLocation == .both
 
             // Favorites filter
             let matchesFavorites = !showFavoritesOnly || exercise.isFavorite
@@ -1249,7 +1483,7 @@ struct ExerciseListCard: View {
     let onTap: () -> Void
 
     private var difficultyColor: Color {
-        switch exercise.difficulty {
+        switch exercise.safeDifficulty {
         case .beginner: return .accentGreen
         case .intermediate: return .accentOrange
         case .advanced: return .accentRed
@@ -1265,7 +1499,7 @@ struct ExerciseListCard: View {
                         .fill(Color.accentBlue.opacity(0.15))
                         .frame(width: 50, height: 50)
 
-                    Image(systemName: exercise.category.icon)
+                    Image(systemName: exercise.safeCategory.icon)
                         .font(.title3)
                         .foregroundStyle(Color.accentBlue)
                 }
@@ -1279,7 +1513,7 @@ struct ExerciseListCard: View {
 
                     HStack(spacing: 8) {
                         // Difficulty badge
-                        Text(exercise.difficulty.displayName)
+                        Text(exercise.safeDifficulty.displayName)
                             .font(.caption2)
                             .fontWeight(.medium)
                             .foregroundStyle(difficultyColor)
@@ -1299,9 +1533,9 @@ struct ExerciseListCard: View {
 
                         // Location
                         HStack(spacing: 2) {
-                            Image(systemName: exercise.location.icon)
+                            Image(systemName: exercise.safeLocation.icon)
                                 .font(.caption2)
-                            Text(exercise.location.displayName)
+                            Text(exercise.safeLocation.displayName)
                                 .font(.caption2)
                         }
                         .foregroundStyle(.secondary)
@@ -1342,7 +1576,7 @@ struct ExerciseDetailView: View {
     let exercise: Exercise
 
     private var difficultyColor: Color {
-        switch exercise.difficulty {
+        switch exercise.safeDifficulty {
         case .beginner: return .accentGreen
         case .intermediate: return .accentOrange
         case .advanced: return .accentRed
@@ -1359,7 +1593,7 @@ struct ExerciseDetailView: View {
                             .fill(Color.accentBlue.opacity(0.1))
                             .frame(width: 120, height: 120)
 
-                        Image(systemName: exercise.category.icon)
+                        Image(systemName: exercise.safeCategory.icon)
                             .font(.system(size: 50))
                             .foregroundStyle(Color.accentBlue)
                     }
@@ -1374,7 +1608,7 @@ struct ExerciseDetailView: View {
 
                         HStack(spacing: 8) {
                             // Difficulty
-                            Label(exercise.difficulty.displayName, systemImage: "chart.bar.fill")
+                            Label(exercise.safeDifficulty.displayName, systemImage: "chart.bar.fill")
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundStyle(difficultyColor)
@@ -1384,7 +1618,7 @@ struct ExerciseDetailView: View {
                                 .clipShape(Capsule())
 
                             // Category
-                            Label(exercise.category.displayName, systemImage: exercise.category.icon)
+                            Label(exercise.safeCategory.displayName, systemImage: exercise.safeCategory.icon)
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundStyle(Color.accentBlue)
@@ -1398,8 +1632,8 @@ struct ExerciseDetailView: View {
                     // Stats cards
                     HStack(spacing: 12) {
                         ExerciseStatCard(
-                            icon: exercise.location.icon,
-                            value: exercise.location.displayName,
+                            icon: exercise.safeLocation.icon,
+                            value: exercise.safeLocation.displayName,
                             label: "Location"
                         )
 

@@ -132,6 +132,8 @@ struct CoreFitnessApp: App {
                     fitnessDataService.setModelContext(context)
                     socialSharingService.setModelContext(context)
                     waterIntakeManager.setModelContext(context)
+                    // Connect WaterIntakeManager to HealthKitManager for syncing
+                    waterIntakeManager.setHealthKitManager(healthKitManager)
                     // Seed achievements on first launch
                     AchievementDefinitions.seedAchievements(in: context)
                 }
@@ -144,6 +146,8 @@ struct CoreFitnessApp: App {
                         // Refresh data if already authorized
                         await healthKitManager.fetchTodayData()
                     }
+                    // Load water intake data from HealthKit
+                    await waterIntakeManager.loadTodayDataAsync()
                 }
                 .onOpenURL { url in
                     handleDeepLink(url)

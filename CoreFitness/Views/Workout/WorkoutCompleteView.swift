@@ -188,9 +188,6 @@ struct WorkoutCompleteView: View {
         // Haptic celebration pattern
         celebrationHaptics()
 
-        // Play celebration sound
-        AudioServicesPlaySystemSound(1025)
-
         // Animate content in
         withAnimation {
             showContent = true
