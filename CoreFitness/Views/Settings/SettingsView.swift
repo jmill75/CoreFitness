@@ -118,6 +118,12 @@ struct SettingsView: View {
                     } label: {
                         Label("Music", systemImage: "music.note")
                     }
+
+                    NavigationLink {
+                        QuickActionsSettingsView()
+                    } label: {
+                        Label("Quick Actions", systemImage: "square.grid.2x2")
+                    }
                 } header: {
                     Text("Features")
                 }
@@ -947,6 +953,122 @@ struct MusicSettingsView: View {
                 musicService.selectedProvider = provider
             }
         }
+    }
+}
+
+// MARK: - Quick Actions Settings View
+struct QuickActionsSettingsView: View {
+    @AppStorage("quickActions") private var quickActionsData: Data = Data()
+    @State private var showResetConfirmation = false
+    @State private var showResetSuccess = false
+
+    private var currentActions: [QuickActionType] {
+        if let decoded = try? JSONDecoder().decode([QuickActionType].self, from: quickActionsData),
+           !decoded.isEmpty {
+            return decoded
+        }
+        return QuickOptionsGrid.defaultActions
+    }
+
+    private var isDefault: Bool {
+        currentActions == QuickOptionsGrid.defaultActions
+    }
+
+    var body: some View {
+        List {
+            // Current Quick Actions Preview
+            Section {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    ForEach(currentActions) { action in
+                        VStack(spacing: 4) {
+                            ZStack {
+                                Circle()
+                                    .fill(action.color.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+
+                                Image(systemName: action.icon)
+                                    .font(.subheadline)
+                                    .foregroundStyle(action.color)
+                            }
+
+                            Text(action.title)
+                                .font(.system(size: 9))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            } header: {
+                Text("Current Shortcuts")
+            } footer: {
+                Text("You have \(currentActions.count) quick action\(currentActions.count == 1 ? "" : "s") configured.")
+            }
+
+            // Reset Section
+            Section {
+                Button(role: .destructive) {
+                    showResetConfirmation = true
+                } label: {
+                    HStack {
+                        Label("Reset to Default", systemImage: "arrow.counterclockwise")
+                        Spacer()
+                        if isDefault {
+                            Text("Already Default")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(isDefault)
+            } header: {
+                Text("Reset")
+            } footer: {
+                Text("This will restore quick actions to the default configuration: Check-In, Water, Exercises, Progress, Health, Programs, Challenges, and Settings.")
+            }
+
+            // Info Section
+            Section {
+                HStack(spacing: 12) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(Color.accentBlue)
+
+                    Text("You can customize quick actions by tapping \"Edit\" on the Quick Actions section on the Home screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .navigationTitle("Quick Actions")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Reset Quick Actions?", isPresented: $showResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                resetToDefault()
+            }
+        } message: {
+            Text("This will restore all quick actions to their default configuration. This cannot be undone.")
+        }
+        .alert("Reset Complete", isPresented: $showResetSuccess) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Quick actions have been reset to default.")
+        }
+    }
+
+    private func resetToDefault() {
+        if let encoded = try? JSONEncoder().encode(QuickOptionsGrid.defaultActions) {
+            quickActionsData = encoded
+        }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        showResetSuccess = true
     }
 }
 

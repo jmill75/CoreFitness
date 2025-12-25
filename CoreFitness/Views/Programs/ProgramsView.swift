@@ -66,17 +66,14 @@ struct ProgramsView: View {
                     .background(Color(.systemGray5))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                    // Current Active Program - Hero Card
-                    CurrentProgramCard()
+                    // Current Programs Card (Combined)
+                    CurrentProgramsCard(onChallengeTap: { showChallenges = true })
 
                     // Exercises Card
                     ExercisesCard(onTap: { showExerciseLibrary = true })
 
                     // My Programs Card
                     SavedProgramsSection()
-
-                    // Challenges Card
-                    ChallengesCard(onTap: { showChallenges = true })
 
                     // Discover Programs Section - 2x2 Grid
                     DiscoverProgramsSection()
@@ -237,21 +234,21 @@ struct QuickActionsSection: View {
             QuickActionCard(
                 title: "AI Create",
                 icon: "sparkles",
-                gradientColors: [Color(hex: "6366f1"), Color(hex: "8b5cf6")],
+                gradientColors: [Color(hex: "0ea5e9"), Color(hex: "06b6d4")], // Cyan/Teal
                 action: onAICreate
             )
 
             QuickActionCard(
                 title: "Import",
                 icon: "doc.badge.plus",
-                gradientColors: [Color(hex: "f97316"), Color(hex: "fb923c")],
+                gradientColors: [Color(hex: "f97316"), Color(hex: "fb923c")], // Orange
                 action: onImportWorkout
             )
 
             QuickActionCard(
                 title: "Exercises",
                 icon: "dumbbell.fill",
-                gradientColors: [Color(hex: "0ea5e9"), Color(hex: "38bdf8")],
+                gradientColors: [Color(hex: "3b82f6"), Color(hex: "60a5fa")], // Blue
                 action: onExerciseLibrary
             )
         }
@@ -313,137 +310,146 @@ struct QuickActionCard: View {
     }
 }
 
-// MARK: - Current Program Card (Hero)
-struct CurrentProgramCard: View {
+// MARK: - Current Programs Card (Combined Workout + Challenge)
+struct CurrentProgramsCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.modelContext) private var modelContext
 
+    let onChallengeTap: () -> Void
+
     @State private var showWorkoutExecution = false
+    @State private var showStartConfirmation = false
     @State private var sampleWorkout: Workout?
 
-    private let progress: Double = 0.33
+    private let programProgress: Double = 0.33
     private let weekNumber: Int = 4
     private let totalWeeks: Int = 12
-
-    // Gradient colors matching the HTML mockup
-    private let gradientColors = [
-        Color(hex: "6366f1"),
-        Color(hex: "8b5cf6"),
-        Color(hex: "a855f7")
-    ]
+    private let challengeProgress: Double = 0.6
+    private let daysRemaining = 12
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Header with progress ring and info
-            HStack(spacing: 16) {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Current Programs")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            // Workout Row
+            HStack(spacing: 12) {
                 // Progress Ring
                 ZStack {
                     Circle()
-                        .stroke(.white.opacity(0.2), lineWidth: 7)
-                        .frame(width: 70, height: 70)
+                        .stroke(Color(hex: "0891b2").opacity(0.2), lineWidth: 5)
+                        .frame(width: 44, height: 44)
 
                     Circle()
-                        .trim(from: 0, to: progress)
-                        .stroke(.white, style: StrokeStyle(lineWidth: 7, lineCap: .round))
-                        .frame(width: 70, height: 70)
+                        .trim(from: 0, to: programProgress)
+                        .stroke(Color(hex: "0891b2"), style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .frame(width: 44, height: 44)
                         .rotationEffect(.degrees(-90))
 
-                    Text("\(Int(progress * 100))%")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
+                    Text("\(Int(programProgress * 100))%")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color(hex: "0891b2"))
                 }
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("12-Week Strength Builder")
-                        .font(.headline)
-                        .fontWeight(.bold)
-
-                    Text("Week \(weekNumber) of \(totalWeeks) • 4 days/week")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
-
-                    // Week progress dots
-                    HStack(spacing: 3) {
-                        ForEach(1...totalWeeks, id: \.self) { week in
-                            RoundedRectangle(cornerRadius: 2)
-                                .fill(weekDotColor(for: week))
-                                .frame(width: 14, height: 4)
-                                .shadow(color: week == weekNumber ? .white.opacity(0.6) : .clear, radius: 4)
-                        }
-                    }
-                }
-
-                Spacer()
-            }
-
-            // Today's Workout
-            HStack {
+                // Info
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Today's Workout")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text("Upper Body Push")
+                    Text("12-Week Strength")
                         .font(.subheadline)
                         .fontWeight(.semibold)
+
+                    Text("Week \(weekNumber) of \(totalWeeks)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
+                // Start Button
                 Button {
-                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                    impact.impactOccurred()
-                    if sampleWorkout == nil {
-                        sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
-                    }
-                    if sampleWorkout != nil {
-                        showWorkoutExecution = true
-                    }
+                    showStartConfirmation = true
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.fill")
-                            .font(.caption)
-                        Text("Start")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                    }
-                    .foregroundStyle(Color(hex: "6366f1"))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(.white)
-                    .clipShape(Capsule())
+                    Text("Start")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(Color(hex: "0891b2"))
+                        .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
-            .padding(14)
-            .background(.white.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-        }
-        .foregroundStyle(.white)
-        .padding(20)
-        .background(
-            LinearGradient(
-                colors: gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .overlay(
-            // Decorative circles
-            ZStack {
-                Circle()
-                    .fill(.white.opacity(0.1))
-                    .frame(width: 200, height: 200)
-                    .offset(x: 100, y: -80)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
 
-                Circle()
-                    .fill(.white.opacity(0.08))
-                    .frame(width: 150, height: 150)
-                    .offset(x: -80, y: 100)
+            Divider()
+                .padding(.horizontal, 16)
+
+            // Challenge Row
+            Button(action: {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                onChallengeTap()
+            }) {
+                HStack(spacing: 12) {
+                    // Trophy icon
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: "10b981").opacity(0.15))
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color(hex: "10b981"))
+                    }
+
+                    // Info
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("30-Day Challenge")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+
+                        Text("Day 18 • \(daysRemaining) days left")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    // Progress
+                    Text("\(Int(challengeProgress * 100))%")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color(hex: "10b981"))
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-        )
+            .buttonStyle(.plain)
+        }
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .alert("Start Workout?", isPresented: $showStartConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Start") {
+                startWorkout()
+            }
+        } message: {
+            Text("Are you sure you want to begin 12-Week Strength? This workout is approximately 45 minutes.")
+        }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = sampleWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -458,14 +464,14 @@ struct CurrentProgramCard: View {
         }
     }
 
-    private func weekDotColor(for week: Int) -> Color {
-        if week < weekNumber {
-            return .white
-        } else if week == weekNumber {
-            return .white
-        } else {
-            return .white.opacity(0.3)
+    private func startWorkout() {
+        workoutManager.resetState()
+        if sampleWorkout == nil {
+            sampleWorkout = SampleWorkoutData.createSampleWorkout(in: modelContext)
         }
+        guard let workout = sampleWorkout, workout.exerciseCount > 0 else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        showWorkoutExecution = true
     }
 }
 
@@ -475,17 +481,16 @@ struct SavedProgramsSection: View {
 
     var body: some View {
         Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             showSavedPrograms = true
         }) {
             HStack(spacing: 16) {
-                // Icon
+                // Icon - using gray/slate color
                 ZStack {
                     RoundedRectangle(cornerRadius: 14)
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "8b5cf6"), Color(hex: "a855f7")],
+                                colors: [Color(hex: "475569"), Color(hex: "64748b")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -514,12 +519,11 @@ struct SavedProgramsSection: View {
                 Text("View All")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Color(hex: "8b5cf6"))
+                    .foregroundStyle(Color.accentBlue)
             }
             .padding(16)
             .background(Color(.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
         }
         .buttonStyle(.plain)
         .fullScreenCover(isPresented: $showSavedPrograms) {
@@ -745,7 +749,7 @@ struct SavedProgramCard: View {
     private var creationTypeColor: Color {
         switch program.creationType {
         case .userCreated: return .accentBlue
-        case .aiGenerated: return .purple
+        case .aiGenerated: return Color(hex: "06b6d4") // Cyan
         case .imported: return .accentOrange
         case .preset: return .accentGreen
         }
@@ -936,7 +940,7 @@ struct ProgramStatItem: View {
 struct DiscoverProgramsSection: View {
     @State private var showChallenges = false
 
-    // Discover items with their colors
+    // Discover items with their colors (no purple)
     private let discoverItems: [(title: String, subtitle: String, icon: String, colors: [Color])] = [
         ("Challenges", "Compete with friends", "trophy.fill", [Color(hex: "22c55e"), Color(hex: "16a34a")]),
         ("Muscle Builder", "12 weeks • Advanced", "dumbbell.fill", [Color(hex: "f97316"), Color(hex: "ea580c")]),
@@ -957,7 +961,7 @@ struct DiscoverProgramsSection: View {
                 Text("Browse All →")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Color(hex: "6366f1"))
+                    .foregroundStyle(Color.accentBlue)
             }
 
             // 2x2 Grid

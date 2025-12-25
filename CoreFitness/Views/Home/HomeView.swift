@@ -42,7 +42,7 @@ struct HomeView: View {
                         TodayRecoveryCard(selectedTab: $selectedTab)
 
                         // Today's Workout Card
-                        TodayWorkoutCard()
+                        TodayWorkoutCard(selectedTab: $selectedTab)
 
                         // Quick Options Grid
                         QuickOptionsGrid(
@@ -157,55 +157,378 @@ struct WelcomeHeader: View {
     }
 }
 
-// MARK: - Quick Options Grid
+// MARK: - Quick Action Types
+enum QuickActionType: String, CaseIterable, Codable, Identifiable {
+    case checkIn = "check_in"
+    case water = "water"
+    case exercises = "exercises"
+    case progress = "progress"
+    case health = "health"
+    case programs = "programs"
+    case challenges = "challenges"
+    case settings = "settings"
+
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .checkIn: return "heart.text.square.fill"
+        case .water: return "drop.fill"
+        case .exercises: return "figure.run"
+        case .progress: return "chart.bar.fill"
+        case .health: return "heart.fill"
+        case .programs: return "list.clipboard.fill"
+        case .challenges: return "trophy.fill"
+        case .settings: return "gearshape.fill"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .checkIn: return "Check-In"
+        case .water: return "Water"
+        case .exercises: return "Exercises"
+        case .progress: return "Progress"
+        case .health: return "Health"
+        case .programs: return "Programs"
+        case .challenges: return "Challenges"
+        case .settings: return "Settings"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .checkIn: return .accentRed
+        case .water: return .accentBlue
+        case .exercises: return .accentOrange
+        case .progress: return .accentGreen
+        case .health: return Color(hex: "FF2D55") // Pink
+        case .programs: return Color(hex: "0891b2") // Teal
+        case .challenges: return .accentYellow
+        case .settings: return .gray
+        }
+    }
+}
+
+// MARK: - Quick Options Grid (Customizable)
 struct QuickOptionsGrid: View {
     let onCheckIn: () -> Void
     let onWaterIntake: () -> Void
     @Binding var selectedTab: Tab
 
+    @AppStorage("quickActions") private var quickActionsData: Data = Data()
+    @State private var showEditSheet = false
+
+    static let defaultActions: [QuickActionType] = [.checkIn, .water, .exercises, .progress, .health, .programs, .challenges, .settings]
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+
+    private var selectedActions: [QuickActionType] {
+        if let decoded = try? JSONDecoder().decode([QuickActionType].self, from: quickActionsData),
+           !decoded.isEmpty {
+            return decoded
+        }
+        return Self.defaultActions
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            Text("Quick Actions")
-                .font(.headline)
-                .fontWeight(.bold)
-
-            // 4 buttons in a row
-            HStack(spacing: 12) {
-                QuickActionButton(
-                    icon: "heart.text.square.fill",
-                    title: "Check-In",
-                    color: .accentRed,
-                    action: onCheckIn
-                )
-
-                QuickActionButton(
-                    icon: "drop.fill",
-                    title: "Water",
-                    color: .accentBlue,
-                    action: onWaterIntake
-                )
-
-                QuickActionButton(
-                    icon: "figure.run",
-                    title: "Exercises",
-                    color: .accentOrange
-                ) {
-                    selectedTab = .programs
+        VStack(alignment: .leading, spacing: 14) {
+            // Header with Edit button
+            HStack {
+                Text("Quick Actions")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                Spacer()
+                Button {
+                    showEditSheet = true
+                } label: {
+                    Text("Edit")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.accentBlue)
                 }
+            }
 
-                QuickActionButton(
-                    icon: "chart.bar.fill",
-                    title: "Progress",
-                    color: .accentGreen
-                ) {
-                    selectedTab = .progress
+            // Dynamic Grid (supports 1-8 items)
+            if !selectedActions.isEmpty {
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(selectedActions) { action in
+                        QuickActionButton(
+                            icon: action.icon,
+                            title: action.title,
+                            color: action.color
+                        ) {
+                            handleAction(action)
+                        }
+                    }
+                }
+            } else {
+                // Empty state
+                HStack {
+                    Spacer()
+                    VStack(spacing: 8) {
+                        Image(systemName: "square.grid.2x2")
+                            .font(.title)
+                            .foregroundStyle(.tertiary)
+                        Text("No shortcuts")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 20)
+                    Spacer()
                 }
             }
         }
-        .padding(20)
+        .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .sheet(isPresented: $showEditSheet) {
+            EditQuickActionsSheet(
+                selectedActions: selectedActions,
+                onSave: { newActions in
+                    if let encoded = try? JSONEncoder().encode(newActions) {
+                        quickActionsData = encoded
+                    }
+                }
+            )
+            .presentationDetents([.large])
+        }
+    }
+
+    private func handleAction(_ action: QuickActionType) {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        switch action {
+        case .checkIn:
+            onCheckIn()
+        case .water:
+            onWaterIntake()
+        case .exercises, .programs:
+            selectedTab = .programs
+        case .progress:
+            selectedTab = .progress
+        case .health:
+            selectedTab = .health
+        case .challenges:
+            selectedTab = .programs
+        case .settings:
+            selectedTab = .settings
+        }
+    }
+}
+
+// MARK: - Edit Quick Actions Sheet
+struct EditQuickActionsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let selectedActions: [QuickActionType]
+    let onSave: ([QuickActionType]) -> Void
+
+    @State private var currentActions: [QuickActionType] = []
+
+    private var availableActions: [QuickActionType] {
+        QuickActionType.allCases.filter { !currentActions.contains($0) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Current Shortcuts Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Your Shortcuts")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                            Spacer()
+                            Text("\(currentActions.count) of 8")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if currentActions.isEmpty {
+                            HStack {
+                                Spacer()
+                                VStack(spacing: 8) {
+                                    Image(systemName: "tray")
+                                        .font(.title)
+                                        .foregroundStyle(.tertiary)
+                                    Text("No shortcuts added")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(.vertical, 30)
+                                Spacer()
+                            }
+                            .background(Color(.tertiarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 12) {
+                                ForEach(currentActions) { action in
+                                    EditableActionItem(action: action) {
+                                        removeAction(action)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+
+                    // Available Shortcuts Section
+                    if !availableActions.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Add Shortcuts")
+                                .font(.headline)
+                                .fontWeight(.bold)
+
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 12) {
+                                ForEach(availableActions) { action in
+                                    AddableActionItem(action: action, disabled: currentActions.count >= 8) {
+                                        addAction(action)
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    // Info text
+                    Text("Tap the minus to remove a shortcut. Tap an available shortcut to add it.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .padding()
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Edit Quick Actions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        onSave(currentActions)
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                currentActions = selectedActions
+            }
+        }
+    }
+
+    private func removeAction(_ action: QuickActionType) {
+        withAnimation(.spring(response: 0.3)) {
+            currentActions.removeAll { $0 == action }
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func addAction(_ action: QuickActionType) {
+        guard currentActions.count < 8 else { return }
+        withAnimation(.spring(response: 0.3)) {
+            currentActions.append(action)
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+}
+
+// MARK: - Editable Action Item (with delete button)
+struct EditableActionItem: View {
+    let action: QuickActionType
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack(alignment: .topTrailing) {
+                ZStack {
+                    Circle()
+                        .fill(action.color.opacity(0.15))
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: action.icon)
+                        .font(.title3)
+                        .foregroundStyle(action.color)
+                }
+
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "minus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white, .red)
+                }
+                .offset(x: 6, y: -6)
+            }
+
+            Text(action.title)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        }
+    }
+}
+
+// MARK: - Addable Action Item (with add button)
+struct AddableActionItem: View {
+    let action: QuickActionType
+    let disabled: Bool
+    let onAdd: () -> Void
+
+    var body: some View {
+        Button(action: onAdd) {
+            VStack(spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(action.color.opacity(disabled ? 0.05 : 0.1))
+                            .frame(width: 50, height: 50)
+
+                        Image(systemName: action.icon)
+                            .font(.title3)
+                            .foregroundStyle(action.color.opacity(disabled ? 0.3 : 0.5))
+                    }
+
+                    // Add button
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.white, disabled ? .gray : .accentGreen)
+                        .offset(x: 6, y: -6)
+                }
+
+                Text(action.title)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(disabled ? .tertiary : .secondary)
+                    .lineLimit(1)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
     }
 }
 
@@ -219,99 +542,62 @@ struct QuickActionButton: View {
 
     var body: some View {
         Button {
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
             action()
         } label: {
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 // Icon circle
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.15))
-                        .frame(width: 50, height: 50)
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: icon)
-                        .font(.title3)
+                        .font(.system(size: 18))
                         .fontWeight(.semibold)
                         .foregroundStyle(color)
                 }
 
                 // Title
                 Text(title)
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(color.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .padding(.vertical, 8)
         }
         .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .scaleEffect(isPressed ? 0.92 : 1.0)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                 isPressed = pressing
             }
         }, perform: {})
     }
 }
 
-// MARK: - Today's Recovery Card (Improved - Bigger)
+// MARK: - Today's Recovery Card (Compact with Sleep, HRV, HR)
 struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @Binding var selectedTab: Tab
 
-    // Blue Ocean Theme
-    // Ring gradient: #60a5fa to #3b82f6
-    // Background: #1e40af to #1e3a8a
-    // Pill backgrounds: #60a5fa
-    // Icon colors: emoji colors (yellow moon, pink heart, red heart)
     private let ringStart = Color(hex: "60a5fa")
     private let ringEnd = Color(hex: "3b82f6")
     private let bgStart = Color(hex: "1e40af")
     private let bgEnd = Color(hex: "1e3a8a")
-    private let pillBgColor = Color(hex: "60a5fa")
-    private let sleepColor = Color(hex: "fcd34d")    // Yellow moon
-    private let hrvColor = Color(hex: "ec4899")      // Pink heart
-    private let hrColor = Color(hex: "ef4444")       // Red heart
 
     private var score: Int {
         healthKitManager.calculateOverallScore()
     }
 
-    private var scoreColor: Color {
-        switch score {
-        case 80...100: return .scoreExcellent
-        case 60..<80: return .scoreGood
-        case 40..<60: return .scoreFair
-        default: return .scorePoor
-        }
-    }
-
     private var scoreMessage: String {
-        if !healthKitManager.isAuthorized {
-            return "No health data"
-        }
+        if !healthKitManager.isAuthorized { return "Connect Health" }
         switch score {
-        case 80...100: return "You're crushing it today!"
-        case 60..<80: return "Good recovery, keep it up!"
-        case 40..<60: return "Take it easy today"
-        default: return "Consider a rest day"
-        }
-    }
-
-    private var recommendation: String {
-        if !healthKitManager.isAuthorized {
-            return "Connect Apple Health to see your score"
-        }
-        switch score {
-        case 80...100: return "High intensity workout recommended"
-        case 60..<80: return "Moderate workout recommended"
-        case 40..<60: return "Light activity recommended"
-        default: return "Rest and recovery day"
+        case 80...100: return "Crushing it!"
+        case 60..<80: return "Good recovery"
+        case 40..<60: return "Take it easy"
+        default: return "Rest day"
         }
     }
 
@@ -319,94 +605,56 @@ struct TodayRecoveryCard: View {
         Button {
             selectedTab = .health
         } label: {
-            VStack(spacing: 20) {
-                // Header
-                HStack {
-                    Text("Today's Recovery")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                    Spacer()
-                    Image(systemName: "chevron.right")
+            HStack(spacing: 12) {
+                // Compact Score Ring
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 6)
+                        .frame(width: 56, height: 56)
+
+                    Circle()
+                        .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
+                        .stroke(
+                            LinearGradient(
+                                colors: [ringStart, ringEnd],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        )
+                        .frame(width: 56, height: 56)
+                        .rotationEffect(.degrees(-90))
+
+                    Text(healthKitManager.isAuthorized ? "\(score)" : "--")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                }
+
+                // Info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Recovery")
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.7))
+                    Text(scoreMessage)
+                        .font(.subheadline)
+                        .fontWeight(.bold)
                 }
 
-                HStack(spacing: 24) {
-                    // Large Score Ring with gradient
-                    ZStack {
-                        // Background ring
-                        Circle()
-                            .stroke(Color.white.opacity(0.15), lineWidth: 14)
-                            .frame(width: 110, height: 110)
+                Spacer()
 
-                        // Green gradient progress ring
-                        Circle()
-                            .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [ringStart, ringEnd],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                style: StrokeStyle(lineWidth: 14, lineCap: .round)
-                            )
-                            .frame(width: 110, height: 110)
-                            .rotationEffect(.degrees(-90))
-                            .shadow(color: ringStart.opacity(0.5), radius: 6)
-
-                        // Score text
-                        VStack(spacing: 2) {
-                            Text(healthKitManager.isAuthorized ? "\(score)" : "--")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                            Text("SCORE")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.7))
-                        }
-                    }
-
-                    // Message and recommendation
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(scoreMessage)
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .lineLimit(2)
-
-                        Text(recommendation)
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.85))
-                            .lineLimit(2)
-                    }
-
-                    Spacer(minLength: 0)
+                // Quick stats - Sleep, HRV, HR
+                HStack(spacing: 8) {
+                    CompactRecoveryStat(icon: "moon.fill", label: "Sleep", value: sleepValue, color: Color(hex: "fcd34d"))
+                    CompactRecoveryStat(icon: "waveform.path.ecg", label: "HRV", value: hrvValue, color: Color(hex: "a78bfa"))
+                    CompactRecoveryStat(icon: "heart.fill", label: "HR", value: hrValue, color: Color(hex: "ef4444"))
                 }
 
-                // Recovery factors row with colored icons
-                HStack(spacing: 10) {
-                    RecoveryFactorPill(
-                        icon: "moon.fill",
-                        label: "Sleep",
-                        value: sleepStatus,
-                        iconColor: sleepColor,
-                        bgColor: pillBgColor
-                    )
-                    RecoveryFactorPill(
-                        icon: "waveform.path.ecg",
-                        label: "HRV",
-                        value: hrvStatus,
-                        iconColor: hrvColor,
-                        bgColor: pillBgColor
-                    )
-                    RecoveryFactorPill(
-                        icon: "heart.fill",
-                        label: "HR",
-                        value: hrStatus,
-                        iconColor: hrColor,
-                        bgColor: pillBgColor
-                    )
-                }
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.4))
             }
             .foregroundStyle(.white)
-            .padding(20)
+            .padding(14)
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
@@ -415,68 +663,45 @@ struct TodayRecoveryCard: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: ringStart.opacity(0.3), radius: 12, y: 6)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)
     }
 
-    private var sleepStatus: String {
+    private var sleepValue: String {
         guard let hours = healthKitManager.healthData.sleepHours else { return "--" }
-        if hours >= 7 { return "Good" }
-        else if hours >= 6 { return "Fair" }
-        else { return "Low" }
+        return String(format: "%.0fh", hours)
     }
 
-    private var hrvStatus: String {
+    private var hrvValue: String {
         guard let hrv = healthKitManager.healthData.hrv else { return "--" }
-        if hrv >= 50 { return "High" }
-        else if hrv >= 30 { return "Normal" }
-        else { return "Low" }
+        return "\(Int(hrv))"
     }
 
-    private var hrStatus: String {
+    private var hrValue: String {
         guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
-        if hr <= 60 { return "Low" }
-        else if hr <= 75 { return "Normal" }
-        else { return "High" }
+        return "\(Int(hr))"
     }
 }
 
-struct RecoveryFactorPill: View {
+struct CompactRecoveryStat: View {
     let icon: String
     let label: String
     let value: String
-    let iconColor: Color
-    var bgColor: Color? = nil  // Optional separate bg color
+    let color: Color
 
     var body: some View {
-        HStack(spacing: 8) {
-            // Colored icon circle
-            ZStack {
-                Circle()
-                    .fill((bgColor ?? iconColor).opacity(0.3))
-                    .frame(width: 26, height: 26)
-
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.bold)
-                Text(label)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.white.opacity(0.7))
-            }
+        VStack(spacing: 1) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 11, weight: .bold))
+            Text(label)
+                .font(.system(size: 8))
+                .foregroundStyle(.white.opacity(0.6))
         }
-        .padding(.leading, 6)
-        .padding(.trailing, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.12))
-        .clipShape(Capsule())
+        .frame(width: 32)
     }
 }
 
@@ -541,108 +766,92 @@ struct DayScoreCell: View {
     }
 }
 
-// MARK: - Today's Workout Card
+// MARK: - Today's Workout Card (Compact)
 struct TodayWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.modelContext) private var modelContext
+    @Binding var selectedTab: Tab
 
     @State private var showWorkoutExecution = false
+    @State private var showStartConfirmation = false
     @State private var sampleWorkout: Workout?
 
     var body: some View {
-        // Workout Card Content
-        VStack(alignment: .leading, spacing: 20) {
-            // Section Header
-            HStack {
-                Text("Today's Workout")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Spacer()
-                Text("Scheduled")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-            }
-
-            // Header Row
-            HStack(spacing: 16) {
+        Button {
+            // Navigate to Programs tab
+            selectedTab = .programs
+        } label: {
+            HStack(spacing: 14) {
                 // Workout Icon
                 ZStack {
                     Circle()
                         .fill(Color.accentOrange.opacity(0.15))
-                        .frame(width: 64, height: 64)
+                        .frame(width: 56, height: 56)
 
                     Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.accentOrange)
                 }
 
                 // Workout Info
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Upper Body Strength")
-                        .font(.title3)
+                        .font(.subheadline)
                         .fontWeight(.bold)
+                        .foregroundStyle(.primary)
 
-                    HStack(spacing: 16) {
-                        HStack(spacing: 6) {
+                    HStack(spacing: 12) {
+                        HStack(spacing: 4) {
                             Image(systemName: "clock")
-                                .font(.caption)
+                                .font(.system(size: 10))
                             Text("45 min")
                         }
-                        HStack(spacing: 6) {
+                        HStack(spacing: 4) {
                             Image(systemName: "list.bullet")
-                                .font(.caption)
+                                .font(.system(size: 10))
                             Text("6 exercises")
                         }
                     }
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                 }
 
                 Spacer()
-            }
 
-            // Exercise Pills
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ExercisePreviewPill(name: "Bench Press", sets: 4)
-                    ExercisePreviewPill(name: "Rows", sets: 4)
-                    ExercisePreviewPill(name: "Shoulder Press", sets: 3)
-                    ExercisePreviewPill(name: "+3 more", sets: 0)
+                // Start Button
+                Button {
+                    showStartConfirmation = true
+                } label: {
+                    Text("Start")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .background(Color.accentOrange)
+                        .clipShape(Capsule())
                 }
-            }
+                .buttonStyle(.plain)
 
-            // Start Button
-            Button {
-                startWorkout()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "play.fill")
-                        .font(.headline)
-                    Text("Start Workout")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(
-                    LinearGradient(
-                        colors: [.accentOrange, .accentOrange.opacity(0.85)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .shadow(color: .accentOrange.opacity(0.3), radius: 8, y: 4)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
             }
-            .buttonStyle(.plain)
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .padding(20)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .buttonStyle(.plain)
+        .alert("Start Workout?", isPresented: $showStartConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Start") {
+                startWorkout()
+            }
+        } message: {
+            Text("Are you sure you want to begin Upper Body Strength? This workout is approximately 45 minutes.")
+        }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = sampleWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -662,48 +871,13 @@ struct TodayWorkoutCard: View {
     }
 
     private func startWorkout() {
-        // Reset workout manager state first
         workoutManager.resetState()
-
-        // Ensure workout exists
         if sampleWorkout == nil {
             sampleWorkout = SampleWorkoutData.createSampleWorkout(in: modelContext)
         }
-
-        // Verify workout has exercises before starting
-        guard let workout = sampleWorkout,
-              workout.exerciseCount > 0 else {
-            return
-        }
-
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
-
+        guard let workout = sampleWorkout, workout.exerciseCount > 0 else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         showWorkoutExecution = true
-    }
-}
-
-struct ExercisePreviewPill: View {
-    let name: String
-    let sets: Int
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(name)
-                .font(.subheadline)
-                .fontWeight(.medium)
-            if sets > 0 {
-                Text("·")
-                    .foregroundStyle(.tertiary)
-                Text("\(sets) sets")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color(.tertiarySystemGroupedBackground))
-        .clipShape(Capsule())
     }
 }
 
