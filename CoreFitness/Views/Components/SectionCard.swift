@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - Section Card
 /// A reusable card component for displaying sections with optional title and subtitle
 struct SectionCard<Content: View>: View {
+    @EnvironmentObject var themeManager: ThemeManager
 
     let title: String?
     let subtitle: String?
@@ -45,8 +46,7 @@ struct SectionCard<Content: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .onTapGesture {
             if let action = action {
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
+                themeManager.lightImpact()
                 action()
             }
         }
@@ -91,7 +91,7 @@ struct SectionCard<Content: View>: View {
 
 // MARK: - Section Card with Header Only (no content)
 struct SectionCardHeader: View {
-
+    @EnvironmentObject var themeManager: ThemeManager
     let title: String
     let subtitle: String?
     let icon: String?
@@ -149,8 +149,7 @@ struct SectionCardHeader: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .onTapGesture {
             if let action = action {
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
+                themeManager.lightImpact()
                 action()
             }
         }
@@ -305,6 +304,7 @@ struct StatCard: View {
 
 // MARK: - Empty State View
 struct EmptyStateView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let icon: String
     let title: String
     let message: String
@@ -350,8 +350,7 @@ struct EmptyStateView: View {
             // Action Button
             if let actionTitle = actionTitle, let action = action {
                 Button {
-                    let impact = UIImpactFeedbackGenerator(style: .medium)
-                    impact.impactOccurred()
+                    themeManager.mediumImpact()
                     action()
                 } label: {
                     Text(actionTitle)
@@ -565,4 +564,109 @@ struct LoadingStatsSkeleton: View {
     }
     .padding()
     .background(Color(.systemGroupedBackground))
+}
+
+// MARK: - View Header Components
+
+/// Unified header component for main views
+/// Provides consistent styling across Home, Programs, Health, Progress, and Settings views
+struct ViewHeader<MenuContent: View>: View {
+    let title: String
+    let isLoading: Bool
+    @ViewBuilder let menuContent: () -> MenuContent
+
+    init(
+        _ title: String,
+        isLoading: Bool = false,
+        @ViewBuilder menuContent: @escaping () -> MenuContent
+    ) {
+        self.title = title
+        self.isLoading = isLoading
+        self.menuContent = menuContent
+    }
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Spacer()
+
+            // Loading indicator
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .padding(.trailing, 8)
+            }
+
+            // Quick Add Menu Button
+            Menu {
+                menuContent()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .frame(width: 52, height: 52)
+                    .background(Color.accentBlue)
+                    .clipShape(Circle())
+                    .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
+            }
+            .accessibilityLabel("Quick actions menu")
+            .accessibilityHint("Double tap to open menu options")
+        }
+    }
+}
+
+/// ViewHeader without menu button - just title and optional loading
+struct ViewHeaderSimple: View {
+    let title: String
+    let isLoading: Bool
+
+    init(_ title: String, isLoading: Bool = false) {
+        self.title = title
+        self.isLoading = isLoading
+    }
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Spacer()
+
+            if isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+            }
+        }
+    }
+}
+
+/// ViewHeader with custom trailing content
+struct ViewHeaderCustom<TrailingContent: View>: View {
+    let title: String
+    @ViewBuilder let trailingContent: () -> TrailingContent
+
+    init(
+        _ title: String,
+        @ViewBuilder trailingContent: @escaping () -> TrailingContent
+    ) {
+        self.title = title
+        self.trailingContent = trailingContent
+    }
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+
+            Spacer()
+
+            trailingContent()
+        }
+    }
 }

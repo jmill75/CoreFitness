@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
 
@@ -6,6 +7,7 @@ struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var navigationState: NavigationState
+    @EnvironmentObject var themeManager: ThemeManager
 
     // MARK: - Bindings
     @Binding var selectedTab: Tab
@@ -24,13 +26,11 @@ struct HomeView: View {
                             userName: authManager.currentUser?.displayName ?? "Champion",
                             onCheckIn: {
                                 showDailyCheckIn = true
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
+                                themeManager.mediumImpact()
                             },
                             onWaterIntake: {
                                 showWaterIntake = true
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
+                                themeManager.mediumImpact()
                             }
                         )
                         .id("top")
@@ -48,13 +48,11 @@ struct HomeView: View {
                         QuickOptionsGrid(
                             onCheckIn: {
                                 showDailyCheckIn = true
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
+                                themeManager.mediumImpact()
                             },
                             onWaterIntake: {
                                 showWaterIntake = true
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
+                                themeManager.mediumImpact()
                             },
                             selectedTab: $selectedTab
                         )
@@ -153,6 +151,8 @@ struct WelcomeHeader: View {
                     .clipShape(Circle())
                     .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
             }
+            .accessibilityLabel("Quick actions menu")
+            .accessibilityHint("Double tap to open menu with daily check-in and water logging options")
         }
     }
 }
@@ -301,7 +301,7 @@ struct QuickOptionsGrid: View {
     }
 
     private func handleAction(_ action: QuickActionType) {
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // Note: Haptic feedback handled by parent view through callbacks
         switch action {
         case .checkIn:
             onCheckIn()
@@ -445,7 +445,6 @@ struct EditQuickActionsSheet: View {
         withAnimation(.spring(response: 0.3)) {
             currentActions.removeAll { $0 == action }
         }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func addAction(_ action: QuickActionType) {
@@ -453,7 +452,6 @@ struct EditQuickActionsSheet: View {
         withAnimation(.spring(response: 0.3)) {
             currentActions.append(action)
         }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 }
 
@@ -480,8 +478,10 @@ struct EditableActionItem: View {
                     Image(systemName: "minus.circle.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(.white, .red)
+                        .frame(width: 44, height: 44)
                 }
                 .offset(x: 6, y: -6)
+                .accessibilityLabel("Remove \(action.title)")
             }
 
             Text(action.title)
@@ -490,6 +490,7 @@ struct EditableActionItem: View {
                 .foregroundStyle(.primary)
                 .lineLimit(1)
         }
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -529,6 +530,8 @@ struct AddableActionItem: View {
         }
         .buttonStyle(.plain)
         .disabled(disabled)
+        .accessibilityLabel("Add \(action.title)")
+        .accessibilityHint(disabled ? "Maximum shortcuts reached" : "Double tap to add this shortcut")
     }
 }
 
@@ -574,6 +577,8 @@ struct QuickActionButton: View {
                 isPressed = pressing
             }
         }, perform: {})
+        .accessibilityLabel(title)
+        .accessibilityHint("Double tap to open \(title)")
     }
 }
 
@@ -696,6 +701,9 @@ struct TodayRecoveryCard: View {
             .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Today's Recovery. Score \(healthKitManager.isAuthorized ? "\(score)" : "not available"). \(scoreMessage)")
+        .accessibilityHint("Double tap to view health details")
     }
 
     private var sleepValue: String {
@@ -732,6 +740,8 @@ struct RecoveryStat: View {
                 .foregroundStyle(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 
@@ -774,6 +784,12 @@ struct DayScoreCell: View {
         return formatter
     }
 
+    private var fullDateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .full
+        return formatter
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             // Day letter
@@ -793,6 +809,8 @@ struct DayScoreCell: View {
                 )
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(fullDateFormatter.string(from: date))\(isToday ? ", Today" : "")")
     }
 }
 
@@ -800,104 +818,149 @@ struct DayScoreCell: View {
 struct TodayWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @Binding var selectedTab: Tab
 
     @State private var showWorkoutExecution = false
     @State private var showStartConfirmation = false
-    @State private var sampleWorkout: Workout?
+    @State private var selectedWorkout: Workout?
 
-    var body: some View {
-        HStack(spacing: 12) {
-            // Workout Icon
-            ZStack {
-                Circle()
-                    .fill(Color.accentOrange.opacity(0.15))
-                    .frame(width: 48, height: 48)
-
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color.accentOrange)
-            }
-
-            // Workout Info (tappable to go to Programs)
-            Button {
-                selectedTab = .programs
-            } label: {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Today's Workout")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    Text("Upper Body Strength")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.primary)
-
-                    HStack(spacing: 8) {
-                        Label("45 min", systemImage: "clock")
-                        Label("6 exercises", systemImage: "list.bullet")
-                    }
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                }
-            }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 8)
-
-            // Start Button
-            Button {
-                showStartConfirmation = true
-            } label: {
-                Text("Start")
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.accentOrange)
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(14)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
-        .alert("Start Workout?", isPresented: $showStartConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Start") {
-                startWorkout()
-            }
-        } message: {
-            Text("Are you sure you want to begin Upper Body Strength? This workout is approximately 45 minutes.")
-        }
-        .fullScreenCover(isPresented: $showWorkoutExecution) {
-            if let workout = sampleWorkout {
-                WorkoutExecutionView(workout: workout)
-                    .environmentObject(workoutManager)
-                    .environmentObject(themeManager)
-            }
-        }
-        .onAppear {
-            loadWorkout()
-        }
+    // Get most recent workout
+    private var currentWorkout: Workout? {
+        workouts.first
     }
 
-    private func loadWorkout() {
-        if sampleWorkout == nil {
-            sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
+    var body: some View {
+        if let workout = currentWorkout {
+            HStack(spacing: 12) {
+                // Workout Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.accentOrange.opacity(0.15))
+                        .frame(width: 48, height: 48)
+
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.accentOrange)
+                }
+
+                // Workout Info (tappable to go to Programs)
+                Button {
+                    selectedTab = .programs
+                } label: {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Today's Workout")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text(workout.name)
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+
+                        HStack(spacing: 8) {
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                            Label("\(workout.exerciseCount) exercises", systemImage: "list.bullet")
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+
+                        Text("View Details")
+                            .font(.caption2)
+                            .foregroundStyle(Color.accentOrange)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 8)
+
+                // Start Button
+                Button {
+                    selectedWorkout = workout
+                    showStartConfirmation = true
+                } label: {
+                    Text("Start")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.accentOrange)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Start workout")
+                .accessibilityHint("Double tap to start \(workout.name) workout")
+            }
+            .accessibilityElement(children: .contain)
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .alert("Start Workout?", isPresented: $showStartConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Start") {
+                    startWorkout()
+                }
+            } message: {
+                if let selected = selectedWorkout {
+                    Text("Are you sure you want to begin \(selected.name)? This workout is approximately \(selected.estimatedDuration) minutes.")
+                } else {
+                    Text("Are you sure you want to start this workout?")
+                }
+            }
+            .fullScreenCover(isPresented: $showWorkoutExecution) {
+                if let selected = selectedWorkout {
+                    WorkoutExecutionView(workout: selected)
+                        .environmentObject(workoutManager)
+                        .environmentObject(themeManager)
+                }
+            }
+        } else {
+            // Empty state - no workouts available
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemGray5))
+                        .frame(width: 48, height: 48)
+
+                    Image(systemName: "figure.run")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("No Workout Planned")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+
+                    Text("Create a workout in Programs")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+
+                Spacer()
+
+                Button {
+                    selectedTab = .programs
+                } label: {
+                    Text("Create")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Color.accentOrange)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
         }
     }
 
     private func startWorkout() {
         workoutManager.resetState()
-        if sampleWorkout == nil {
-            sampleWorkout = SampleWorkoutData.createSampleWorkout(in: modelContext)
-        }
-        guard let workout = sampleWorkout, workout.exerciseCount > 0 else { return }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        guard let workout = selectedWorkout, workout.exerciseCount > 0 else { return }
         showWorkoutExecution = true
     }
 }
@@ -906,6 +969,7 @@ struct TodayWorkoutCard: View {
 struct QuickWaterIntakeView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var waterManager: WaterIntakeManager
+    @EnvironmentObject var themeManager: ThemeManager
 
     // Local animation state
     @State private var showAddAnimation = false
@@ -1154,7 +1218,7 @@ struct QuickWaterIntakeView: View {
         }
 
         // Haptic feedback
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        themeManager.mediumImpact()
 
         // Show animation
         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
@@ -1170,7 +1234,8 @@ struct QuickWaterIntakeView: View {
 
         // Celebration and extra haptic for goal completion
         if waterManager.hasReachedGoal && previousTotal < waterManager.goalOunces {
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            themeManager.notifySuccess()
+            waterManager.markGoalCelebrated()
 
             // Trigger celebration animation
             withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
@@ -1277,6 +1342,8 @@ struct HomeWaterAddButton: View {
                 isPressed = false
             }
         }
+        .accessibilityLabel("Add \(size.displaySize) of water")
+        .accessibilityHint("Double tap to log \(size.label) \(size.displaySize)")
     }
 }
 
@@ -1311,6 +1378,8 @@ struct TodayWaterStatBox: View {
         .padding(.vertical, 12)
         .background(Color(.tertiarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value) \(unit)")
     }
 }
 

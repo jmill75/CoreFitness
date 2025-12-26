@@ -56,6 +56,9 @@ class WorkoutManager: ObservableObject {
     private var countdownTimer: Timer?
     private var modelContext: ModelContext?
 
+    // MARK: - Theme Manager (for haptics)
+    weak var themeManager: ThemeManager?
+
     // MARK: - Watch Connectivity
     private let watchManager = WatchConnectivityManager.shared
 
@@ -320,23 +323,23 @@ class WorkoutManager: ObservableObject {
     /// Start the 3-2-1-GO countdown
     private func startCountdown() {
         currentPhase = .countdown(remaining: 3)
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        themeManager?.mediumImpact()
 
         // Use DispatchQueue for more reliable timing
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self, self.currentPhase != .idle else { return }
             self.currentPhase = .countdown(remaining: 2)
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            self.themeManager?.mediumImpact()
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 guard let self = self, self.currentPhase != .idle else { return }
                 self.currentPhase = .countdown(remaining: 1)
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                self.themeManager?.mediumImpact()
 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     guard let self = self, self.currentPhase != .idle else { return }
                     // GO!
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    self.themeManager?.notifySuccess()
                     self.beginExercising()
                 }
             }
@@ -438,9 +441,9 @@ class WorkoutManager: ObservableObject {
             prWeight = weight
             showPRCelebration = true
             // Extra haptic for PR
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                UINotificationFeedbackGenerator().notificationOccurred(.success)
+            themeManager?.notifySuccess()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+                self?.themeManager?.notifySuccess()
             }
 
             // Delay next action to let PR celebration show
@@ -479,21 +482,19 @@ class WorkoutManager: ObservableObject {
 
     /// Haptic feedback for set completion
     private func triggerSetCompleteHaptic() {
-        let generator = UIImpactFeedbackGenerator(style: .heavy)
-        generator.impactOccurred()
+        themeManager?.heavyImpact()
     }
 
     /// Haptic feedback for exercise completion (more intense)
     private func triggerExerciseCompleteHaptic() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        themeManager?.notifySuccess()
 
         // Double tap pattern for more impact
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            self?.themeManager?.heavyImpact()
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            self?.themeManager?.heavyImpact()
         }
     }
 
@@ -556,10 +557,10 @@ class WorkoutManager: ObservableObject {
                     self.currentPhase = .exercising
                     self.watchManager.sendRestTimerEnded()
                     self.notifyWatchExerciseChanged()
-                    UINotificationFeedbackGenerator().notificationOccurred(.warning)
+                    self.themeManager?.notifyWarning()
                 } else if self.restTimeRemaining <= 5 {
                     // Countdown haptics for last 5 seconds
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    self.themeManager?.lightImpact()
                 }
             }
         }
@@ -572,14 +573,14 @@ class WorkoutManager: ObservableObject {
         currentPhase = .exercising
         watchManager.sendRestTimerEnded()
         notifyWatchExerciseChanged()
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        themeManager?.mediumImpact()
     }
 
     /// Extend rest timer
     func extendRest(by seconds: Int = 30) {
         restTimeRemaining += seconds
         currentPhase = .resting(remaining: restTimeRemaining)
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        themeManager?.lightImpact()
     }
 
     /// Move to next exercise
@@ -595,7 +596,7 @@ class WorkoutManager: ObservableObject {
         currentPhase = .exercising
 
         notifyWatchExerciseChanged()
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        themeManager?.mediumImpact()
     }
 
     /// Go back to previous exercise
@@ -606,7 +607,7 @@ class WorkoutManager: ObservableObject {
         currentSetNumber = 1
         currentPhase = .exercising
 
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        themeManager?.lightImpact()
     }
 
     /// Pause the workout
@@ -655,7 +656,7 @@ class WorkoutManager: ObservableObject {
         // End Live Activity
         liveActivityManager.endActivity()
 
-        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        themeManager?.notifySuccess()
     }
 
     /// Cancel/exit workout

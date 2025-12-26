@@ -46,16 +46,96 @@ struct ProgressTabView: View {
 
 // MARK: - Stats Overview Section
 struct StatsOverviewSection: View {
+    @Query private var workoutSessions: [WorkoutSession]
+    @Query private var userAchievements: [UserAchievement]
+
+    // Only completed sessions
+    private var completedSessions: [WorkoutSession] {
+        workoutSessions.filter { $0.status == .completed }
+    }
+
+    private var currentStreak: Int {
+        // Calculate consecutive days with workouts
+        let calendar = Calendar.current
+        var streak = 0
+        var checkDate = calendar.startOfDay(for: Date())
+
+        while true {
+            let hasWorkout = completedSessions.contains {
+                guard let completed = $0.completedAt else { return false }
+                return calendar.isDate(completed, inSameDayAs: checkDate)
+            }
+            if hasWorkout {
+                streak += 1
+                checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate) ?? checkDate
+            } else {
+                break
+            }
+        }
+        return streak
+    }
+
+    private var bestStreak: Int {
+        // For now, return current streak as best (would need to track this separately)
+        max(currentStreak, 0)
+    }
+
+    private var totalWorkouts: Int {
+        completedSessions.count
+    }
+
+    private var workoutsThisMonth: Int {
+        let calendar = Calendar.current
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
+        return completedSessions.filter {
+            guard let completed = $0.completedAt else { return false }
+            return completed >= startOfMonth
+        }.count
+    }
+
+    private var totalTimeMinutes: Int {
+        completedSessions.reduce(0) { $0 + (($1.totalDuration ?? 0) / 60) }
+    }
+
+    private var avgWorkoutMinutes: Int {
+        guard totalWorkouts > 0 else { return 0 }
+        return totalTimeMinutes / totalWorkouts
+    }
+
+    private var badgesEarned: Int {
+        userAchievements.filter { $0.isComplete }.count
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
-                StatOverviewCard(emoji: "🔥", value: "12", label: "Day Streak", subtitle: "Best: 30 days")
-                StatOverviewCard(emoji: "💪", value: "48", label: "Workouts", subtitle: "This month: 12")
+                StatOverviewCard(
+                    emoji: "🔥",
+                    value: "\(currentStreak)",
+                    label: "Day Streak",
+                    subtitle: bestStreak > 0 ? "Best: \(bestStreak) days" : "Start your streak!"
+                )
+                StatOverviewCard(
+                    emoji: "💪",
+                    value: "\(totalWorkouts)",
+                    label: "Workouts",
+                    subtitle: workoutsThisMonth > 0 ? "This month: \(workoutsThisMonth)" : "No workouts yet"
+                )
             }
 
             HStack(spacing: 12) {
-                StatOverviewCard(emoji: "⏱️", value: "32h", label: "Total Time", subtitle: "Avg: 45 min")
-                StatOverviewCard(emoji: "🏆", value: "15", label: "Badges", subtitle: "3 new this week")
+                StatOverviewCard(
+                    emoji: "⏱️",
+                    value: totalTimeMinutes >= 60 ? "\(totalTimeMinutes / 60)h" : "\(totalTimeMinutes)m",
+                    label: "Total Time",
+                    subtitle: avgWorkoutMinutes > 0 ? "Avg: \(avgWorkoutMinutes) min" : "Start training!"
+                )
+                StatOverviewCard(
+                    emoji: "🏆",
+                    value: "\(badgesEarned)",
+                    label: "Badges",
+                    subtitle: badgesEarned > 0 ? "Keep earning!" : "Complete goals to earn"
+                )
             }
         }
     }
@@ -221,21 +301,45 @@ struct AchievementBadge: View {
 
 // MARK: - Streaks Section
 struct StreaksSection: View {
+    @Query private var workoutSessions: [WorkoutSession]
+
+    // Only completed sessions
+    private var completedSessions: [WorkoutSession] {
+        workoutSessions.filter { $0.status == .completed }
+    }
+
+    // Get the last 7 days and check which have workouts
+    private var weekDays: [(label: String, date: Date, hasWorkout: Bool)] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
+
+        return (0..<7).map { daysAgo in
+            let date = calendar.date(byAdding: .day, value: -(6 - daysAgo), to: today) ?? today
+            let weekday = calendar.component(.weekday, from: date) - 1 // 0 = Sunday
+            let hasWorkout = completedSessions.contains {
+                guard let completed = $0.completedAt else { return false }
+                return calendar.isDate(completed, inSameDayAs: date)
+            }
+            return (label: dayLabels[weekday], date: date, hasWorkout: hasWorkout)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Current Streak")
+            Text("This Week")
                 .font(.headline)
                 .fontWeight(.bold)
 
             HStack(spacing: 6) {
-                ForEach(0..<7, id: \.self) { index in
+                ForEach(Array(weekDays.enumerated()), id: \.offset) { index, day in
                     VStack(spacing: 6) {
                         ZStack {
                             Circle()
-                                .fill(index < 5 ? Color.accentGreen : Color(.systemGray5))
+                                .fill(day.hasWorkout ? Color.accentGreen : Color(.systemGray5))
                                 .frame(width: 36, height: 36)
 
-                            if index < 5 {
+                            if day.hasWorkout {
                                 Image(systemName: "checkmark")
                                     .font(.caption)
                                     .fontWeight(.bold)
@@ -243,7 +347,7 @@ struct StreaksSection: View {
                             }
                         }
 
-                        Text(["M", "T", "W", "T", "F", "S", "S"][index])
+                        Text(day.label)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -259,6 +363,31 @@ struct StreaksSection: View {
 
 // MARK: - Workout History Section
 struct WorkoutHistorySection: View {
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workoutSessions: [WorkoutSession]
+
+    // Only completed sessions
+    private var completedSessions: [WorkoutSession] {
+        workoutSessions.filter { $0.status == .completed }
+    }
+
+    private var recentWorkouts: [WorkoutSession] {
+        Array(completedSessions.prefix(3))
+    }
+
+    private func formatDate(_ date: Date?) -> String {
+        guard let date = date else { return "" }
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: date)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -268,16 +397,39 @@ struct WorkoutHistorySection: View {
 
                 Spacer()
 
-                Text("See All")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(Color.brandPrimary)
+                if completedSessions.count > 3 {
+                    Text("See All")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color.brandPrimary)
+                }
             }
 
-            VStack(spacing: 10) {
-                WorkoutHistoryRow(name: "Upper Body Push", date: "Today", duration: "45 min", icon: "figure.arms.open")
-                WorkoutHistoryRow(name: "Lower Body", date: "Yesterday", duration: "52 min", icon: "figure.walk")
-                WorkoutHistoryRow(name: "Core & Cardio", date: "Dec 20", duration: "30 min", icon: "figure.core.training")
+            if recentWorkouts.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "figure.run")
+                        .font(.title)
+                        .foregroundStyle(.tertiary)
+                    Text("No workouts yet")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("Complete your first workout to see it here")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(recentWorkouts) { session in
+                        WorkoutHistoryRow(
+                            name: session.workout?.name ?? "Workout",
+                            date: formatDate(session.completedAt),
+                            duration: "\((session.totalDuration ?? 0) / 60) min",
+                            icon: "figure.strengthtraining.traditional"
+                        )
+                    }
+                }
             }
         }
         .padding()

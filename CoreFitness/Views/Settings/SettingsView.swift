@@ -13,6 +13,15 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Header Section
+                Section {
+                    Text("Settings")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                }
+                .listRowBackground(Color.clear)
+
                 // User Profile Section
                 Section {
                     UserProfileCard()
@@ -215,18 +224,7 @@ struct SettingsView: View {
                 .listRowBackground(Color.clear)
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                        Text("Settings")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showSubscription) {
                 SubscriptionView()
                     .presentationBackground(.regularMaterial)
@@ -301,6 +299,7 @@ struct UserProfileCard: View {
 
 // MARK: - Placeholder Settings Views
 struct RestTimerSettingsView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var restTime: Double = 90
 
     private var timerColor: Color {
@@ -339,8 +338,7 @@ struct RestTimerSettingsView: View {
                                 withAnimation(.spring(response: 0.3)) {
                                     restTime = Double(seconds)
                                 }
-                                let impact = UIImpactFeedbackGenerator(style: .light)
-                                impact.impactOccurred()
+                                themeManager.lightImpact()
                             } label: {
                                 Text("\(seconds)s")
                                     .font(.caption)
@@ -379,7 +377,7 @@ struct RestTimerSettingsView: View {
 }
 
 struct NotificationSettingsView: View {
-
+    @EnvironmentObject var themeManager: ThemeManager
     @StateObject private var notificationManager = NotificationManager.shared
     @State private var showPermissionAlert = false
 
@@ -401,8 +399,7 @@ struct NotificationSettingsView: View {
                         }
                     }
                     // Haptic feedback
-                    let impact = UIImpactFeedbackGenerator(style: .light)
-                    impact.impactOccurred()
+                    themeManager.lightImpact()
                 }
 
                 if notificationManager.dailyCheckInReminderEnabled {
@@ -710,6 +707,7 @@ struct SubscriptionFeatureRow: View {
 
 // MARK: - Water Intake Settings View
 struct WaterIntakeSettingsView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @AppStorage("waterIntakeEnabled") private var waterIntakeEnabled = true
     @AppStorage("waterGoalOz") private var waterGoalOz: Double = 64
     @AppStorage("waterReminderEnabled") private var waterReminderEnabled = false
@@ -753,7 +751,7 @@ struct WaterIntakeSettingsView: View {
                                     withAnimation {
                                         waterGoalOz = Double(oz)
                                     }
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    themeManager.lightImpact()
                                 } label: {
                                     Text("\(oz)oz")
                                         .font(.caption)
@@ -846,6 +844,7 @@ struct ContainerSizeRow: View {
 
 // MARK: - Music Settings View
 struct MusicSettingsView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @AppStorage("musicEnabled") private var musicEnabled = true
     @AppStorage("musicProvider") private var musicProvider: String = "Apple Music"
     @AppStorage("showMusicDuringWorkout") private var showMusicDuringWorkout = true
@@ -872,7 +871,7 @@ struct MusicSettingsView: View {
                         Button {
                             musicProvider = provider.rawValue
                             musicService.selectedProvider = provider
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            themeManager.lightImpact()
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: provider.icon)
@@ -958,6 +957,7 @@ struct MusicSettingsView: View {
 
 // MARK: - Quick Actions Settings View
 struct QuickActionsSettingsView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @AppStorage("quickActions") private var quickActionsData: Data = Data()
     @State private var showResetConfirmation = false
     @State private var showResetSuccess = false
@@ -1067,7 +1067,7 @@ struct QuickActionsSettingsView: View {
         if let encoded = try? JSONEncoder().encode(QuickOptionsGrid.defaultActions) {
             quickActionsData = encoded
         }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        themeManager.mediumImpact()
         showResetSuccess = true
     }
 }

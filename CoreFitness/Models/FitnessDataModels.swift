@@ -624,7 +624,7 @@ final class MonthlySummary {
 // MARK: - User Settings & Profile
 // ============================================
 
-/// User profile and settings
+/// User profile and settings - syncs via iCloud/CloudKit
 @Model
 final class UserProfile {
     var id: UUID = UUID()
@@ -640,12 +640,65 @@ final class UserProfile {
     var targetWeight: Double? // lbs
     var targetBodyFat: Double?
 
-    // Preferences
+    // Appearance Preferences (synced across devices)
+    var selectedThemeRaw: String = "Standard"
+    var colorSchemePreferenceRaw: String = "System"
+
+    // Feedback Preferences
+    var hapticsEnabled: Bool = true
+    var soundsEnabled: Bool = true
+
+    // Unit Preferences
     var useMetricSystem: Bool = false
+
+    // Workout Preferences
+    var restTimerDuration: Int = 90 // default rest between sets
+    var restTimerAutoStart: Bool = true
+    var restTimerVibrate: Bool = true
+    var restTimerSound: Bool = false
+    var showHeartRateZones: Bool = true
+
+    // Notification Preferences
     var notificationsEnabled: Bool = true
     var workoutReminderTime: Date?
-    var restTimerDuration: Int = 90 // default rest between sets
-    var showHeartRateZones: Bool = true
+    var weeklySummaryEnabled: Bool = true
+    var monthlySummaryEnabled: Bool = true
+
+    // Water Intake Preferences
+    var waterIntakeEnabled: Bool = true
+    var waterReminderEnabled: Bool = false
+    var waterReminderInterval: Double = 2 // hours
+
+    // Music Preferences
+    var musicEnabled: Bool = true
+    var musicProviderRaw: String = "Apple Music"
+    var showMusicDuringWorkout: Bool = true
+    var autoPlayOnWorkoutStart: Bool = false
+
+    // Watch Preferences
+    var watchMirrorWorkouts: Bool = true
+    var watchShowHeartRate: Bool = true
+    var watchHapticAlerts: Bool = true
+
+    // Quick Actions (stored as JSON data)
+    var quickActionsData: Data = Data()
+
+    // HealthKit
+    var hasRequestedHealthKit: Bool = false
+
+    // Daily Check-In Settings
+    var dailyCheckInReminderEnabled: Bool = false
+    var dailyCheckInTimeRaw: String = "morning"
+
+    // Daily Check-In State (last check-in values)
+    var lastCheckInDateString: String = ""
+    var lastCheckInMood: Double = 3
+    var lastCheckInSoreness: Double = 2
+    var lastCheckInStress: Double = 2
+    var lastCheckInSleep: Double = 3
+
+    // Sync Tracking
+    var lastModified: Date = Date()
 
     // Stats
     var totalWorkoutsCompleted: Int = 0
@@ -675,5 +728,10 @@ final class UserProfile {
         self.totalMinutesWorkedOut = 0
         self.createdAt = Date()
         self.memberSince = Date()
+    }
+
+    /// Mark profile as modified for sync tracking
+    func markModified() {
+        lastModified = Date()
     }
 }

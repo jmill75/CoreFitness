@@ -16,41 +16,23 @@ struct ProgramsView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Header with + button
-                    HStack {
-                        Text("Programs")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-
-                        Spacer()
-
-                        // Quick Add Menu Button (same as Home)
-                        Menu {
-                            Button {
-                                showCreateProgram = true
-                            } label: {
-                                Label("Create Program", systemImage: "plus")
-                            }
-
-                            Button {
-                                showAIWorkoutCreation = true
-                            } label: {
-                                Label("AI Create", systemImage: "sparkles")
-                            }
-
-                            Button {
-                                showImportWorkout = true
-                            } label: {
-                                Label("Import", systemImage: "doc.badge.plus")
-                            }
+                    ViewHeader("Programs") {
+                        Button {
+                            showCreateProgram = true
                         } label: {
-                            Image(systemName: "plus")
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                                .frame(width: 52, height: 52)
-                                .background(Color.accentBlue)
-                                .clipShape(Circle())
-                                .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
+                            Label("Create Program", systemImage: "plus")
+                        }
+
+                        Button {
+                            showAIWorkoutCreation = true
+                        } label: {
+                            Label("AI Create", systemImage: "sparkles")
+                        }
+
+                        Button {
+                            showImportWorkout = true
+                        } label: {
+                            Label("Import", systemImage: "doc.badge.plus")
                         }
                     }
 
@@ -100,12 +82,12 @@ struct ProgramsView: View {
 
 // MARK: - Exercises Card
 struct ExercisesCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let onTap: () -> Void
 
     var body: some View {
         Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            themeManager.mediumImpact()
             onTap()
         }) {
             HStack(spacing: 16) {
@@ -156,12 +138,12 @@ struct ExercisesCard: View {
 
 // MARK: - Challenges Card
 struct ChallengesCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let onTap: () -> Void
 
     var body: some View {
         Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            themeManager.mediumImpact()
             onTap()
         }) {
             HStack(spacing: 16) {
@@ -244,6 +226,7 @@ struct QuickActionsSection: View {
 }
 
 struct QuickActionCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
 
     let title: String
     let icon: String
@@ -254,8 +237,7 @@ struct QuickActionCard: View {
 
     var body: some View {
         Button(action: {
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
+            themeManager.mediumImpact()
             action()
         }) {
             VStack(spacing: 8) {
@@ -303,18 +285,29 @@ struct CurrentProgramsCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Challenge.startDate, order: .reverse) private var challenges: [Challenge]
+    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
 
     let onChallengeTap: () -> Void
 
     @State private var showWorkoutExecution = false
     @State private var showStartConfirmation = false
-    @State private var sampleWorkout: Workout?
+    @State private var selectedWorkout: Workout?
 
-    private let programProgress: Double = 0.33
-    private let weekNumber: Int = 4
-    private let totalWeeks: Int = 12
-    private let challengeProgress: Double = 0.6
-    private let daysRemaining = 12
+    // Get active challenge from SwiftData (same logic as ChallengesView)
+    private var activeChallenge: Challenge? {
+        challenges.first { $0.isActive && !$0.isCompleted }
+    }
+
+    // Get most recent workout (user-created or any available)
+    private var currentWorkout: Workout? {
+        workouts.first
+    }
+
+    // Check if we have any content to show
+    private var hasContent: Bool {
+        currentWorkout != nil || activeChallenge != nil
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -329,104 +322,119 @@ struct CurrentProgramsCard: View {
             .padding(.top, 16)
             .padding(.bottom, 12)
 
-            // Workout Row
-            HStack(spacing: 12) {
-                // Progress Ring
-                ZStack {
-                    Circle()
-                        .stroke(Color(hex: "0891b2").opacity(0.2), lineWidth: 5)
-                        .frame(width: 44, height: 44)
-
-                    Circle()
-                        .trim(from: 0, to: programProgress)
-                        .stroke(Color(hex: "0891b2"), style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                        .frame(width: 44, height: 44)
-                        .rotationEffect(.degrees(-90))
-
-                    Text("\(Int(programProgress * 100))%")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(Color(hex: "0891b2"))
-                }
-
-                // Info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("12-Week Strength")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-
-                    Text("Week \(weekNumber) of \(totalWeeks)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                // Start Button
-                Button {
-                    showStartConfirmation = true
-                } label: {
-                    Text("Start")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 6)
-                        .background(Color(hex: "0891b2"))
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 12)
-
-            Divider()
-                .padding(.horizontal, 16)
-
-            // Challenge Row
-            Button(action: {
-                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                onChallengeTap()
-            }) {
+            // Workout Row - only show if we have a workout
+            if let workout = currentWorkout {
                 HStack(spacing: 12) {
-                    // Trophy icon
+                    // Workout icon
                     ZStack {
                         Circle()
-                            .fill(Color(hex: "10b981").opacity(0.15))
+                            .fill(Color(hex: "0891b2").opacity(0.15))
                             .frame(width: 44, height: 44)
 
-                        Image(systemName: "trophy.fill")
+                        Image(systemName: "dumbbell.fill")
                             .font(.system(size: 18))
-                            .foregroundStyle(Color(hex: "10b981"))
+                            .foregroundStyle(Color(hex: "0891b2"))
                     }
 
                     // Info
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("30-Day Challenge")
+                        Text(workout.name)
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.primary)
 
-                        Text("Day 18 • \(daysRemaining) days left")
+                        Text("\(workout.exerciseCount) exercises")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer()
 
-                    // Progress
-                    Text("\(Int(challengeProgress * 100))%")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(Color(hex: "10b981"))
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                    // Start Button
+                    Button {
+                        selectedWorkout = workout
+                        showStartConfirmation = true
+                    } label: {
+                        Text("Start")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                            .background(Color(hex: "0891b2"))
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.bottom, 12)
             }
-            .buttonStyle(.plain)
+
+            // Show empty state if no content
+            if !hasContent {
+                VStack(spacing: 8) {
+                    Image(systemName: "figure.run")
+                        .font(.title)
+                        .foregroundStyle(.secondary)
+                    Text("No active programs")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            }
+
+            // Challenge Row - only show if there's an active challenge
+            if let challenge = activeChallenge {
+                if currentWorkout != nil {
+                    Divider()
+                        .padding(.horizontal, 16)
+                }
+
+                Button(action: {
+                    themeManager.lightImpact()
+                    onChallengeTap()
+                }) {
+                    HStack(spacing: 12) {
+                        // Trophy icon
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "10b981").opacity(0.15))
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 18))
+                                .foregroundStyle(Color(hex: "10b981"))
+                        }
+
+                        // Info
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(challenge.name)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+
+                            Text("Day \(challenge.currentDay) • \(challenge.daysRemaining) days left")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        // Progress
+                        Text("\(Int(challenge.progress * 100))%")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(Color(hex: "10b981"))
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -436,40 +444,37 @@ struct CurrentProgramsCard: View {
                 startWorkout()
             }
         } message: {
-            Text("Are you sure you want to begin 12-Week Strength? This workout is approximately 45 minutes.")
+            if let workout = selectedWorkout {
+                Text("Are you sure you want to begin \(workout.name)? This workout is approximately \(workout.estimatedDuration) minutes.")
+            } else {
+                Text("Are you sure you want to start this workout?")
+            }
         }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
-            if let workout = sampleWorkout {
+            if let workout = selectedWorkout {
                 WorkoutExecutionView(workout: workout)
                     .environmentObject(workoutManager)
                     .environmentObject(themeManager)
-            }
-        }
-        .onAppear {
-            if sampleWorkout == nil {
-                sampleWorkout = SampleWorkoutData.loadOrCreateSampleWorkout(in: modelContext)
             }
         }
     }
 
     private func startWorkout() {
         workoutManager.resetState()
-        if sampleWorkout == nil {
-            sampleWorkout = SampleWorkoutData.createSampleWorkout(in: modelContext)
-        }
-        guard let workout = sampleWorkout, workout.exerciseCount > 0 else { return }
-        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        guard let workout = selectedWorkout, workout.exerciseCount > 0 else { return }
+        themeManager.mediumImpact()
         showWorkoutExecution = true
     }
 }
 
 // MARK: - Saved Programs Section
 struct SavedProgramsSection: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var showSavedPrograms = false
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            themeManager.mediumImpact()
             showSavedPrograms = true
         }) {
             HStack(spacing: 16) {
@@ -904,11 +909,12 @@ struct ProgramStatItem: View {
 
 // MARK: - Challenges Section Card
 struct ChallengesSectionCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let onTap: () -> Void
 
     var body: some View {
         Button(action: {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            themeManager.mediumImpact()
             onTap()
         }) {
             HStack(spacing: 16) {
@@ -1399,6 +1405,7 @@ struct FilterChip: View {
 
 // MARK: - Exercise List Card
 struct ExerciseListCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.modelContext) private var modelContext
     let exercise: Exercise
     let onTap: () -> Void
@@ -1469,12 +1476,13 @@ struct ExerciseListCard: View {
                 Button {
                     exercise.isFavorite.toggle()
                     try? modelContext.save()
-                    let impact = UIImpactFeedbackGenerator(style: .light)
-                    impact.impactOccurred()
+                    themeManager.lightImpact()
                 } label: {
                     Image(systemName: exercise.isFavorite ? "heart.fill" : "heart")
                         .font(.title3)
                         .foregroundStyle(exercise.isFavorite ? Color.accentRed : Color.secondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -1492,6 +1500,7 @@ struct ExerciseListCard: View {
 
 // MARK: - Exercise Detail View
 struct ExerciseDetailView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     let exercise: Exercise
@@ -1620,8 +1629,7 @@ struct ExerciseDetailView: View {
                         Button {
                             exercise.isFavorite.toggle()
                             try? modelContext.save()
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
+                            themeManager.mediumImpact()
                         } label: {
                             HStack {
                                 Image(systemName: exercise.isFavorite ? "heart.fill" : "heart")
@@ -1639,8 +1647,7 @@ struct ExerciseDetailView: View {
 
                         Button {
                             // TODO: Add to workout functionality
-                            let impact = UIImpactFeedbackGenerator(style: .medium)
-                            impact.impactOccurred()
+                            themeManager.mediumImpact()
                         } label: {
                             HStack {
                                 Image(systemName: "plus.circle.fill")

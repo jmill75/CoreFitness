@@ -170,7 +170,7 @@ private struct FeatureRow: View {
 
 // MARK: - Get Started Page
 struct GetStartedPage: View {
-
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var showSignIn: Bool
 
     var body: some View {
@@ -198,8 +198,7 @@ struct GetStartedPage: View {
             VStack(spacing: 16) {
                 Button {
                     showSignIn = true
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
+                    themeManager.mediumImpact()
                 } label: {
                     HStack {
                         Image(systemName: "arrow.right.circle.fill")

@@ -238,6 +238,7 @@ struct StyledCard<Content: View>: View {
 
 // MARK: - Gradient Button
 struct GradientButton: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let title: String
     let icon: String?
     let gradient: LinearGradient
@@ -259,8 +260,7 @@ struct GradientButton: View {
 
     var body: some View {
         Button {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
+            themeManager.mediumImpact()
             action()
         } label: {
             HStack(spacing: 8) {
@@ -287,6 +287,7 @@ struct GradientButton: View {
                 isPressed = pressing
             }
         }, perform: {})
+        .accessibilityLabel(title)
     }
 }
 
@@ -310,6 +311,8 @@ struct StatPill: View {
         .padding(.vertical, 10)
         .background(color.opacity(0.1))
         .clipShape(Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 
@@ -349,12 +352,14 @@ struct ProgressRing: View {
     let color: Color
     let lineWidth: CGFloat
     let size: CGFloat
+    var accessibilityLabelText: String?
 
-    init(progress: Double, color: Color = .brandPrimary, lineWidth: CGFloat = 10, size: CGFloat = 100) {
+    init(progress: Double, color: Color = .brandPrimary, lineWidth: CGFloat = 10, size: CGFloat = 100, accessibilityLabelText: String? = nil) {
         self.progress = progress
         self.color = color
         self.lineWidth = lineWidth
         self.size = size
+        self.accessibilityLabelText = accessibilityLabelText
     }
 
     var body: some View {
@@ -376,17 +381,20 @@ struct ProgressRing: View {
                 .animation(.spring(response: 0.6), value: progress)
         }
         .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? "Progress: \(Int(progress * 100)) percent")
+        .accessibilityValue("\(Int(progress * 100))%")
     }
 }
 
 // MARK: - Dismiss Button (X)
 struct DismissButton: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let action: () -> Void
 
     var body: some View {
         Button {
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
+            themeManager.lightImpact()
             action()
         } label: {
             Image(systemName: "xmark")
@@ -397,11 +405,15 @@ struct DismissButton: View {
                 .background(.ultraThinMaterial)
                 .clipShape(Circle())
         }
+        .frame(width: 44, height: 44) // Minimum touch target size for accessibility
+        .accessibilityLabel("Close")
+        .accessibilityHint("Double tap to dismiss")
     }
 }
 
 // MARK: - Glass Slider
 struct GlassSlider: View {
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var value: Double
     let range: ClosedRange<Double>
     let step: Double
@@ -565,8 +577,7 @@ struct GlassSlider: View {
                             if horizontalDrag > verticalDrag {
                                 isDragging = true
                                 onEditingChanged?(true)
-                                let impact = UIImpactFeedbackGenerator(style: .light)
-                                impact.impactOccurred()
+                                themeManager.lightImpact()
                             } else {
                                 return
                             }
@@ -580,8 +591,7 @@ struct GlassSlider: View {
 
                         // Haptic feedback when value changes
                         if newValue != value {
-                            let impact = UIImpactFeedbackGenerator(style: .light)
-                            impact.impactOccurred()
+                            themeManager.lightImpact()
                         }
                         value = newValue
                     }
@@ -589,8 +599,7 @@ struct GlassSlider: View {
                         if isDragging {
                             isDragging = false
                             onEditingChanged?(false)
-                            let impact = UIImpactFeedbackGenerator(style: .light)
-                            impact.impactOccurred()
+                            themeManager.lightImpact()
                         }
                     }
             )

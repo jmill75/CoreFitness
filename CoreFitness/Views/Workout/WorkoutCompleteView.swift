@@ -201,13 +201,16 @@ struct WorkoutCompleteView: View {
     }
 
     private func celebrationHaptics() {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
+        themeManager.notifySuccess()
 
         // Create a celebration pattern
         for i in 1...5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
-                UIImpactFeedbackGenerator(style: i % 2 == 0 ? .heavy : .medium).impactOccurred()
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) { [themeManager] in
+                if i % 2 == 0 {
+                    themeManager.heavyImpact()
+                } else {
+                    themeManager.mediumImpact()
+                }
             }
         }
     }
@@ -283,7 +286,7 @@ struct WorkoutCompleteView: View {
             fireworks[fireworkIndex].particles.removeAll()
 
             // Play haptic for explosion
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            themeManager.heavyImpact()
 
             // Create explosion particles
             let particleCount = Int.random(in: 40...60)

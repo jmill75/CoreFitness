@@ -13,7 +13,7 @@ struct WorkoutHeaderBar: View {
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .background(.ultraThinMaterial)
                     .clipShape(Circle())
             }

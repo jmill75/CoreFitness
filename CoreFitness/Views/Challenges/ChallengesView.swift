@@ -1143,6 +1143,7 @@ struct CompletedChallengeCard: View {
 struct CreateChallengeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
 
     @State private var selectedGoal: ChallengeGoalType?
     @State private var selectedTemplate: ChallengeTemplate?
@@ -1423,8 +1424,7 @@ struct CreateChallengeView: View {
                             }
                         }
 
-                        let impact = UIImpactFeedbackGenerator(style: .medium)
-                        impact.impactOccurred()
+                        themeManager.mediumImpact()
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "sparkles")
@@ -1464,8 +1464,14 @@ struct CreateChallengeView: View {
     }
 
     private func startButtonGlowAnimation() {
-        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+        withAnimation(.easeInOut(duration: 1.5).repeatCount(3, autoreverses: true)) {
             buttonGlow = 0.3
+        }
+        // Settle to subtle glow after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) {
+            withAnimation(.easeOut(duration: 0.5)) {
+                buttonGlow = 0.15
+            }
         }
     }
 
@@ -1508,8 +1514,7 @@ struct CreateChallengeView: View {
         modelContext.insert(challenge)
         try? modelContext.save()
 
-        let successFeedback = UINotificationFeedbackGenerator()
-        successFeedback.notificationOccurred(.success)
+        themeManager.notifySuccess()
 
         dismiss()
     }
@@ -1559,6 +1564,7 @@ struct SelectedContactChip: View {
 // MARK: - Contact Picker View
 struct ContactPickerView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var selectedContacts: [SelectedContact]
 
     @State private var contacts: [CNContact] = []
@@ -1720,8 +1726,7 @@ struct ContactPickerView: View {
             selectedContacts.append(selectedContact)
         }
 
-        let impact = UIImpactFeedbackGenerator(style: .light)
-        impact.impactOccurred()
+        themeManager.lightImpact()
     }
 }
 
@@ -2112,6 +2117,7 @@ struct JoinChallengeView: View {
 struct ChallengeDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
     let challenge: Challenge
 
     @State private var showShareSheet = false
@@ -2245,8 +2251,7 @@ struct ChallengeDetailView: View {
 
                             Button {
                                 UIPasteboard.general.string = challenge.inviteCode
-                                let impact = UIImpactFeedbackGenerator(style: .medium)
-                                impact.impactOccurred()
+                                themeManager.mediumImpact()
                             } label: {
                                 Image(systemName: "doc.on.doc")
                                     .font(.title3)
@@ -2279,6 +2284,7 @@ struct ChallengeDetailView: View {
 // MARK: - Today Check-In Card
 struct TodayCheckInCard: View {
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
     let challenge: Challenge
     let participant: ChallengeParticipant?
     let goalColor: Color
@@ -2336,8 +2342,7 @@ struct TodayCheckInCard: View {
 
         hasCheckedInToday = true
 
-        let impact = UINotificationFeedbackGenerator()
-        impact.notificationOccurred(.success)
+        themeManager.notifySuccess()
     }
 }
 

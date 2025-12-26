@@ -34,6 +34,7 @@ struct AnimatedProgressRing: View {
     let size: CGFloat
     let gradient: LinearGradient
     let backgroundColor: Color
+    var accessibilityLabelText: String?
 
     @State private var animatedProgress: Double = 0
 
@@ -62,6 +63,9 @@ struct AnimatedProgressRing: View {
                 animatedProgress = min(newValue, 1.0)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? "Progress: \(Int(progress * 100)) percent")
+        .accessibilityValue("\(Int(progress * 100))%")
     }
 }
 
@@ -132,6 +136,8 @@ struct AnimatedStatCard: View {
                 isVisible = true
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(value)\(subtitle != nil ? ", \(subtitle!)" : "")")
     }
 }
 
@@ -222,6 +228,7 @@ struct AnimatedCheckmark: View {
     let isComplete: Bool
     let size: CGFloat
     let color: Color
+    var accessibilityLabelText: String?
 
     @State private var trimEnd: CGFloat = 0
 
@@ -261,6 +268,8 @@ struct AnimatedCheckmark: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? (isComplete ? "Completed" : "Not completed"))
     }
 }
 
@@ -270,6 +279,7 @@ struct AnimatedProgressBar: View {
     let height: CGFloat
     let backgroundColor: Color
     let foregroundGradient: LinearGradient
+    var accessibilityLabelText: String?
 
     @State private var animatedProgress: Double = 0
 
@@ -296,6 +306,9 @@ struct AnimatedProgressBar: View {
                 animatedProgress = min(newValue, 1.0)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabelText ?? "Progress bar")
+        .accessibilityValue("\(Int(progress * 100)) percent")
     }
 }
 
@@ -306,6 +319,7 @@ struct FloatingActionButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
+    var accessibilityLabelText: String = "Action button"
 
     @State private var isPressed = false
     @State private var showRipple = false
@@ -341,6 +355,7 @@ struct FloatingActionButton: View {
             }
         }
         .buttonStyle(BouncyButtonStyle())
+        .accessibilityLabel(accessibilityLabelText)
     }
 }
 
@@ -385,6 +400,8 @@ struct LoadingDots: View {
                 }
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Loading")
     }
 }
 

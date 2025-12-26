@@ -65,6 +65,8 @@ struct StrengthTrackingView: View {
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.title3)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
                         }
                     }
 
@@ -178,13 +180,17 @@ struct ExerciseCard: View {
                     showingAddSet = true
                 } label: {
                     Image(systemName: "plus.circle")
-                        .font(.caption)
+                        .font(.body)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
                     Image(systemName: "trash")
-                        .font(.caption)
+                        .font(.body)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
             }
 

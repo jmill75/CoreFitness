@@ -561,6 +561,7 @@ struct FireworkParticle: Identifiable {
 
 // MARK: - Exit Confirmation View
 struct ExitConfirmationView: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let onSaveExit: () -> Void
     let onDiscard: () -> Void
     let onContinue: () -> Void
@@ -602,7 +603,7 @@ struct ExitConfirmationView: View {
                 VStack(spacing: 16) {
                     // Save & Exit
                     Button {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        themeManager.mediumImpact()
                         onSaveExit()
                     } label: {
                         HStack(spacing: 12) {
@@ -621,7 +622,7 @@ struct ExitConfirmationView: View {
 
                     // Discard
                     Button {
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        themeManager.mediumImpact()
                         onDiscard()
                     } label: {
                         HStack(spacing: 12) {
@@ -640,7 +641,7 @@ struct ExitConfirmationView: View {
 
                     // Continue
                     Button {
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                        themeManager.lightImpact()
                         onContinue()
                     } label: {
                         Text("Continue Workout")
@@ -809,7 +810,7 @@ struct UnifiedWorkoutView: View {
                 // Minus button
                 Button {
                     if reps > 1 { reps -= 1 }
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    themeManager.mediumImpact()
                 } label: {
                     Image(systemName: "minus")
                         .font(.title)
@@ -838,7 +839,7 @@ struct UnifiedWorkoutView: View {
                 // Plus button
                 Button {
                     reps += 1
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    themeManager.mediumImpact()
                 } label: {
                     Image(systemName: "plus")
                         .font(.title)
@@ -855,7 +856,7 @@ struct UnifiedWorkoutView: View {
                 // Minus button
                 Button {
                     if weight >= 5 { weight -= 5 }
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    themeManager.mediumImpact()
                 } label: {
                     Text("-5")
                         .font(.title2)
@@ -884,7 +885,7 @@ struct UnifiedWorkoutView: View {
                 // Plus button
                 Button {
                     weight += 5
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    themeManager.mediumImpact()
                 } label: {
                     Text("+5")
                         .font(.title2)
@@ -902,7 +903,7 @@ struct UnifiedWorkoutView: View {
     private var saveButton: some View {
         Button {
             workoutManager.logSet(reps: reps, weight: weight, rpe: nil)
-            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+            themeManager.heavyImpact()
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.circle.fill")

@@ -11,6 +11,10 @@ class WaterIntakeManager: ObservableObject {
     @Published var goalOunces: Double = 64
     @Published var lastAddedAmount: Double = 0
     @Published var isLoading: Bool = false
+    @Published var hasCelebratedGoalToday: Bool = false
+
+    // Track the date for which celebration status applies
+    private var celebrationDate: Date?
 
     // MARK: - Computed Properties
     var progressPercentage: Double {
@@ -132,6 +136,11 @@ class WaterIntakeManager: ObservableObject {
                 // No HealthKit manager, just update locally
                 totalOunces += ounces
             }
+
+            // Notify listeners that water intake was updated
+            await MainActor.run {
+                NotificationCenter.default.post(name: .waterIntakeUpdated, object: nil)
+            }
         }
     }
 
@@ -150,6 +159,11 @@ class WaterIntakeManager: ObservableObject {
             } else {
                 totalOunces = max(0, totalOunces - ounces)
             }
+
+            // Notify listeners that water intake was updated
+            await MainActor.run {
+                NotificationCenter.default.post(name: .waterIntakeUpdated, object: nil)
+            }
         }
     }
 
@@ -157,6 +171,31 @@ class WaterIntakeManager: ObservableObject {
         // Note: This would require deleting all water samples for today from HealthKit
         // For now, just reset the local display
         totalOunces = 0
+        // Also reset celebration status when resetting the day
+        hasCelebratedGoalToday = false
+        celebrationDate = nil
+    }
+
+    /// Mark the goal as celebrated for today - prevents multiple haptics on navigation
+    func markGoalCelebrated() {
+        let today = Calendar.current.startOfDay(for: Date())
+        celebrationDate = today
+        hasCelebratedGoalToday = true
+    }
+
+    /// Check if we should celebrate (goal reached and hasn't been celebrated today)
+    var shouldCelebrateGoal: Bool {
+        guard hasReachedGoal else { return false }
+
+        let today = Calendar.current.startOfDay(for: Date())
+
+        // If celebration date is not today, reset it (new day)
+        if celebrationDate != today {
+            hasCelebratedGoalToday = false
+            celebrationDate = nil
+        }
+
+        return !hasCelebratedGoalToday
     }
 
     func updateGoal(_ newGoal: Double) {
@@ -231,35 +270,18 @@ class WaterIntakeManager: ObservableObject {
     }
 
     // MARK: - Historical Data for Charts
+
+    /// Synchronous version - prefer getLast30DaysDataAsync() for accurate data
     func getLast30DaysData() -> [Double] {
-        var result: [Double] = []
-
-        Task {
-            if let manager = healthKitManager {
-                let history = await manager.getWaterIntakeHistory(days: 30)
-                let calendar = Calendar.current
-                let today = calendar.startOfDay(for: Date())
-
-                for dayOffset in (0..<30).reversed() {
-                    if let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) {
-                        let dayStart = calendar.startOfDay(for: date)
-                        result.append(history[dayStart] ?? 0)
-                    }
-                }
-            }
-        }
-
-        // Return placeholder data for immediate display
-        // The actual data will be loaded asynchronously
-        if result.isEmpty {
-            return (0..<30).map { _ in Double.random(in: 20...80) }
-        }
-        return result
+        // Return zeros - caller should use async version for real data
+        return Array(repeating: 0, count: 30)
     }
 
+    /// Async version - fetches actual water intake history from HealthKit
     func getLast30DaysDataAsync() async -> [Double] {
         guard let manager = healthKitManager else {
-            return (0..<30).map { _ in Double.random(in: 20...80) }
+            // No HealthKit manager - return zeros (no data available)
+            return Array(repeating: 0, count: 30)
         }
 
         let history = await manager.getWaterIntakeHistory(days: 30)
@@ -274,11 +296,12 @@ class WaterIntakeManager: ObservableObject {
             }
         }
 
-        return result.isEmpty ? (0..<30).map { _ in Double.random(in: 20...80) } : result
+        // Return actual data - zeros for days with no intake is valid
+        return result
     }
 
-    func getStatsForLast30Days() -> (total: Double, average: Double, maxValue: Double, goalsMetCount: Int) {
-        let dailyData = getLast30DaysData()
+    func getStatsForLast30Days() async -> (total: Double, average: Double, maxValue: Double, goalsMetCount: Int) {
+        let dailyData = await getLast30DaysDataAsync()
         let total = dailyData.reduce(0, +)
         let average = dailyData.isEmpty ? 0 : total / Double(dailyData.count)
         let maxValue = dailyData.max() ?? 0

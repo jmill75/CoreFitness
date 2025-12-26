@@ -100,9 +100,9 @@ struct ChallengeStatsView: View {
             Text("Activity Over Time")
                 .font(.headline)
 
-            // Sample chart - in real implementation, would use actual day logs
+            // Chart using actual day logs from participant
             Chart {
-                ForEach(sampleChartData, id: \.day) { data in
+                ForEach(chartData, id: \.day) { data in
                     BarMark(
                         x: .value("Day", data.day),
                         y: .value("Completed", data.completed ? 1 : 0)
@@ -124,11 +124,40 @@ struct ChallengeStatsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    private var sampleChartData: [(day: String, completed: Bool)] {
-        let days = ["S", "M", "T", "W", "T", "F", "S"]
-        return days.enumerated().map { index, day in
-            (day: day, completed: index < participant.completedDays % 7 || index == 0)
+    // Get chart data from actual day logs
+    private var chartData: [(day: String, completed: Bool)] {
+        // Get the days of the week starting from challenge start
+        let calendar = Calendar.current
+        let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) ?? Date()
+
+        // Create a set of completed day numbers for quick lookup
+        let completedDayNumbers = Set(
+            (participant.dayLogs ?? [])
+                .filter { $0.isCompleted }
+                .map { $0.dayNumber }
+        )
+
+        // Generate last 7 days data based on challenge timeline
+        let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
+        var result: [(day: String, completed: Bool)] = []
+
+        // Map current week to challenge days
+        for dayIndex in 0..<7 {
+            guard let date = calendar.date(byAdding: .day, value: dayIndex, to: startOfWeek) else { continue }
+            let weekday = calendar.component(.weekday, from: date) - 1 // 0 = Sunday
+            let dayLabel = dayLabels[weekday]
+
+            // Calculate which challenge day this corresponds to
+            let daysSinceStart = calendar.dateComponents([.day], from: challenge.startDate, to: date).day ?? 0
+            let challengeDay = daysSinceStart + 1
+
+            // Check if this challenge day was completed
+            let isCompleted = challengeDay > 0 && challengeDay <= challenge.durationDays && completedDayNumbers.contains(challengeDay)
+
+            result.append((day: dayLabel, completed: isCompleted))
         }
+
+        return result
     }
 
     // MARK: - Highlights Section

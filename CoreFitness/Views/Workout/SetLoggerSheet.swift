@@ -42,7 +42,7 @@ struct SetLoggerSheet: View {
                             HStack(spacing: 20) {
                                 Button {
                                     if reps > 1 { reps -= 1 }
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    themeManager.lightImpact()
                                 } label: {
                                     ZStack {
                                         Circle()
@@ -62,7 +62,7 @@ struct SetLoggerSheet: View {
 
                                 Button {
                                     reps += 1
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    themeManager.lightImpact()
                                 } label: {
                                     ZStack {
                                         Circle()
@@ -134,7 +134,7 @@ struct SetLoggerSheet: View {
                             ForEach([-10.0, -2.5, 2.5, 10.0], id: \.self) { adjustment in
                                 Button {
                                     weight = max(0, weight + adjustment)
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    themeManager.lightImpact()
                                 } label: {
                                     Text(adjustment > 0 ? "+\(adjustment.formatted())" : "\(adjustment.formatted())")
                                         .font(.subheadline)
@@ -161,7 +161,7 @@ struct SetLoggerSheet: View {
                             ForEach([6, 7, 8, 9, 10], id: \.self) { rpe in
                                 Button {
                                     selectedRPE = selectedRPE == rpe ? nil : rpe
-                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                    themeManager.lightImpact()
                                 } label: {
                                     Text("\(rpe)")
                                         .font(.headline)
@@ -238,6 +238,7 @@ struct SetLoggerSheet: View {
 
 // MARK: - Repeating Button (Press-and-Hold)
 struct RepeatingButton<Label: View>: View {
+    @EnvironmentObject var themeManager: ThemeManager
     let action: () -> Void
     @ViewBuilder let label: () -> Label
 
@@ -255,12 +256,12 @@ struct RepeatingButton<Label: View>: View {
                             isPressed = true
                             // Immediate action on press
                             action()
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            themeManager.lightImpact()
 
                             // Start repeating after delay
                             timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
                                 action()
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                themeManager.lightImpact()
                             }
                         }
                     }

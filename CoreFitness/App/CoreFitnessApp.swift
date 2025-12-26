@@ -66,6 +66,7 @@ struct CoreFitnessApp: App {
 
     // MARK: - State
     @StateObject private var authManager = AuthManager()
+    @StateObject private var userProfileManager = UserProfileManager()
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var healthKitManager = HealthKitManager()
     @StateObject private var workoutManager = WorkoutManager()
@@ -74,7 +75,6 @@ struct CoreFitnessApp: App {
     @StateObject private var socialSharingService = SocialSharingService()
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @StateObject private var navigationState = NavigationState.shared
-    @AppStorage("hasRequestedHealthKit") private var hasRequestedHealthKit = false
 
     // MARK: - SwiftData Container
     var sharedModelContainer: ModelContainer = {
@@ -106,7 +106,8 @@ struct CoreFitnessApp: App {
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: .automatic
         )
 
         do {
@@ -143,6 +144,7 @@ struct CoreFitnessApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
+                .environmentObject(userProfileManager)
                 .environmentObject(themeManager)
                 .environmentObject(healthKitManager)
                 .environmentObject(workoutManager)
@@ -154,10 +156,17 @@ struct CoreFitnessApp: App {
                 .preferredColorScheme(themeManager.colorScheme)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
+                    // Connect UserProfileManager to model context (must be first)
+                    userProfileManager.setModelContext(context)
+                    // Connect ThemeManager to UserProfileManager for synced settings
+                    themeManager.setUserProfileManager(userProfileManager)
+                    // Connect other managers to model context
                     workoutManager.setModelContext(context)
                     fitnessDataService.setModelContext(context)
                     socialSharingService.setModelContext(context)
                     waterIntakeManager.setModelContext(context)
+                    // Connect ThemeManager to WorkoutManager for haptics
+                    workoutManager.themeManager = themeManager
                     // Connect WaterIntakeManager to HealthKitManager for syncing
                     waterIntakeManager.setHealthKitManager(healthKitManager)
                     // Seed achievements on first launch
@@ -165,9 +174,9 @@ struct CoreFitnessApp: App {
                 }
                 .task {
                     // Request HealthKit authorization on first launch
-                    if !hasRequestedHealthKit {
+                    if !userProfileManager.hasRequestedHealthKit {
                         await healthKitManager.requestAuthorization()
-                        hasRequestedHealthKit = true
+                        userProfileManager.hasRequestedHealthKit = true
                     } else if healthKitManager.isAuthorized {
                         // Refresh data if already authorized
                         await healthKitManager.fetchTodayData()

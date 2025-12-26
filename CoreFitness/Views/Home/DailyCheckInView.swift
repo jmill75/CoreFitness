@@ -1,9 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct DailyCheckInView: View {
 
     // MARK: - Environment
+    @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     // MARK: - State
     @State private var mood: Double = 3
@@ -149,19 +152,74 @@ struct DailyCheckInView: View {
 
     private func saveCheckIn() {
         isSaving = true
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        themeManager.mediumImpact()
 
-        // Save check-in data
+        // Save check-in data to AppStorage (for quick access)
         lastCheckInDateString = todayString
         savedMood = mood
         savedSoreness = soreness
         savedStress = stress
         savedSleepQuality = sleepQuality
 
+        // Save MoodEntry to SwiftData for persistence and sync
+        let moodEntry = MoodEntry(
+            date: Date(),
+            mood: moodFromValue(mood),
+            energyLevel: Int(sleepQuality * 2), // Convert 1-5 to 2-10
+            stressLevel: Int(stress * 2),
+            notes: notes.isEmpty ? nil : notes
+        )
+        modelContext.insert(moodEntry)
+
+        // Also save/update DailyHealthData for today
+        saveDailyHealthData()
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
             showSuccessAnimation()
+
+            // Post notification for data refresh
+            NotificationCenter.default.post(name: .dailyCheckInSaved, object: nil)
+        }
+    }
+
+    private func moodFromValue(_ value: Double) -> Mood {
+        switch Int(value) {
+        case 5: return .amazing
+        case 4: return .good
+        case 3: return .okay
+        case 2: return .tired
+        default: return .stressed
+        }
+    }
+
+    private func saveDailyHealthData() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        // Check if we already have data for today
+        let descriptor = FetchDescriptor<DailyHealthData>(
+            predicate: #Predicate { data in
+                data.date >= today
+            }
+        )
+
+        do {
+            let existingData = try modelContext.fetch(descriptor)
+
+            if let todayData = existingData.first {
+                // Update existing entry
+                todayData.energyLevel = Int(sleepQuality * 2) // Convert 1-5 to 2-10
+                todayData.stressLevel = Int(stress * 2)
+            } else {
+                // Create new entry
+                let healthData = DailyHealthData(date: today)
+                healthData.energyLevel = Int(sleepQuality * 2)
+                healthData.stressLevel = Int(stress * 2)
+                modelContext.insert(healthData)
+            }
+        } catch {
+            print("Error saving daily health data: \(error)")
         }
     }
 
@@ -178,8 +236,7 @@ struct DailyCheckInView: View {
 
         // Pop in checkmark after ring completes
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            let successFeedback = UINotificationFeedbackGenerator()
-            successFeedback.notificationOccurred(.success)
+            themeManager.notifySuccess()
 
             withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) {
                 checkmarkScale = 1.0
@@ -593,7 +650,7 @@ struct PhysicalStatusCard: View {
 
 // MARK: - Today's Plan Card
 struct TodaysPlanCard: View {
-
+    @EnvironmentObject var themeManager: ThemeManager
     @Binding var selectedPlans: Set<TodayPlanType>
 
     var body: some View {
@@ -705,7 +762,7 @@ struct TodaysPlanCard: View {
                 }
             }
         }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        themeManager.lightImpact()
     }
 }
 
@@ -822,6 +879,7 @@ struct NotesCard: View {
 
 // MARK: - Check-In Slider Content (Apple Native Style)
 struct CheckInSliderContent: View {
+    @EnvironmentObject var themeManager: ThemeManager
 
     let title: String
     @Binding var value: Double
@@ -896,8 +954,7 @@ struct CheckInSliderContent: View {
             }
             .tint(sliderColor)
             .onChange(of: value) { _, _ in
-                let impact = UIImpactFeedbackGenerator(style: .light)
-                impact.impactOccurred()
+                themeManager.lightImpact()
             }
 
             // Step indicators
@@ -923,6 +980,7 @@ struct CheckInSliderContent: View {
 
 // MARK: - Toggle Row
 struct ToggleRow: View {
+    @EnvironmentObject var themeManager: ThemeManager
 
     let title: String
     let subtitle: String
@@ -955,8 +1013,7 @@ struct ToggleRow: View {
                 .labelsHidden()
                 .tint(color)
                 .onChange(of: isOn) { _, _ in
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+                    themeManager.lightImpact()
                 }
         }
         .padding()
