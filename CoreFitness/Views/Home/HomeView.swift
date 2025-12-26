@@ -8,6 +8,7 @@ struct HomeView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var navigationState: NavigationState
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // MARK: - Bindings
     @Binding var selectedTab: Tab
@@ -26,7 +27,7 @@ struct HomeView: View {
         return challenge.participants?.first { $0.oderId == userId }
     }
 
-    @State private var animateContent = false
+    @State private var animationStage = 0
 
     var body: some View {
         NavigationStack {
@@ -36,18 +37,21 @@ struct HomeView: View {
                         // Welcome Header
                         WelcomeHeader(userName: authManager.currentUser?.displayName ?? "Champion")
                             .id("top")
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 10)
+                            .opacity(animationStage >= 1 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
+                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
 
                         // Week Calendar (no card, at top)
                         WeekCalendarStrip()
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 10)
+                            .opacity(animationStage >= 2 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
+                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
 
                         // Today's Recovery - Improved Hero Card
                         TodayRecoveryCard(selectedTab: $selectedTab)
-                            .opacity(animateContent ? 1 : 0)
-                            .offset(y: animateContent ? 0 : 15)
+                            .opacity(animationStage >= 3 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
+                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
 
                         // Current Activity Section (Workout + Challenge)
                         CurrentActivitySection(
@@ -55,8 +59,9 @@ struct HomeView: View {
                             currentUserParticipant: currentUserParticipant,
                             selectedTab: $selectedTab
                         )
-                        .opacity(animateContent ? 1 : 0)
-                        .offset(y: animateContent ? 0 : 15)
+                        .opacity(animationStage >= 4 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
 
                         // Quick Options Grid
                         QuickOptionsGrid(
@@ -70,8 +75,9 @@ struct HomeView: View {
                             },
                             selectedTab: $selectedTab
                         )
-                        .opacity(animateContent ? 1 : 0)
-                        .offset(y: animateContent ? 0 : 15)
+                        .opacity(animationStage >= 5 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
                     }
                     .padding()
                     .padding(.bottom, 80)
@@ -80,8 +86,14 @@ struct HomeView: View {
                 .background(Color(.systemGroupedBackground))
                 .onAppear {
                     proxy.scrollTo("top", anchor: .top)
-                    withAnimation(.easeOut(duration: 0.5)) {
-                        animateContent = true
+                    if reduceMotion {
+                        animationStage = 5
+                    } else {
+                        for stage in 1...5 {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
+                                animationStage = stage
+                            }
+                        }
                     }
                 }
             }
@@ -245,7 +257,13 @@ struct QuickOptionsGrid: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(Color.accentBlue)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
                 }
+                .frame(minWidth: 44, minHeight: 44)
+                .accessibilityLabel("Edit quick actions")
+                .accessibilityHint("Double tap to customize your shortcuts")
             }
 
             // Dynamic Grid (supports 1-8 items)
@@ -534,6 +552,7 @@ struct QuickActionButton: View {
     let color: Color
     let action: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @State private var isPressed = false
 
     var body: some View {
@@ -554,29 +573,33 @@ struct QuickActionButton: View {
 
                 // Title
                 Text(title)
-                    .font(.system(size: 11))
-                    .fontWeight(.medium)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.92 : 1.0)
+        .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.92 : 1.0))
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
-                isPressed = pressing
+            if !reduceMotion {
+                withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                    isPressed = pressing
+                }
             }
         }, perform: {})
         .accessibilityLabel(title)
         .accessibilityHint("Double tap to open \(title)")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
 // MARK: - Today's Recovery Card (Large Hero Card)
 struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Binding var selectedTab: Tab
     @State private var isPressed = false
 
@@ -631,8 +654,8 @@ struct TodayRecoveryCard: View {
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
                             Text("score")
                                 .font(.caption2)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.white.opacity(0.7))
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white.opacity(0.85))
                         }
                     }
 
@@ -641,7 +664,7 @@ struct TodayRecoveryCard: View {
                         Text("Today's Health")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(.white.opacity(0.85))
                         Text(scoreMessage)
                             .font(.title2)
                             .fontWeight(.bold)
@@ -687,16 +710,20 @@ struct TodayRecoveryCard: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+            .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
         .buttonStyle(.plain)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            isPressed = pressing
+            if !reduceMotion {
+                isPressed = pressing
+            }
         }, perform: {})
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Today's Health. Score \(healthKitManager.isAuthorized ? "\(score)" : "not available"). \(scoreMessage)")
-        .accessibilityHint("Double tap to view health details")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Today's Health Score")
+        .accessibilityValue(healthKitManager.isAuthorized ? "\(score) out of 100. \(scoreMessage)" : "Not connected. Connect Health app to see your score.")
+        .accessibilityHint("Double tap to view detailed health metrics")
+        .accessibilityAddTraits(.isButton)
     }
 
     private var stepsValue: String {
@@ -736,17 +763,20 @@ struct HealthStatItem: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 14))
                 .foregroundStyle(color)
             Text(value)
                 .font(.system(size: 13, weight: .bold, design: .rounded))
             Text(label)
-                .font(.system(size: 9))
-                .foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.white.opacity(0.75))
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value == "--" ? "No data available" : value)
     }
 }
 
@@ -764,8 +794,8 @@ struct RecoveryStat: View {
             Text(value)
                 .font(.system(size: 15, weight: .bold, design: .rounded))
             Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.6))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.white.opacity(0.75))
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
@@ -1062,6 +1092,7 @@ struct ActiveWorkoutCard: View {
 struct HomeChallengeCard: View {
     let challenge: Challenge
     let currentUserParticipant: ChallengeParticipant?
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @Binding var selectedTab: Tab
     @State private var isPressed = false
 
@@ -1137,13 +1168,20 @@ struct HomeChallengeCard: View {
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+            .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
         .buttonStyle(.plain)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            isPressed = pressing
+            if !reduceMotion {
+                isPressed = pressing
+            }
         }, perform: {})
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(challenge.name) challenge")
+        .accessibilityValue("Day \(challenge.currentDay) of \(challenge.durationDays). \(Int(challenge.progress * 100)) percent complete\(currentStreak > 0 ? ". \(currentStreak) day streak" : "")")
+        .accessibilityHint("Double tap to view challenge details")
+        .accessibilityAddTraits(.isButton)
     }
 }
 
