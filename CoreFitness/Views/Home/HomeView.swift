@@ -887,9 +887,9 @@ struct ActiveWorkoutCard: View {
     @State private var selectedWorkout: Workout?
     @State private var isPressed = false
 
-    // Original blue gradient
-    private let gradientStart = Color(hex: "3b82f6")
-    private let gradientEnd = Color(hex: "1e40af")
+    // Pine green gradient
+    private let gradientStart = Color(hex: "2d6a4f")
+    private let gradientEnd = Color(hex: "1b4332")
 
     private var activeSession: WorkoutSession? {
         workoutManager.currentSession
