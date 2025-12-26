@@ -99,7 +99,10 @@ struct CoreFitnessApp: App {
             // Challenge Models
             Challenge.self,
             ChallengeParticipant.self,
-            ChallengeDayLog.self
+            ChallengeDayLog.self,
+            ChallengeActivityData.self,
+            ChallengeStrengthSet.self,
+            ChallengeWeeklySummary.self
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
@@ -109,7 +112,30 @@ struct CoreFitnessApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // If migration fails, delete the old store and create a new one
+            print("Migration failed, recreating database: \(error)")
+
+            let fileManager = FileManager.default
+            let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            let storeURL = appSupport.appendingPathComponent("default.store")
+
+            // Delete old store files
+            let storePaths = [
+                storeURL,
+                storeURL.appendingPathExtension("shm"),
+                storeURL.appendingPathExtension("wal")
+            ]
+
+            for path in storePaths {
+                try? fileManager.removeItem(at: path)
+            }
+
+            // Try again with fresh database
+            do {
+                return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            } catch {
+                fatalError("Could not create ModelContainer after reset: \(error)")
+            }
         }
     }()
 
@@ -183,10 +209,13 @@ struct CoreFitnessApp: App {
 }
 
 // ============================================
-// NOTE: When you're ready to add Firebase:
-// 1. Add Firebase SDK via Swift Package Manager
-// 2. Download GoogleService-Info.plist from Firebase Console
-// 3. Add `import FirebaseCore` at the top
-// 4. Add `FirebaseApp.configure()` to AppDelegate.didFinishLaunchingWithOptions
-// 5. Set AuthManager.mockMode = false
+// iCloud/CloudKit Setup:
+// 1. Enable iCloud capability in Xcode (Signing & Capabilities)
+// 2. Enable CloudKit checkbox
+// 3. Container identifier: iCloud.com.jmillergroup.CoreFitness
+// 4. Enable Background Modes > Remote notifications for sync
+// The app uses iCloud for:
+// - User authentication (via iCloud account)
+// - Challenge data sync between participants
+// - User profile and preferences storage
 // ============================================

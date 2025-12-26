@@ -778,72 +778,63 @@ struct TodayWorkoutCard: View {
     @State private var sampleWorkout: Workout?
 
     var body: some View {
-        Button {
-            // Navigate to Programs tab
-            selectedTab = .programs
-        } label: {
-            HStack(spacing: 14) {
-                // Workout Icon
-                ZStack {
-                    Circle()
-                        .fill(Color.accentOrange.opacity(0.15))
-                        .frame(width: 56, height: 56)
+        HStack(spacing: 12) {
+            // Workout Icon
+            ZStack {
+                Circle()
+                    .fill(Color.accentOrange.opacity(0.15))
+                    .frame(width: 48, height: 48)
 
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.accentOrange)
-                }
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentOrange)
+            }
 
-                // Workout Info
-                VStack(alignment: .leading, spacing: 4) {
+            // Workout Info (tappable to go to Programs)
+            Button {
+                selectedTab = .programs
+            } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Today's Workout")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     Text("Upper Body Strength")
                         .font(.subheadline)
                         .fontWeight(.bold)
                         .foregroundStyle(.primary)
 
-                    HStack(spacing: 12) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 10))
-                            Text("45 min")
-                        }
-                        HStack(spacing: 4) {
-                            Image(systemName: "list.bullet")
-                                .font(.system(size: 10))
-                            Text("6 exercises")
-                        }
+                    HStack(spacing: 8) {
+                        Label("45 min", systemImage: "clock")
+                        Label("6 exercises", systemImage: "list.bullet")
                     }
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                // Start Button
-                Button {
-                    showStartConfirmation = true
-                } label: {
-                    Text("Start")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Color.accentOrange)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
             }
-            .padding(16)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .buttonStyle(.plain)
+
+            Spacer(minLength: 8)
+
+            // Start Button
+            Button {
+                showStartConfirmation = true
+            } label: {
+                Text("Start")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.accentOrange)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+        .padding(14)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
         .alert("Start Workout?", isPresented: $showStartConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Start") {

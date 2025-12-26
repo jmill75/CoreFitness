@@ -89,7 +89,7 @@ struct HealthView: View {
 // MARK: - Score Trend Card (Line Graph)
 struct ScoreTrendCard: View {
 
-    private let days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    private let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
     private let values: [Double] = [60, 75, 65, 82, 78, 88, 85]
     private let chartHeight: CGFloat = 120
 
@@ -357,7 +357,9 @@ struct HealthMetricsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            HStack(spacing: 10) {
+                IconBadge("heart.fill", color: .accentRed, size: 36)
+
                 Text("Apple Health Data")
                     .font(.headline)
                     .fontWeight(.bold)
@@ -836,9 +838,9 @@ struct MoodTrackerCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Mood grid with animated emojis
+                // Mood grid with animated emojis (Sun-Sat)
                 HStack(spacing: 0) {
-                    ForEach(Array(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].enumerated()), id: \.offset) { index, day in
+                    ForEach(Array(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].enumerated()), id: \.offset) { index, day in
                         VStack(spacing: 8) {
                             Text(moodEmoji(for: day))
                                 .font(.title2)

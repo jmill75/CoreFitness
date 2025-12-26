@@ -462,4 +462,130 @@ class HealthKitManager: ObservableObject {
 
         return min(100, max(0, score))
     }
+
+    // MARK: - Fetch Workouts for Challenge Import
+
+    /// Fetches workouts from HealthKit within a date range
+    func fetchWorkouts(from startDate: Date, to endDate: Date, type: HKWorkoutActivityType? = nil) async -> [HKWorkout] {
+        var predicates: [NSPredicate] = []
+
+        // Date predicate
+        let datePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        predicates.append(datePredicate)
+
+        // Activity type predicate (optional)
+        if let workoutType = type {
+            let typePredicate = HKQuery.predicateForWorkouts(with: workoutType)
+            predicates.append(typePredicate)
+        }
+
+        let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: HKObjectType.workoutType(),
+                predicate: compoundPredicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [sortDescriptor]
+            ) { _, samples, error in
+                if let error = error {
+                    print("Error fetching workouts: \(error)")
+                    continuation.resume(returning: [])
+                    return
+                }
+
+                let workouts = samples as? [HKWorkout] ?? []
+                continuation.resume(returning: workouts)
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    /// Creates ChallengeActivityData from an HKWorkout
+    func createActivityData(from workout: HKWorkout) -> ChallengeActivityData {
+        let activityData = ChallengeActivityData()
+
+        // Basic timing
+        activityData.startTime = workout.startDate
+        activityData.endTime = workout.endDate
+        activityData.durationSeconds = Int(workout.duration)
+
+        // Distance (if available)
+        if let distance = workout.totalDistance?.doubleValue(for: .mile()) {
+            activityData.distanceValue = distance
+            activityData.distanceUnit = .miles
+        }
+
+        // Calories
+        if let calories = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) {
+            activityData.caloriesBurned = Int(calories)
+        }
+
+        // Calculate average pace if distance and duration available
+        if let distance = activityData.distanceValue, distance > 0, let duration = activityData.durationSeconds {
+            activityData.averagePaceSecondsPerMile = Int(Double(duration) / distance)
+        }
+
+        return activityData
+    }
+
+    /// Fetches heart rate samples during a specific time period
+    func fetchHeartRateSamples(from startDate: Date, to endDate: Date) async -> (average: Int?, max: Int?) {
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            return (nil, nil)
+        }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: heartRateType,
+                quantitySamplePredicate: predicate,
+                options: [.discreteAverage, .discreteMax]
+            ) { _, statistics, error in
+                if let error = error {
+                    print("Error fetching heart rate: \(error)")
+                    continuation.resume(returning: (nil, nil))
+                    return
+                }
+
+                let avgHR = statistics?.averageQuantity()?.doubleValue(for: HKUnit(from: "count/min"))
+                let maxHR = statistics?.maximumQuantity()?.doubleValue(for: HKUnit(from: "count/min"))
+
+                continuation.resume(returning: (
+                    avgHR != nil ? Int(avgHR!) : nil,
+                    maxHR != nil ? Int(maxHR!) : nil
+                ))
+            }
+            healthStore.execute(query)
+        }
+    }
+
+    /// Enriches ChallengeActivityData with heart rate data from workout period
+    func enrichActivityDataWithHeartRate(_ activityData: ChallengeActivityData) async {
+        guard let start = activityData.startTime, let end = activityData.endTime else { return }
+
+        let (avgHR, maxHR) = await fetchHeartRateSamples(from: start, to: end)
+        activityData.averageHeartRate = avgHR
+        activityData.maxHeartRate = maxHR
+    }
+
+    /// Maps HKWorkoutActivityType to ChallengeGoalType
+    func mapWorkoutTypeToGoalType(_ workoutType: HKWorkoutActivityType) -> ChallengeGoalType {
+        switch workoutType {
+        case .running, .walking, .hiking, .cycling, .swimming:
+            return .cardio
+        case .traditionalStrengthTraining, .functionalStrengthTraining:
+            return .strength
+        case .yoga, .pilates:
+            return .flexibility
+        case .highIntensityIntervalTraining, .crossTraining:
+            return .endurance
+        case .mindAndBody:
+            return .wellness
+        default:
+            return .fitness
+        }
+    }
 }

@@ -27,16 +27,25 @@ struct ChallengesView: View {
         completedChallenges.count
     }
 
-    private var winRate: Int {
-        guard completedCount > 0 else { return 0 }
-        let wins = completedChallenges.filter { challenge in
-            challenge.sortedParticipants.first?.oderId == "current_user"
-        }.count
-        return Int((Double(wins) / Double(completedCount)) * 100)
+    private var bestFinish: String {
+        guard completedCount > 0 else { return "--" }
+        var bestRank = Int.max
+        for challenge in completedChallenges {
+            if let rank = challenge.sortedParticipants.firstIndex(where: { $0.oderId == "current_user" }) {
+                bestRank = min(bestRank, rank + 1)
+            }
+        }
+        if bestRank == Int.max { return "--" }
+        switch bestRank {
+        case 1: return "1st"
+        case 2: return "2nd"
+        case 3: return "3rd"
+        default: return "\(bestRank)th"
+        }
     }
 
-    private var totalDays: Int {
-        completedChallenges.reduce(0) { $0 + $1.durationDays }
+    private var daysLeft: Int {
+        activeChallenge?.daysRemaining ?? 0
     }
 
     var body: some View {
@@ -61,9 +70,9 @@ struct ChallengesView: View {
                     HStack(spacing: 0) {
                         StatItem(value: "\(completedCount)", label: "Completed", icon: "checkmark.circle.fill", color: .accentGreen)
                         Divider().frame(height: 40)
-                        StatItem(value: "\(winRate)%", label: "Win Rate", icon: "trophy.fill", color: .accentOrange)
+                        StatItem(value: bestFinish, label: "Best Finish", icon: "trophy.fill", color: .accentOrange)
                         Divider().frame(height: 40)
-                        StatItem(value: "\(totalDays)", label: "Days", icon: "calendar", color: .accentBlue)
+                        StatItem(value: "\(daysLeft)", label: "Days Left", icon: "calendar", color: .accentBlue)
                     }
                     .padding(.vertical, 16)
                     .background(Color(.secondarySystemGroupedBackground))
@@ -94,18 +103,19 @@ struct ChallengesView: View {
 
                     // Challenge Templates Section
                     VStack(alignment: .leading, spacing: 16) {
-                        SectionHeader(title: "Quick Start", action: "See All") {}
+                        SectionHeader(title: "Quick Start", action: nil) {}
 
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(ChallengeTemplate.templates) { template in
-                                    TemplateCard(template: template) {
-                                        createChallengeFromTemplate(template)
-                                    }
+                        LazyVGrid(columns: [
+                            GridItem(.flexible(), spacing: 12),
+                            GridItem(.flexible(), spacing: 12)
+                        ], spacing: 12) {
+                            ForEach(ChallengeTemplate.templates.prefix(6)) { template in
+                                TemplateCard(template: template) {
+                                    createChallengeFromTemplate(template)
                                 }
                             }
-                            .padding(.horizontal, 16)
                         }
+                        .padding(.horizontal, 16)
                     }
                     .padding(.top, 24)
 
@@ -410,7 +420,7 @@ private struct TemplateCard: View {
         case .fitness: return Color(hex: "3b82f6")
         case .strength, .muscle: return Color(hex: "f97316")
         case .cardio: return Color(hex: "ef4444")
-        case .flexibility: return .purple
+        case .flexibility: return Color(hex: "06b6d4") // Teal instead of purple
         case .weightLoss, .wellness: return Color(hex: "22c55e")
         case .endurance: return Color(hex: "eab308")
         }
@@ -418,44 +428,45 @@ private struct TemplateCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(iconColor.opacity(0.15))
-                            .frame(width: 40, height: 40)
+                            .frame(width: 36, height: 36)
 
                         Image(systemName: template.goalType.icon)
-                            .font(.headline)
+                            .font(.subheadline)
                             .foregroundStyle(iconColor)
                     }
 
                     Spacer()
 
                     Text("\(template.durationDays)d")
-                        .font(.caption)
+                        .font(.caption2)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
                         .background(Color(.tertiarySystemGroupedBackground))
                         .clipShape(Capsule())
                 }
 
                 Text(template.name)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.semibold)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+                    .frame(height: 32, alignment: .topLeading)
 
                 Text(template.difficulty.displayName)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            .padding(14)
-            .frame(width: 160)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }
@@ -1555,6 +1566,8 @@ struct ContactPickerView: View {
     @State private var hasPermission = false
     @State private var showPermissionDenied = false
 
+    private let maxFriends = 5
+
     private var filteredContacts: [CNContact] {
         if searchText.isEmpty {
             return contacts
@@ -1567,41 +1580,59 @@ struct ContactPickerView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if showPermissionDenied {
-                    VStack(spacing: 16) {
-                        Image(systemName: "person.crop.circle.badge.exclamationmark")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                // Selection counter header
+                HStack {
+                    Text("Selected")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(selectedContacts.count)/\(maxFriends)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(selectedContacts.count == maxFriends ? .orange : .accentColor)
+                }
+                .padding()
+                .background(Color(.secondarySystemGroupedBackground))
 
-                        Text("Contacts Access Required")
-                            .font(.headline)
+                Group {
+                    if showPermissionDenied {
+                        VStack(spacing: 16) {
+                            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                                .font(.system(size: 60))
+                                .foregroundStyle(.secondary)
 
-                        Text("Please enable contacts access in Settings to invite friends to your challenge.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                            Text("Contacts Access Required")
+                                .font(.headline)
 
-                        Button("Open Settings") {
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                UIApplication.shared.open(url)
+                            Text("Please enable contacts access in Settings to invite friends to your challenge.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 32)
+
+                            Button("Open Settings") {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        .frame(maxHeight: .infinity)
+                    } else {
+                        List {
+                            ForEach(filteredContacts, id: \.identifier) { contact in
+                                ContactRow(
+                                    contact: contact,
+                                    isSelected: selectedContacts.contains { $0.id == contact.identifier },
+                                    isDisabled: !selectedContacts.contains { $0.id == contact.identifier } && selectedContacts.count >= maxFriends
+                                ) {
+                                    toggleContact(contact)
+                                }
                             }
                         }
-                        .buttonStyle(.borderedProminent)
+                        .searchable(text: $searchText, prompt: "Search contacts")
                     }
-                } else {
-                    List {
-                        ForEach(filteredContacts, id: \.identifier) { contact in
-                            ContactRow(
-                                contact: contact,
-                                isSelected: selectedContacts.contains { $0.id == contact.identifier }
-                            ) {
-                                toggleContact(contact)
-                            }
-                        }
-                    }
-                    .searchable(text: $searchText, prompt: "Search contacts")
                 }
             }
             .background(.ultraThinMaterial)
@@ -1611,10 +1642,22 @@ struct ContactPickerView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                        .fontWeight(.semibold)
+            }
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Continue")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(Color.accentColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
+                .padding()
+                .background(.ultraThinMaterial)
             }
         }
         .onAppear {
@@ -1686,6 +1729,7 @@ struct ContactPickerView: View {
 struct ContactRow: View {
     let contact: CNContact
     let isSelected: Bool
+    var isDisabled: Bool = false
     let onTap: () -> Void
 
     private var fullName: String {
@@ -1706,22 +1750,23 @@ struct ContactRow: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
-                    .background(Color.purple.opacity(0.8))
+                    .background(isDisabled ? Color.gray.opacity(0.5) : Color.purple.opacity(0.8))
                     .clipShape(Circle())
 
                 Text(fullName)
                     .font(.body)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(isDisabled ? .secondary : .primary)
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundStyle(isSelected ? Color.purple : Color.gray.opacity(0.3))
+                    .foregroundStyle(isSelected ? Color.purple : (isDisabled ? Color.gray.opacity(0.2) : Color.gray.opacity(0.3)))
             }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(isDisabled)
     }
 }
 
@@ -2021,8 +2066,7 @@ struct JoinChallengeView: View {
     }
 
     private func joinChallenge() {
-        // TODO: In production, this would query Firebase for the challenge
-        // For now, search local challenges
+        // Query iCloud for shared challenges, fallback to local
         let descriptor = FetchDescriptor<Challenge>(
             predicate: #Predicate { $0.inviteCode == inviteCode }
         )

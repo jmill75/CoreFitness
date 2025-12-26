@@ -4,13 +4,24 @@ import SwiftData
 // MARK: - Exercise Definition (Template)
 @Model
 final class Exercise {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var muscleGroup: MuscleGroup
-    var equipment: Equipment
+    var id: UUID = UUID()
+    var name: String = ""
+    var muscleGroupRaw: String = MuscleGroup.fullBody.rawValue
+    var equipmentRaw: String = Equipment.bodyweight.rawValue
     var instructions: String?
     var videoURL: String?
-    var createdAt: Date
+    var createdAt: Date = Date()
+
+    // Computed properties for enums
+    var muscleGroup: MuscleGroup {
+        get { MuscleGroup(rawValue: muscleGroupRaw) ?? .fullBody }
+        set { muscleGroupRaw = newValue.rawValue }
+    }
+
+    var equipment: Equipment {
+        get { Equipment(rawValue: equipmentRaw) ?? .bodyweight }
+        set { equipmentRaw = newValue.rawValue }
+    }
 
     // Extended properties - optional to support migration from existing data
     var category: ExerciseCategory?
@@ -57,8 +68,8 @@ final class Exercise {
     ) {
         self.id = id
         self.name = name
-        self.muscleGroup = muscleGroup
-        self.equipment = equipment
+        self.muscleGroupRaw = muscleGroup.rawValue
+        self.equipmentRaw = equipment.rawValue
         self.category = category
         self.difficulty = difficulty
         self.location = location
@@ -74,19 +85,25 @@ final class Exercise {
 // MARK: - Workout Template
 @Model
 final class Workout {
-    @Attribute(.unique) var id: UUID
-    var name: String
+    var id: UUID = UUID()
+    var name: String = ""
     var workoutDescription: String?
-    var estimatedDuration: Int // minutes
-    var difficulty: Difficulty
-    var createdAt: Date
-    var updatedAt: Date
+    var estimatedDuration: Int = 45 // minutes
+    var difficultyRaw: String = Difficulty.intermediate.rawValue
+    var createdAt: Date = Date()
+    var updatedAt: Date = Date()
 
     // Program management properties - defaults support migration
     var creationType: CreationType?
     var isActive: Bool = false
     var isQuickWorkout: Bool = false
     var personalRecordsCount: Int = 0
+
+    // Computed property for difficulty enum
+    var difficulty: Difficulty {
+        get { Difficulty(rawValue: difficultyRaw) ?? .intermediate }
+        set { difficultyRaw = newValue.rawValue }
+    }
 
     // Safe accessor for creationType with default
     var safeCreationType: CreationType {
@@ -135,7 +152,7 @@ final class Workout {
         self.name = name
         self.workoutDescription = description
         self.estimatedDuration = estimatedDuration
-        self.difficulty = difficulty
+        self.difficultyRaw = difficulty.rawValue
         self.creationType = creationType
         self.isQuickWorkout = isQuickWorkout
         self.isActive = false
@@ -148,12 +165,12 @@ final class Workout {
 // MARK: - Workout Exercise (Join table with exercise-specific config)
 @Model
 final class WorkoutExercise {
-    @Attribute(.unique) var id: UUID
-    var order: Int
-    var targetSets: Int
-    var targetReps: Int
+    var id: UUID = UUID()
+    var order: Int = 0
+    var targetSets: Int = 3
+    var targetReps: Int = 10
     var targetWeight: Double? // in lbs, stored consistently
-    var restDuration: Int // seconds
+    var restDuration: Int = 90 // seconds
     var notes: String?
 
     // Relationships
@@ -183,10 +200,10 @@ final class WorkoutExercise {
 // MARK: - Workout Session (Completed workout instance)
 @Model
 final class WorkoutSession {
-    @Attribute(.unique) var id: UUID
-    var startedAt: Date
+    var id: UUID = UUID()
+    var startedAt: Date = Date()
     var completedAt: Date?
-    var status: SessionStatus
+    var statusRaw: String = SessionStatus.inProgress.rawValue
     var totalDuration: Int? // seconds
     var caloriesBurned: Int?
     var notes: String?
@@ -196,6 +213,12 @@ final class WorkoutSession {
 
     @Relationship(deleteRule: .cascade, inverse: \CompletedSet.session)
     var completedSets: [CompletedSet]?
+
+    // Computed property for status enum
+    var status: SessionStatus {
+        get { SessionStatus(rawValue: statusRaw) ?? .inProgress }
+        set { statusRaw = newValue.rawValue }
+    }
 
     var isActive: Bool {
         status == .inProgress
@@ -215,18 +238,18 @@ final class WorkoutSession {
     ) {
         self.id = id
         self.startedAt = startedAt
-        self.status = status
+        self.statusRaw = status.rawValue
     }
 }
 
 // MARK: - Completed Set (Actual logged set)
 @Model
 final class CompletedSet {
-    @Attribute(.unique) var id: UUID
-    var setNumber: Int
-    var reps: Int
-    var weight: Double // in lbs
-    var completedAt: Date
+    var id: UUID = UUID()
+    var setNumber: Int = 1
+    var reps: Int = 0
+    var weight: Double = 0 // in lbs
+    var completedAt: Date = Date()
     var rpe: Int? // Rate of Perceived Exertion (1-10)
     var notes: String?
 

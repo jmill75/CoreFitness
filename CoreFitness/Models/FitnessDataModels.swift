@@ -8,11 +8,11 @@ import SwiftData
 /// Tracks personal records for each exercise
 @Model
 final class PersonalRecord {
-    @Attribute(.unique) var id: UUID
-    var exerciseName: String
-    var weight: Double // in lbs
-    var reps: Int
-    var achievedAt: Date
+    var id: UUID = UUID()
+    var exerciseName: String = ""
+    var weight: Double = 0 // in lbs
+    var reps: Int = 0
+    var achievedAt: Date = Date()
     var previousWeight: Double? // for tracking progression
     var sessionId: UUID? // link to the session where PR was achieved
 
@@ -47,8 +47,8 @@ final class PersonalRecord {
 /// Stores daily health and wellness data from HealthKit and manual entries
 @Model
 final class DailyHealthData {
-    @Attribute(.unique) var id: UUID
-    var date: Date // Date component only, time stripped
+    var id: UUID = UUID()
+    var date: Date = Date() // Date component only, time stripped
 
     // Activity
     var steps: Int?
@@ -161,13 +161,25 @@ enum SleepQuality: String, Codable, CaseIterable {
 /// Tracks daily mood entries
 @Model
 final class MoodEntry {
-    @Attribute(.unique) var id: UUID
-    var date: Date
-    var mood: Mood
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var moodRaw: String = Mood.okay.rawValue
     var energyLevel: Int? // 1-10
     var stressLevel: Int? // 1-10
     var notes: String?
-    var tags: [String]? // e.g., ["tired", "motivated", "stressed"]
+    var tagsRaw: String? // Comma-separated tags for CloudKit compatibility
+
+    // Computed property for mood enum
+    var mood: Mood {
+        get { Mood(rawValue: moodRaw) ?? .okay }
+        set { moodRaw = newValue.rawValue }
+    }
+
+    // Computed property for tags array
+    var tags: [String]? {
+        get { tagsRaw?.components(separatedBy: ",").filter { !$0.isEmpty } }
+        set { tagsRaw = newValue?.joined(separator: ",") }
+    }
 
     init(
         id: UUID = UUID(),
@@ -180,11 +192,11 @@ final class MoodEntry {
     ) {
         self.id = id
         self.date = date
-        self.mood = mood
+        self.moodRaw = mood.rawValue
         self.energyLevel = energyLevel
         self.stressLevel = stressLevel
         self.notes = notes
-        self.tags = tags
+        self.tagsRaw = tags?.joined(separator: ",")
     }
 }
 
@@ -231,17 +243,31 @@ enum Mood: String, Codable, CaseIterable {
 /// Tracks workout streaks and consistency
 @Model
 final class StreakData {
-    @Attribute(.unique) var id: UUID
-    var currentStreak: Int
-    var longestStreak: Int
+    var id: UUID = UUID()
+    var currentStreak: Int = 0
+    var longestStreak: Int = 0
     var lastWorkoutDate: Date?
-    var totalWorkoutDays: Int
-    var weeklyGoal: Int // workouts per week target
-    var currentWeekWorkouts: Int
+    var totalWorkoutDays: Int = 0
+    var weeklyGoal: Int = 4 // workouts per week target
+    var currentWeekWorkouts: Int = 0
 
     // Streak history
     var streakStartDate: Date?
-    var streakBrokenDates: [Date]?
+    var streakBrokenDatesRaw: String? // Comma-separated ISO dates for CloudKit compatibility
+
+    // Computed property for streakBrokenDates
+    var streakBrokenDates: [Date]? {
+        get {
+            guard let raw = streakBrokenDatesRaw else { return nil }
+            let formatter = ISO8601DateFormatter()
+            return raw.components(separatedBy: ",").compactMap { formatter.date(from: $0) }
+        }
+        set {
+            guard let dates = newValue else { streakBrokenDatesRaw = nil; return }
+            let formatter = ISO8601DateFormatter()
+            streakBrokenDatesRaw = dates.map { formatter.string(from: $0) }.joined(separator: ",")
+        }
+    }
 
     init(
         id: UUID = UUID(),
@@ -317,15 +343,21 @@ final class StreakData {
 /// Defines available achievements/badges
 @Model
 final class Achievement {
-    @Attribute(.unique) var id: String // e.g., "first_workout", "7_day_streak"
-    var name: String
-    var achievementDescription: String
-    var category: AchievementCategory
-    var iconName: String // SF Symbol or custom
-    var emoji: String
-    var requirement: Int // The number needed to unlock
-    var points: Int // Gamification points
-    var isSecret: Bool // Hidden until unlocked
+    var id: String = "" // e.g., "first_workout", "7_day_streak"
+    var name: String = ""
+    var achievementDescription: String = ""
+    var categoryRaw: String = AchievementCategory.workout.rawValue
+    var iconName: String = "star.fill" // SF Symbol or custom
+    var emoji: String = "🏆"
+    var requirement: Int = 1 // The number needed to unlock
+    var points: Int = 10 // Gamification points
+    var isSecret: Bool = false // Hidden until unlocked
+
+    // Computed property for category enum
+    var category: AchievementCategory {
+        get { AchievementCategory(rawValue: categoryRaw) ?? .workout }
+        set { categoryRaw = newValue.rawValue }
+    }
 
     init(
         id: String,
@@ -341,7 +373,7 @@ final class Achievement {
         self.id = id
         self.name = name
         self.achievementDescription = description
-        self.category = category
+        self.categoryRaw = category.rawValue
         self.iconName = iconName
         self.emoji = emoji
         self.requirement = requirement
@@ -353,12 +385,12 @@ final class Achievement {
 /// Tracks user's earned achievements
 @Model
 final class UserAchievement {
-    @Attribute(.unique) var id: UUID
-    var achievementId: String
-    var earnedAt: Date
-    var progress: Int // Current progress toward achievement
-    var isComplete: Bool
-    var notified: Bool // Whether user was shown notification
+    var id: UUID = UUID()
+    var achievementId: String = ""
+    var earnedAt: Date = Date()
+    var progress: Int = 0 // Current progress toward achievement
+    var isComplete: Bool = false
+    var notified: Bool = false // Whether user was shown notification
 
     init(
         id: UUID = UUID(),
@@ -404,19 +436,25 @@ enum AchievementCategory: String, Codable, CaseIterable {
 /// Represents a shared workout post
 @Model
 final class WorkoutShare {
-    @Attribute(.unique) var id: UUID
-    var sessionId: UUID
-    var sharedAt: Date
-    var platform: SharePlatform
+    var id: UUID = UUID()
+    var sessionId: UUID = UUID()
+    var sharedAt: Date = Date()
+    var platformRaw: String = SharePlatform.other.rawValue
     var caption: String?
     var imageData: Data? // Workout summary image
 
     // Workout summary data (denormalized for historical record)
-    var workoutName: String
-    var duration: Int // seconds
-    var exerciseCount: Int
-    var totalSets: Int
-    var totalVolume: Double // total weight lifted
+    var workoutName: String = ""
+    var duration: Int = 0 // seconds
+    var exerciseCount: Int = 0
+    var totalSets: Int = 0
+    var totalVolume: Double = 0 // total weight lifted
+
+    // Computed property for platform enum
+    var platform: SharePlatform {
+        get { SharePlatform(rawValue: platformRaw) ?? .other }
+        set { platformRaw = newValue.rawValue }
+    }
 
     init(
         id: UUID = UUID(),
@@ -432,7 +470,7 @@ final class WorkoutShare {
         self.id = id
         self.sessionId = sessionId
         self.sharedAt = Date()
-        self.platform = platform
+        self.platformRaw = platform.rawValue
         self.workoutName = workoutName
         self.duration = duration
         self.exerciseCount = exerciseCount
@@ -475,33 +513,33 @@ enum SharePlatform: String, Codable, CaseIterable {
 /// Stores aggregated weekly fitness data
 @Model
 final class WeeklySummary {
-    @Attribute(.unique) var id: UUID
-    var weekStartDate: Date
-    var weekEndDate: Date
+    var id: UUID = UUID()
+    var weekStartDate: Date = Date()
+    var weekEndDate: Date = Date()
 
     // Workout Stats
-    var workoutsCompleted: Int
-    var totalWorkoutMinutes: Int
-    var totalExercises: Int
-    var totalSets: Int
-    var totalReps: Int
-    var totalVolumeLifted: Double
+    var workoutsCompleted: Int = 0
+    var totalWorkoutMinutes: Int = 0
+    var totalExercises: Int = 0
+    var totalSets: Int = 0
+    var totalReps: Int = 0
+    var totalVolumeLifted: Double = 0
 
     // PRs achieved this week
-    var prsAchieved: Int
+    var prsAchieved: Int = 0
 
     // Activity
-    var totalSteps: Int
-    var averageDailySteps: Int
-    var totalActiveCalories: Int
+    var totalSteps: Int = 0
+    var averageDailySteps: Int = 0
+    var totalActiveCalories: Int = 0
 
     // Wellness
-    var averageSleepMinutes: Int
-    var averageMoodScore: Int
-    var averageRecoveryScore: Int
+    var averageSleepMinutes: Int = 0
+    var averageMoodScore: Int = 0
+    var averageRecoveryScore: Int = 0
 
     // Streak info
-    var workoutDays: Int // Days with at least one workout
+    var workoutDays: Int = 0 // Days with at least one workout
 
     init(
         id: UUID = UUID(),
@@ -531,32 +569,32 @@ final class WeeklySummary {
 /// Stores aggregated monthly fitness data
 @Model
 final class MonthlySummary {
-    @Attribute(.unique) var id: UUID
-    var month: Int // 1-12
-    var year: Int
+    var id: UUID = UUID()
+    var month: Int = 1 // 1-12
+    var year: Int = 2024
 
     // Workout Stats
-    var workoutsCompleted: Int
-    var totalWorkoutMinutes: Int
-    var totalVolumeLifted: Double
-    var prsAchieved: Int
+    var workoutsCompleted: Int = 0
+    var totalWorkoutMinutes: Int = 0
+    var totalVolumeLifted: Double = 0
+    var prsAchieved: Int = 0
 
     // Best week
-    var bestWeekWorkouts: Int
-    var bestWeekVolume: Double
+    var bestWeekWorkouts: Int = 0
+    var bestWeekVolume: Double = 0
 
     // Activity
-    var totalSteps: Int
-    var totalActiveCalories: Int
+    var totalSteps: Int = 0
+    var totalActiveCalories: Int = 0
 
     // Wellness averages
-    var averageSleepMinutes: Int
-    var averageMoodScore: Int
-    var averageRecoveryScore: Int
+    var averageSleepMinutes: Int = 0
+    var averageMoodScore: Int = 0
+    var averageRecoveryScore: Int = 0
 
     // Streaks
-    var longestStreakThisMonth: Int
-    var totalWorkoutDays: Int
+    var longestStreakThisMonth: Int = 0
+    var totalWorkoutDays: Int = 0
 
     init(
         id: UUID = UUID(),
@@ -589,30 +627,30 @@ final class MonthlySummary {
 /// User profile and settings
 @Model
 final class UserProfile {
-    @Attribute(.unique) var id: UUID
+    var id: UUID = UUID()
     var displayName: String?
     var email: String?
     var avatarData: Data?
-    var createdAt: Date
+    var createdAt: Date = Date()
 
     // Goals
-    var weeklyWorkoutGoal: Int
-    var dailyStepsGoal: Int
-    var dailyWaterGoal: Double // oz
+    var weeklyWorkoutGoal: Int = 4
+    var dailyStepsGoal: Int = 10000
+    var dailyWaterGoal: Double = 64 // oz
     var targetWeight: Double? // lbs
     var targetBodyFat: Double?
 
     // Preferences
-    var useMetricSystem: Bool
-    var notificationsEnabled: Bool
+    var useMetricSystem: Bool = false
+    var notificationsEnabled: Bool = true
     var workoutReminderTime: Date?
-    var restTimerDuration: Int // default rest between sets
-    var showHeartRateZones: Bool
+    var restTimerDuration: Int = 90 // default rest between sets
+    var showHeartRateZones: Bool = true
 
     // Stats
-    var totalWorkoutsCompleted: Int
-    var totalMinutesWorkedOut: Int
-    var memberSince: Date
+    var totalWorkoutsCompleted: Int = 0
+    var totalMinutesWorkedOut: Int = 0
+    var memberSince: Date = Date()
 
     init(
         id: UUID = UUID(),

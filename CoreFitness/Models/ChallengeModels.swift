@@ -1,25 +1,66 @@
 import Foundation
 import SwiftData
 
+// MARK: - Entry Source Enum
+enum EntrySource: String, Codable {
+    case manual = "Manual Entry"
+    case timer = "In-App Timer"
+    case healthkit = "Apple Health"
+
+    var icon: String {
+        switch self {
+        case .manual: return "square.and.pencil"
+        case .timer: return "timer"
+        case .healthkit: return "heart.fill"
+        }
+    }
+}
+
+// MARK: - Distance Unit Enum
+enum DistanceUnit: String, Codable, CaseIterable {
+    case miles = "Miles"
+    case kilometers = "Kilometers"
+    case meters = "Meters"
+
+    var abbreviation: String {
+        switch self {
+        case .miles: return "mi"
+        case .kilometers: return "km"
+        case .meters: return "m"
+        }
+    }
+}
+
 // MARK: - Challenge Model
 @Model
 final class Challenge {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var challengeDescription: String
-    var durationDays: Int
-    var startDate: Date
-    var endDate: Date
-    var goalType: ChallengeGoalType
-    var location: ChallengeLocation
-    var creatorId: String
-    var inviteCode: String
-    var isActive: Bool
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var challengeDescription: String = ""
+    var durationDays: Int = 30
+    var startDate: Date = Date()
+    var endDate: Date = Date()
+    var goalTypeRaw: String = ChallengeGoalType.fitness.rawValue  // Stored as raw string
+    var locationRaw: String = ChallengeLocation.anywhere.rawValue  // Stored as raw string
+    var creatorId: String = ""
+    var inviteCode: String = ""
+    var isActive: Bool = true
+    var createdAt: Date = Date()
 
     // Relationships
     @Relationship(deleteRule: .cascade, inverse: \ChallengeParticipant.challenge)
     var participants: [ChallengeParticipant]?
+
+    // Computed properties for enums
+    var goalType: ChallengeGoalType {
+        get { ChallengeGoalType(rawValue: goalTypeRaw) ?? .fitness }
+        set { goalTypeRaw = newValue.rawValue }
+    }
+
+    var location: ChallengeLocation {
+        get { ChallengeLocation(rawValue: locationRaw) ?? .anywhere }
+        set { locationRaw = newValue.rawValue }
+    }
 
     var sortedParticipants: [ChallengeParticipant] {
         participants?.sorted { $0.completedDays > $1.completedDays } ?? []
@@ -59,8 +100,8 @@ final class Challenge {
         self.durationDays = durationDays
         self.startDate = startDate
         self.endDate = Calendar.current.date(byAdding: .day, value: durationDays, to: startDate) ?? startDate
-        self.goalType = goalType
-        self.location = location
+        self.goalTypeRaw = goalType.rawValue
+        self.locationRaw = location.rawValue
         self.creatorId = creatorId
         self.inviteCode = Challenge.generateInviteCode()
         self.isActive = true
@@ -76,15 +117,29 @@ final class Challenge {
 // MARK: - Challenge Participant
 @Model
 final class ChallengeParticipant {
-    @Attribute(.unique) var id: UUID
-    var oderId: String
-    var displayName: String
-    var avatarEmoji: String
-    var joinedAt: Date
-    var completedDays: Int
-    var currentStreak: Int
-    var longestStreak: Int
-    var isOwner: Bool
+    var id: UUID = UUID()
+    var oderId: String = ""
+    var displayName: String = ""
+    var avatarEmoji: String = "😀"
+    var joinedAt: Date = Date()
+    var completedDays: Int = 0
+    var currentStreak: Int = 0
+    var longestStreak: Int = 0
+    var isOwner: Bool = false
+
+    // Aggregate stats (optional for migration compatibility)
+    var totalDistanceMiles: Double?
+    var totalDurationSeconds: Int?
+    var totalWeightLifted: Double?
+    var totalCaloriesBurned: Int?
+    var averageHeartRate: Int?
+    var prsAchieved: Int?
+    var currentWeightLoss: Double?
+
+    // Sync properties (optional for migration compatibility)
+    var lastSyncedAt: Date?
+    var cloudKitRecordID: String?
+    var needsSync: Bool?
 
     // Relationships
     var challenge: Challenge?
@@ -92,9 +147,34 @@ final class ChallengeParticipant {
     @Relationship(deleteRule: .cascade, inverse: \ChallengeDayLog.participant)
     var dayLogs: [ChallengeDayLog]?
 
+    @Relationship(deleteRule: .cascade, inverse: \ChallengeWeeklySummary.participant)
+    var weeklySummaries: [ChallengeWeeklySummary]?
+
     var completionPercentage: Double {
         guard let challenge = challenge else { return 0 }
         return Double(completedDays) / Double(challenge.durationDays)
+    }
+
+    var formattedTotalDistance: String {
+        String(format: "%.1f mi", totalDistanceMiles ?? 0)
+    }
+
+    var formattedTotalDuration: String {
+        let seconds = totalDurationSeconds ?? 0
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
+    }
+
+    var formattedTotalWeight: String {
+        let weight = totalWeightLifted ?? 0
+        if weight >= 1000 {
+            return String(format: "%.1fK lbs", weight / 1000)
+        }
+        return String(format: "%.0f lbs", weight)
     }
 
     init(
@@ -113,40 +193,280 @@ final class ChallengeParticipant {
         self.currentStreak = 0
         self.longestStreak = 0
         self.isOwner = isOwner
+        self.totalDistanceMiles = 0
+        self.totalDurationSeconds = 0
+        self.totalWeightLifted = 0
+        self.totalCaloriesBurned = 0
+        self.prsAchieved = 0
+        self.needsSync = false
     }
 
-    func logDay(day: Int, completed: Bool) {
+    func logDay(day: Int, completed: Bool, activityData: ChallengeActivityData? = nil) {
         if completed {
             completedDays += 1
             currentStreak += 1
             longestStreak = max(longestStreak, currentStreak)
+
+            // Update aggregates from activity data
+            if let data = activityData {
+                totalDistanceMiles = (totalDistanceMiles ?? 0) + data.distanceInMiles
+                totalDurationSeconds = (totalDurationSeconds ?? 0) + (data.durationSeconds ?? 0)
+                totalWeightLifted = (totalWeightLifted ?? 0) + (data.totalWeightLifted ?? 0)
+                totalCaloriesBurned = (totalCaloriesBurned ?? 0) + (data.caloriesBurned ?? 0)
+                if data.isPR == true {
+                    prsAchieved = (prsAchieved ?? 0) + 1
+                }
+            }
+
+            needsSync = true
         } else {
             currentStreak = 0
         }
+    }
+
+    func recalculateAggregates() {
+        totalDistanceMiles = 0
+        totalDurationSeconds = 0
+        totalWeightLifted = 0
+        totalCaloriesBurned = 0
+        prsAchieved = 0
+
+        guard let logs = dayLogs else { return }
+        for log in logs where log.isCompleted {
+            if let data = log.activityData {
+                totalDistanceMiles = (totalDistanceMiles ?? 0) + data.distanceInMiles
+                totalDurationSeconds = (totalDurationSeconds ?? 0) + (data.durationSeconds ?? 0)
+                totalWeightLifted = (totalWeightLifted ?? 0) + (data.totalWeightLifted ?? 0)
+                totalCaloriesBurned = (totalCaloriesBurned ?? 0) + (data.caloriesBurned ?? 0)
+                if data.isPR == true {
+                    prsAchieved = (prsAchieved ?? 0) + 1
+                }
+            }
+        }
+        needsSync = true
     }
 }
 
 // MARK: - Challenge Day Log
 @Model
 final class ChallengeDayLog {
-    @Attribute(.unique) var id: UUID
-    var dayNumber: Int
-    var isCompleted: Bool
+    var id: UUID = UUID()
+    var dayNumber: Int = 0
+    var isCompleted: Bool = false
     var completedAt: Date?
     var notes: String?
+
+    // Entry tracking (stored as raw string for compatibility)
+    var entrySourceRaw: String?
+    var entryTimestamp: Date?
 
     // Relationships
     var participant: ChallengeParticipant?
 
+    @Relationship(deleteRule: .cascade, inverse: \ChallengeActivityData.dayLog)
+    var activityData: ChallengeActivityData?
+
+    // Computed property for EntrySource
+    var entrySource: EntrySource? {
+        get { entrySourceRaw.flatMap { EntrySource(rawValue: $0) } }
+        set { entrySourceRaw = newValue?.rawValue }
+    }
+
     init(
         id: UUID = UUID(),
         dayNumber: Int,
-        isCompleted: Bool = false
+        isCompleted: Bool = false,
+        entrySource: EntrySource? = nil
     ) {
         self.id = id
         self.dayNumber = dayNumber
         self.isCompleted = isCompleted
         self.completedAt = isCompleted ? Date() : nil
+        self.entrySourceRaw = entrySource?.rawValue
+        self.entryTimestamp = isCompleted ? Date() : nil
+    }
+}
+
+// MARK: - Challenge Activity Data
+@Model
+final class ChallengeActivityData {
+    var id: UUID = UUID()
+
+    // Cardio stats
+    var startTime: Date?
+    var endTime: Date?
+    var durationSeconds: Int?
+    var distanceValue: Double?
+    var distanceUnitRaw: String?  // Stored as raw string for SwiftData compatibility
+    var averagePaceSecondsPerMile: Int?
+    var caloriesBurned: Int?
+
+    // Strength stats
+    var totalWeightLifted: Double?
+    var totalSets: Int?
+    var totalReps: Int?
+    var exercisesCompleted: Int?
+    var isPR: Bool?
+
+    // Endurance stats
+    var averageHeartRate: Int?
+    var maxHeartRate: Int?
+    // Heart rate zone minutes stored as individual properties for SwiftData compatibility
+    var heartRateZone1Minutes: Int?
+    var heartRateZone2Minutes: Int?
+    var heartRateZone3Minutes: Int?
+    var heartRateZone4Minutes: Int?
+    var heartRateZone5Minutes: Int?
+
+    // Wellness stats
+    var meditationMinutes: Int?
+    var sleepHours: Double?
+    var stressLevel: Int? // 1-10
+    var hydrationOz: Double?
+
+    // Weight Loss stats
+    var currentWeight: Double?
+    var targetWeight: Double?
+    var bodyFatPercentage: Double?
+
+    // Relationships
+    var dayLog: ChallengeDayLog?
+
+    @Relationship(deleteRule: .cascade, inverse: \ChallengeStrengthSet.activityData)
+    var strengthSets: [ChallengeStrengthSet]?
+
+    // Computed property for DistanceUnit
+    var distanceUnit: DistanceUnit? {
+        get { distanceUnitRaw.flatMap { DistanceUnit(rawValue: $0) } }
+        set { distanceUnitRaw = newValue?.rawValue }
+    }
+
+    // Computed property for heart rate zone minutes array
+    var heartRateZoneMinutes: [Int] {
+        get {
+            [
+                heartRateZone1Minutes ?? 0,
+                heartRateZone2Minutes ?? 0,
+                heartRateZone3Minutes ?? 0,
+                heartRateZone4Minutes ?? 0,
+                heartRateZone5Minutes ?? 0
+            ]
+        }
+        set {
+            if newValue.count >= 1 { heartRateZone1Minutes = newValue[0] }
+            if newValue.count >= 2 { heartRateZone2Minutes = newValue[1] }
+            if newValue.count >= 3 { heartRateZone3Minutes = newValue[2] }
+            if newValue.count >= 4 { heartRateZone4Minutes = newValue[3] }
+            if newValue.count >= 5 { heartRateZone5Minutes = newValue[4] }
+        }
+    }
+
+    // Computed properties
+    var formattedDuration: String {
+        guard let seconds = durationSeconds else { return "--:--" }
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        let secs = seconds % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        }
+        return String(format: "%02d:%02d", minutes, secs)
+    }
+
+    var formattedPace: String {
+        guard let pace = averagePaceSecondsPerMile else { return "--:--" }
+        let minutes = pace / 60
+        let seconds = pace % 60
+        return String(format: "%d:%02d /mi", minutes, seconds)
+    }
+
+    var distanceInMiles: Double {
+        guard let value = distanceValue, let unit = distanceUnit else { return 0 }
+        switch unit {
+        case .miles: return value
+        case .kilometers: return value * 0.621371
+        case .meters: return value * 0.000621371
+        }
+    }
+
+    init(id: UUID = UUID()) {
+        self.id = id
+    }
+}
+
+// MARK: - Challenge Strength Set
+@Model
+final class ChallengeStrengthSet {
+    var id: UUID = UUID()
+    var exerciseName: String = ""
+    var setNumber: Int = 1
+    var reps: Int = 0
+    var weight: Double = 0
+    var isPR: Bool = false
+    var completedAt: Date = Date()
+
+    // Relationships
+    var activityData: ChallengeActivityData?
+
+    init(
+        id: UUID = UUID(),
+        exerciseName: String,
+        setNumber: Int,
+        reps: Int,
+        weight: Double,
+        isPR: Bool = false
+    ) {
+        self.id = id
+        self.exerciseName = exerciseName
+        self.setNumber = setNumber
+        self.reps = reps
+        self.weight = weight
+        self.isPR = isPR
+        self.completedAt = Date()
+    }
+}
+
+// MARK: - Challenge Weekly Summary
+@Model
+final class ChallengeWeeklySummary {
+    var id: UUID = UUID()
+    var weekNumber: Int = 1
+    var startDate: Date = Date()
+    var endDate: Date = Date()
+    var completedDays: Int = 0
+    var totalDurationSeconds: Int = 0
+    var totalDistanceMiles: Double = 0
+    var totalWeightLifted: Double = 0
+    var totalCaloriesBurned: Int = 0
+    var averageHeartRate: Int?
+
+    // Relationships
+    var participant: ChallengeParticipant?
+
+    var formattedTotalDuration: String {
+        let hours = totalDurationSeconds / 3600
+        let minutes = (totalDurationSeconds % 3600) / 60
+        if hours > 0 {
+            return "\(hours)h \(minutes)m"
+        }
+        return "\(minutes)m"
+    }
+
+    init(
+        id: UUID = UUID(),
+        weekNumber: Int,
+        startDate: Date,
+        endDate: Date
+    ) {
+        self.id = id
+        self.weekNumber = weekNumber
+        self.startDate = startDate
+        self.endDate = endDate
+        self.completedDays = 0
+        self.totalDurationSeconds = 0
+        self.totalDistanceMiles = 0
+        self.totalWeightLifted = 0
+        self.totalCaloriesBurned = 0
     }
 }
 

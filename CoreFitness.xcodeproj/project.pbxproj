@@ -7,17 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		07A2DF1099DB657ABFC80ECD /* LeaderboardComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4DFF79F40BD17D3BD30676 /* LeaderboardComparisonView.swift */; };
+		17FC49E20FDE8400EE619277 /* ChallengeSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE8C0CCE0E2021ADC92B245 /* ChallengeSyncService.swift */; };
+		3261551721C8946D58598FF7 /* HealthKitImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A94995AB949181CC227C3B /* HealthKitImportView.swift */; };
+		4B52C819A98F1DF88F3251A6 /* ActivityTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6511244DDE3034EC0FA2F000 /* ActivityTimerView.swift */; };
+		6FFC4E36BE2CBDD4C8BEBFCF /* ChallengeStatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11281B6C9663C867E467687C /* ChallengeStatsView.swift */; };
+		72A67F25E985B019A9AC19B2 /* ChallengeTimerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DEABBF980288963574555B7 /* ChallengeTimerService.swift */; };
 		73876A112EFAC6CD00EA8B0C /* WatchConnectivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73876A102EFAC6CD00EA8B0C /* WatchConnectivityManager.swift */; };
 		73876A1A2EFAD01600EA8B0C /* CoreFitnessWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 73876A192EFAD01600EA8B0C /* CoreFitnessWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		73F1A7F62EFB5CF60037175B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73F1A7F52EFB5CF60037175B /* WidgetKit.framework */; };
 		73F1A7F82EFB5CF60037175B /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73F1A7F72EFB5CF60037175B /* SwiftUI.framework */; };
 		73F1A8052EFB5CF80037175B /* CoreFitnessWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 73F1A7F32EFB5CF60037175B /* CoreFitnessWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		73F1AB6D2EFC32DA0037175B /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 73F1AB6C2EFC32DA0037175B /* Info.plist */; };
-		73F1ABCF2EFC33440037175B /* CoreFitnessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F1ABCE2EFC33440037175B /* CoreFitnessTests.swift */; };
-		73F1ABD12EFC33810037175B /* BUILD_FIX_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD02EFC33810037175B /* BUILD_FIX_SUMMARY.md */; };
-		73F1ABD32EFC33900037175B /* cleanup_build.sh in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD22EFC33900037175B /* cleanup_build.sh */; };
-		73F1ABD52EFC33B00037175B /* PRE_BUILD_CHECKLIST.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD42EFC33B00037175B /* PRE_BUILD_CHECKLIST.md */; };
-		73F1ABD72EFC33CA0037175B /* QUICK_START.md in Resources */ = {isa = PBXBuildFile; fileRef = 73F1ABD62EFC33CA0037175B /* QUICK_START.md */; };
+		7F12326F3CC33DE8F4D3B125 /* CardioTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9300AA92210CD823CF0914AF /* CardioTrackingView.swift */; };
 		A1000001 /* CoreFitnessApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CoreFitnessApp.swift */; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* ContentView.swift */; };
 		A1000003 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* AuthManager.swift */; };
@@ -51,7 +52,6 @@
 		A1000052 /* AchievementDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000052 /* AchievementDefinitions.swift */; };
 		A1000053 /* FitnessDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000053 /* FitnessDataService.swift */; };
 		A1000054 /* SocialSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000054 /* SocialSharingService.swift */; };
-		A100005E /* WaterIntakeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005E /* WaterIntakeManager.swift */; };
 		A1000055 /* DebugDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000055 /* DebugDataView.swift */; };
 		A1000056 /* AchievementWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000056 /* AchievementWallView.swift */; };
 		A1000057 /* ChallengeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000057 /* ChallengeModels.swift */; };
@@ -59,6 +59,13 @@
 		A1000059 /* ChallengesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000059 /* ChallengesView.swift */; };
 		A100005A /* MusicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005A /* MusicService.swift */; };
 		A100005B /* AnimatedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005B /* AnimatedComponents.swift */; };
+		A100005E /* WaterIntakeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005E /* WaterIntakeManager.swift */; };
+		C3B3AA73DEEAF2D43FB667EA /* ChallengeDailyCheckInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F754F932FBC86FD22105A18 /* ChallengeDailyCheckInView.swift */; };
+		C5E0491DF7D11B692F761D5E /* WeeklySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBC7ADC5BD1621CA1591D39 /* WeeklySummaryView.swift */; };
+		CF8C0F984863B28C4575539A /* StrengthTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8E3E40044135313012B0B3 /* StrengthTrackingView.swift */; };
+		E10EED454D35070855ED56D0 /* SideBySideComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8999988B9B03EE39A9F8AE2A /* SideBySideComparisonView.swift */; };
+		F0EB427EE83F44DECF41A717 /* ChartComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B16CF86D362E6C4AF87DF5 /* ChartComparisonView.swift */; };
+		FBBEEFCDE17376FE2DEF046E /* ChallengeComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957031145F52C39E3A7C4EB0 /* ChallengeComparisonView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -118,6 +125,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0DBC7ADC5BD1621CA1591D39 /* WeeklySummaryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WeeklySummaryView.swift; sourceTree = "<group>"; };
+		0DEABBF980288963574555B7 /* ChallengeTimerService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeTimerService.swift; sourceTree = "<group>"; };
+		11281B6C9663C867E467687C /* ChallengeStatsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeStatsView.swift; sourceTree = "<group>"; };
+		43A94995AB949181CC227C3B /* HealthKitImportView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthKitImportView.swift; sourceTree = "<group>"; };
+		6511244DDE3034EC0FA2F000 /* ActivityTimerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActivityTimerView.swift; sourceTree = "<group>"; };
+		6F754F932FBC86FD22105A18 /* ChallengeDailyCheckInView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeDailyCheckInView.swift; sourceTree = "<group>"; };
 		73876A102EFAC6CD00EA8B0C /* WatchConnectivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivityManager.swift; sourceTree = "<group>"; };
 		73876A142EFAD01600EA8B0C /* CoreFitnessWatch.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreFitnessWatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		73876A192EFAD01600EA8B0C /* CoreFitnessWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "CoreFitnessWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -132,6 +145,11 @@
 		73F1ABD22EFC33900037175B /* cleanup_build.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = cleanup_build.sh; sourceTree = "<group>"; };
 		73F1ABD42EFC33B00037175B /* PRE_BUILD_CHECKLIST.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PRE_BUILD_CHECKLIST.md; sourceTree = "<group>"; };
 		73F1ABD62EFC33CA0037175B /* QUICK_START.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICK_START.md; sourceTree = "<group>"; };
+		8999988B9B03EE39A9F8AE2A /* SideBySideComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SideBySideComparisonView.swift; sourceTree = "<group>"; };
+		8F4DFF79F40BD17D3BD30676 /* LeaderboardComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LeaderboardComparisonView.swift; sourceTree = "<group>"; };
+		9300AA92210CD823CF0914AF /* CardioTrackingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CardioTrackingView.swift; sourceTree = "<group>"; };
+		93B16CF86D362E6C4AF87DF5 /* ChartComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChartComparisonView.swift; sourceTree = "<group>"; };
+		957031145F52C39E3A7C4EB0 /* ChallengeComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeComparisonView.swift; sourceTree = "<group>"; };
 		A2000001 /* CoreFitnessApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreFitnessApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A2000003 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
@@ -176,10 +194,12 @@
 		A200005B /* AnimatedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedComponents.swift; sourceTree = "<group>"; };
 		A200005E /* WaterIntakeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaterIntakeManager.swift; sourceTree = "<group>"; };
 		A3000001 /* CoreFitness.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoreFitness.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BA8E3E40044135313012B0B3 /* StrengthTrackingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StrengthTrackingView.swift; sourceTree = "<group>"; };
+		BDE8C0CCE0E2021ADC92B245 /* ChallengeSyncService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeSyncService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		73F1A8092EFB5CF80037175B /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		73F1A8092EFB5CF80037175B /* Exceptions for "CoreFitnessWidgets" folder in "CoreFitnessWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -189,10 +209,51 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		73876A1D2EFAD01600EA8B0C /* CoreFitnessWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "CoreFitnessWatch Watch App"; sourceTree = "<group>"; };
-		73876A2B2EFAD01800EA8B0C /* CoreFitnessWatch Watch AppTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "CoreFitnessWatch Watch AppTests"; sourceTree = "<group>"; };
-		73876A352EFAD01800EA8B0C /* CoreFitnessWatch Watch AppUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "CoreFitnessWatch Watch AppUITests"; sourceTree = "<group>"; };
-		73F1A7F92EFB5CF60037175B /* CoreFitnessWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (73F1A8092EFB5CF80037175B /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = CoreFitnessWidgets; sourceTree = "<group>"; };
+		73876A1D2EFAD01600EA8B0C /* CoreFitnessWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "CoreFitnessWatch Watch App";
+			sourceTree = "<group>";
+		};
+		73876A2B2EFAD01800EA8B0C /* CoreFitnessWatch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "CoreFitnessWatch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		73876A352EFAD01800EA8B0C /* CoreFitnessWatch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "CoreFitnessWatch Watch AppUITests";
+			sourceTree = "<group>";
+		};
+		73F1A7F92EFB5CF60037175B /* CoreFitnessWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				73F1A8092EFB5CF80037175B /* Exceptions for "CoreFitnessWidgets" folder in "CoreFitnessWidgetsExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = CoreFitnessWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -236,6 +297,40 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1FD4879F1FD8547F2A528C6F /* CloudKit */ = {
+			isa = PBXGroup;
+			children = (
+				BDE8C0CCE0E2021ADC92B245 /* ChallengeSyncService.swift */,
+			);
+			name = CloudKit;
+			path = CloudKit;
+			sourceTree = "<group>";
+		};
+		3B63B33162C5DA38957FBA91 /* Comparison */ = {
+			isa = PBXGroup;
+			children = (
+				957031145F52C39E3A7C4EB0 /* ChallengeComparisonView.swift */,
+				8F4DFF79F40BD17D3BD30676 /* LeaderboardComparisonView.swift */,
+				8999988B9B03EE39A9F8AE2A /* SideBySideComparisonView.swift */,
+				93B16CF86D362E6C4AF87DF5 /* ChartComparisonView.swift */,
+			);
+			name = Comparison;
+			path = Comparison;
+			sourceTree = "<group>";
+		};
+		70518C1074F4039F5BF7DD89 /* Tracking */ = {
+			isa = PBXGroup;
+			children = (
+				6F754F932FBC86FD22105A18 /* ChallengeDailyCheckInView.swift */,
+				9300AA92210CD823CF0914AF /* CardioTrackingView.swift */,
+				BA8E3E40044135313012B0B3 /* StrengthTrackingView.swift */,
+				6511244DDE3034EC0FA2F000 /* ActivityTimerView.swift */,
+				43A94995AB949181CC227C3B /* HealthKitImportView.swift */,
+			);
+			name = Tracking;
+			path = Tracking;
+			sourceTree = "<group>";
+		};
 		73F1A7F42EFB5CF60037175B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -243,6 +338,16 @@
 				73F1A7F72EFB5CF60037175B /* SwiftUI.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		8AF2539B37CE415CA8E0F8FC /* Stats */ = {
+			isa = PBXGroup;
+			children = (
+				11281B6C9663C867E467687C /* ChallengeStatsView.swift */,
+				0DBC7ADC5BD1621CA1591D39 /* WeeklySummaryView.swift */,
+			);
+			name = Stats;
+			path = Stats;
 			sourceTree = "<group>";
 		};
 		A5000001 = {
@@ -339,6 +444,8 @@
 				A2000054 /* SocialSharingService.swift */,
 				A200005A /* MusicService.swift */,
 				A200005E /* WaterIntakeManager.swift */,
+				1FD4879F1FD8547F2A528C6F /* CloudKit */,
+				0DEABBF980288963574555B7 /* ChallengeTimerService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -460,6 +567,9 @@
 			isa = PBXGroup;
 			children = (
 				A2000059 /* ChallengesView.swift */,
+				70518C1074F4039F5BF7DD89 /* Tracking */,
+				3B63B33162C5DA38957FBA91 /* Comparison */,
+				8AF2539B37CE415CA8E0F8FC /* Stats */,
 			);
 			path = Challenges;
 			sourceTree = "<group>";
@@ -480,8 +590,6 @@
 				73876A1C2EFAD01600EA8B0C /* PBXTargetDependency */,
 			);
 			name = CoreFitnessWatch;
-			packageProductDependencies = (
-			);
 			productName = CoreFitnessWatch;
 			productReference = 73876A142EFAD01600EA8B0C /* CoreFitnessWatch.app */;
 			productType = "com.apple.product-type.application.watchapp2-container";
@@ -502,8 +610,6 @@
 				73876A1D2EFAD01600EA8B0C /* CoreFitnessWatch Watch App */,
 			);
 			name = "CoreFitnessWatch Watch App";
-			packageProductDependencies = (
-			);
 			productName = "CoreFitnessWatch Watch App";
 			productReference = 73876A192EFAD01600EA8B0C /* CoreFitnessWatch Watch App.app */;
 			productType = "com.apple.product-type.application";
@@ -525,8 +631,6 @@
 				73876A2B2EFAD01800EA8B0C /* CoreFitnessWatch Watch AppTests */,
 			);
 			name = "CoreFitnessWatch Watch AppTests";
-			packageProductDependencies = (
-			);
 			productName = "CoreFitnessWatch Watch AppTests";
 			productReference = 73876A282EFAD01800EA8B0C /* CoreFitnessWatch Watch AppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -548,8 +652,6 @@
 				73876A352EFAD01800EA8B0C /* CoreFitnessWatch Watch AppUITests */,
 			);
 			name = "CoreFitnessWatch Watch AppUITests";
-			packageProductDependencies = (
-			);
 			productName = "CoreFitnessWatch Watch AppUITests";
 			productReference = 73876A322EFAD01800EA8B0C /* CoreFitnessWatch Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
@@ -570,8 +672,6 @@
 				73F1A7F92EFB5CF60037175B /* CoreFitnessWidgets */,
 			);
 			name = CoreFitnessWidgetsExtension;
-			packageProductDependencies = (
-			);
 			productName = CoreFitnessWidgetsExtension;
 			productReference = 73F1A7F32EFB5CF60037175B /* CoreFitnessWidgetsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -772,6 +872,19 @@
 				A100005A /* MusicService.swift in Sources */,
 				A100005B /* AnimatedComponents.swift in Sources */,
 				A100005E /* WaterIntakeManager.swift in Sources */,
+				17FC49E20FDE8400EE619277 /* ChallengeSyncService.swift in Sources */,
+				72A67F25E985B019A9AC19B2 /* ChallengeTimerService.swift in Sources */,
+				C3B3AA73DEEAF2D43FB667EA /* ChallengeDailyCheckInView.swift in Sources */,
+				7F12326F3CC33DE8F4D3B125 /* CardioTrackingView.swift in Sources */,
+				CF8C0F984863B28C4575539A /* StrengthTrackingView.swift in Sources */,
+				4B52C819A98F1DF88F3251A6 /* ActivityTimerView.swift in Sources */,
+				3261551721C8946D58598FF7 /* HealthKitImportView.swift in Sources */,
+				FBBEEFCDE17376FE2DEF046E /* ChallengeComparisonView.swift in Sources */,
+				07A2DF1099DB657ABFC80ECD /* LeaderboardComparisonView.swift in Sources */,
+				E10EED454D35070855ED56D0 /* SideBySideComparisonView.swift in Sources */,
+				F0EB427EE83F44DECF41A717 /* ChartComparisonView.swift in Sources */,
+				6FFC4E36BE2CBDD4C8BEBFCF /* ChallengeStatsView.swift in Sources */,
+				C5E0491DF7D11B692F761D5E /* WeeklySummaryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

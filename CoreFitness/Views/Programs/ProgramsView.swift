@@ -10,7 +10,6 @@ struct ProgramsView: View {
     @State private var showImportWorkout = false
     @State private var showExerciseLibrary = false
     @State private var showChallenges = false
-    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -55,17 +54,6 @@ struct ProgramsView: View {
                         }
                     }
 
-                    // Search bar
-                    HStack(spacing: 10) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.secondary)
-                        TextField("Search programs & exercises", text: $searchText)
-                            .font(.subheadline)
-                    }
-                    .padding(12)
-                    .background(Color(.systemGray5))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-
                     // Current Programs Card (Combined)
                     CurrentProgramsCard(onChallengeTap: { showChallenges = true })
 
@@ -75,8 +63,8 @@ struct ProgramsView: View {
                     // My Programs Card
                     SavedProgramsSection()
 
-                    // Discover Programs Section - 2x2 Grid
-                    DiscoverProgramsSection()
+                    // Challenges Card
+                    ChallengesSectionCard(onTap: { showChallenges = true })
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -936,106 +924,57 @@ struct ProgramStatItem: View {
     }
 }
 
-// MARK: - Discover Programs Section
-struct DiscoverProgramsSection: View {
-    @State private var showChallenges = false
-
-    // Discover items with their colors (no purple)
-    private let discoverItems: [(title: String, subtitle: String, icon: String, colors: [Color])] = [
-        ("Challenges", "Compete with friends", "trophy.fill", [Color(hex: "22c55e"), Color(hex: "16a34a")]),
-        ("Muscle Builder", "12 weeks • Advanced", "dumbbell.fill", [Color(hex: "f97316"), Color(hex: "ea580c")]),
-        ("Fat Burner", "8 weeks • HIIT", "flame.fill", [Color(hex: "ef4444"), Color(hex: "dc2626")]),
-        ("Recovery", "4 weeks • Mobility", "leaf.fill", [Color(hex: "0ea5e9"), Color(hex: "0284c7")])
-    ]
+// MARK: - Challenges Section Card
+struct ChallengesSectionCard: View {
+    let onTap: () -> Void
 
     var body: some View {
-        VStack(spacing: 14) {
-            // Section Header
-            HStack {
-                Text("Discover")
-                    .font(.title3)
-                    .fontWeight(.bold)
+        Button(action: {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            onTap()
+        }) {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "22c55e"), Color(hex: "16a34a")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: "trophy.fill")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Challenges")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+
+                    Text("Compete with friends & stay motivated")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
                 Spacer()
 
-                Text("Browse All →")
+                Text("View All")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(Color.accentBlue)
+                    .foregroundStyle(Color(hex: "22c55e"))
             }
-
-            // 2x2 Grid
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(discoverItems.indices, id: \.self) { index in
-                    let item = discoverItems[index]
-                    Button {
-                        if index == 0 {
-                            showChallenges = true
-                        }
-                    } label: {
-                        DiscoverGridCard(
-                            title: item.title,
-                            subtitle: item.subtitle,
-                            icon: item.icon,
-                            gradientColors: item.colors
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .fullScreenCover(isPresented: $showChallenges) {
-            ChallengesView()
-        }
-    }
-}
-
-struct DiscoverGridCard: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let gradientColors: [Color]
-
-    var body: some View {
-        HStack(spacing: 12) {
-            // Icon
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.white.opacity(0.2))
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: icon)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-            }
-
-            // Text
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .lineLimit(1)
-
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.8))
-                    .lineLimit(1)
-            }
-
-            Spacer()
-        }
-        .foregroundStyle(.white)
-        .padding(14)
-        .frame(height: 72)
-        .background(
-            LinearGradient(
-                colors: gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .buttonStyle(.plain)
     }
 }
 
