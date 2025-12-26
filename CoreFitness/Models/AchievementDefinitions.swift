@@ -275,6 +275,9 @@ struct AchievementDefinitions {
 
     /// Seeds achievements into the database if not already present
     static func seedAchievements(in context: ModelContext) {
+        // First, clean up any duplicate achievements
+        removeDuplicateAchievements(in: context)
+
         for achievement in all {
             // Check if achievement already exists
             let id = achievement.id
@@ -302,5 +305,21 @@ struct AchievementDefinitions {
         }
 
         try? context.save()
+    }
+
+    /// Remove duplicate achievements, keeping only the first of each ID
+    private static func removeDuplicateAchievements(in context: ModelContext) {
+        let descriptor = FetchDescriptor<Achievement>()
+        guard let allAchievements = try? context.fetch(descriptor) else { return }
+
+        var seenIds = Set<String>()
+        for achievement in allAchievements {
+            if seenIds.contains(achievement.id) {
+                // Duplicate found - delete it
+                context.delete(achievement)
+            } else {
+                seenIds.insert(achievement.id)
+            }
+        }
     }
 }

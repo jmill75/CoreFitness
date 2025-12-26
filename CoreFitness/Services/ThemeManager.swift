@@ -51,6 +51,7 @@ class ThemeManager: ObservableObject {
     // MARK: - User Profile Manager Reference
     private weak var userProfileManager: UserProfileManager?
     private var cancellables = Set<AnyCancellable>()
+    private var isReceivingFromProfile = false
 
     // MARK: - Published Properties (synced with UserProfileManager)
     @Published var selectedTheme: AppTheme = .standard
@@ -79,11 +80,15 @@ class ThemeManager: ObservableObject {
         loadFromUserProfileManager()
 
         // Subscribe to changes from UserProfileManager
+        // Use isReceivingFromProfile flag to prevent feedback loop
         manager.$selectedThemeRaw
             .receive(on: DispatchQueue.main)
             .sink { [weak self] rawValue in
+                guard let self = self else { return }
                 if let theme = AppTheme(rawValue: rawValue) {
-                    self?.selectedTheme = theme
+                    self.isReceivingFromProfile = true
+                    self.selectedTheme = theme
+                    self.isReceivingFromProfile = false
                 }
             }
             .store(in: &cancellables)
@@ -91,69 +96,102 @@ class ThemeManager: ObservableObject {
         manager.$colorSchemePreferenceRaw
             .receive(on: DispatchQueue.main)
             .sink { [weak self] rawValue in
+                guard let self = self else { return }
                 if let pref = ColorSchemePreference(rawValue: rawValue) {
-                    self?.colorSchemePreference = pref
+                    self.isReceivingFromProfile = true
+                    self.colorSchemePreference = pref
+                    self.isReceivingFromProfile = false
                 }
             }
             .store(in: &cancellables)
 
         manager.$useMetricSystem
             .receive(on: DispatchQueue.main)
-            .assign(to: &$useMetric)
+            .sink { [weak self] value in
+                guard let self = self else { return }
+                self.isReceivingFromProfile = true
+                self.useMetric = value
+                self.isReceivingFromProfile = false
+            }
+            .store(in: &cancellables)
 
         manager.$hapticsEnabled
             .receive(on: DispatchQueue.main)
-            .assign(to: &$hapticsEnabled)
+            .sink { [weak self] value in
+                guard let self = self else { return }
+                self.isReceivingFromProfile = true
+                self.hapticsEnabled = value
+                self.isReceivingFromProfile = false
+            }
+            .store(in: &cancellables)
 
         manager.$soundsEnabled
             .receive(on: DispatchQueue.main)
-            .assign(to: &$soundsEnabled)
+            .sink { [weak self] value in
+                guard let self = self else { return }
+                self.isReceivingFromProfile = true
+                self.soundsEnabled = value
+                self.isReceivingFromProfile = false
+            }
+            .store(in: &cancellables)
 
         manager.$restTimerDuration
             .receive(on: DispatchQueue.main)
-            .map { Double($0) }
-            .assign(to: &$restTimerDuration)
+            .sink { [weak self] value in
+                guard let self = self else { return }
+                self.isReceivingFromProfile = true
+                self.restTimerDuration = Double(value)
+                self.isReceivingFromProfile = false
+            }
+            .store(in: &cancellables)
 
         // Subscribe to local changes and push to UserProfileManager
+        // Skip if we're receiving from profile to prevent feedback loop
         $selectedTheme
             .dropFirst()
             .sink { [weak self] theme in
-                self?.userProfileManager?.selectedThemeRaw = theme.rawValue
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.selectedThemeRaw = theme.rawValue
             }
             .store(in: &cancellables)
 
         $colorSchemePreference
             .dropFirst()
             .sink { [weak self] pref in
-                self?.userProfileManager?.colorSchemePreferenceRaw = pref.rawValue
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.colorSchemePreferenceRaw = pref.rawValue
             }
             .store(in: &cancellables)
 
         $useMetric
             .dropFirst()
             .sink { [weak self] value in
-                self?.userProfileManager?.useMetricSystem = value
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.useMetricSystem = value
             }
             .store(in: &cancellables)
 
         $hapticsEnabled
             .dropFirst()
             .sink { [weak self] value in
-                self?.userProfileManager?.hapticsEnabled = value
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.hapticsEnabled = value
             }
             .store(in: &cancellables)
 
         $soundsEnabled
             .dropFirst()
             .sink { [weak self] value in
-                self?.userProfileManager?.soundsEnabled = value
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.soundsEnabled = value
             }
             .store(in: &cancellables)
 
         $restTimerDuration
             .dropFirst()
             .sink { [weak self] value in
-                self?.userProfileManager?.restTimerDuration = Int(value)
+                guard let self = self, !self.isReceivingFromProfile else { return }
+                self.userProfileManager?.restTimerDuration = Int(value)
             }
             .store(in: &cancellables)
     }

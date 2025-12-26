@@ -102,7 +102,7 @@ struct AppGradients {
     )
 
     static let electric = LinearGradient(
-        colors: [Color(hex: "007AFF"), Color(hex: "32ADE6")],
+        colors: [Color(hex: "BF5AF2"), Color(hex: "5E5CE6")],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -111,17 +111,13 @@ struct AppGradients {
     static func scoreGradient(for score: Int) -> LinearGradient {
         switch score {
         case 80...100:
-            // Vibrant green
-            return LinearGradient(colors: [Color(hex: "22C55E"), Color(hex: "16A34A")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color(hex: "34C759"), Color(hex: "30D158")], startPoint: .topLeading, endPoint: .bottomTrailing)
         case 60..<80:
-            // Clean blue
-            return LinearGradient(colors: [Color(hex: "3B82F6"), Color(hex: "2563EB")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color(hex: "FFD60A"), Color(hex: "FF9F0A")], startPoint: .topLeading, endPoint: .bottomTrailing)
         case 40..<60:
-            // Warm orange
-            return LinearGradient(colors: [Color(hex: "F97316"), Color(hex: "EA580C")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color(hex: "FF9F0A"), Color(hex: "FF6B00")], startPoint: .topLeading, endPoint: .bottomTrailing)
         default:
-            // Soft red
-            return LinearGradient(colors: [Color(hex: "EF4444"), Color(hex: "DC2626")], startPoint: .topLeading, endPoint: .bottomTrailing)
+            return LinearGradient(colors: [Color(hex: "FF3B30"), Color(hex: "FF6B6B")], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 }

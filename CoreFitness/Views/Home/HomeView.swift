@@ -12,37 +12,51 @@ struct HomeView: View {
     // MARK: - Bindings
     @Binding var selectedTab: Tab
 
+    // MARK: - Queries
+    @Query(filter: #Predicate<Challenge> { $0.isActive }, sort: \Challenge.startDate, order: .reverse)
+    private var activeChallenges: [Challenge]
+
     // MARK: - State
     @State private var showDailyCheckIn = false
     @State private var showWaterIntake = false
+
+    // Get current user's participant for a challenge
+    private func currentUserParticipant(for challenge: Challenge) -> ChallengeParticipant? {
+        guard let userId = authManager.currentUser?.id else { return nil }
+        return challenge.participants?.first { $0.oderId == userId }
+    }
+
+    @State private var animateContent = false
 
     var body: some View {
         NavigationStack {
             ScrollViewReader { proxy in
                 ScrollView {
-                    VStack(spacing: 28) {
+                    VStack(spacing: 20) {
                         // Welcome Header
-                        WelcomeHeader(
-                            userName: authManager.currentUser?.displayName ?? "Champion",
-                            onCheckIn: {
-                                showDailyCheckIn = true
-                                themeManager.mediumImpact()
-                            },
-                            onWaterIntake: {
-                                showWaterIntake = true
-                                themeManager.mediumImpact()
-                            }
-                        )
-                        .id("top")
+                        WelcomeHeader(userName: authManager.currentUser?.displayName ?? "Champion")
+                            .id("top")
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 10)
 
                         // Week Calendar (no card, at top)
                         WeekCalendarStrip()
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 10)
 
                         // Today's Recovery - Improved Hero Card
                         TodayRecoveryCard(selectedTab: $selectedTab)
+                            .opacity(animateContent ? 1 : 0)
+                            .offset(y: animateContent ? 0 : 15)
 
-                        // Today's Workout Card
-                        TodayWorkoutCard(selectedTab: $selectedTab)
+                        // Current Activity Section (Workout + Challenge)
+                        CurrentActivitySection(
+                            activeChallenges: activeChallenges,
+                            currentUserParticipant: currentUserParticipant,
+                            selectedTab: $selectedTab
+                        )
+                        .opacity(animateContent ? 1 : 0)
+                        .offset(y: animateContent ? 0 : 15)
 
                         // Quick Options Grid
                         QuickOptionsGrid(
@@ -56,6 +70,8 @@ struct HomeView: View {
                             },
                             selectedTab: $selectedTab
                         )
+                        .opacity(animateContent ? 1 : 0)
+                        .offset(y: animateContent ? 0 : 15)
                     }
                     .padding()
                     .padding(.bottom, 80)
@@ -64,15 +80,16 @@ struct HomeView: View {
                 .background(Color(.systemGroupedBackground))
                 .onAppear {
                     proxy.scrollTo("top", anchor: .top)
+                    withAnimation(.easeOut(duration: 0.5)) {
+                        animateContent = true
+                    }
                 }
             }
             .fullScreenCover(isPresented: $showDailyCheckIn) {
                 DailyCheckInView()
             }
-            .sheet(isPresented: $showWaterIntake) {
+            .fullScreenCover(isPresented: $showWaterIntake) {
                 QuickWaterIntakeView()
-                    .presentationDetents([.large])
-                    .presentationBackground(.regularMaterial)
             }
             .task {
                 // Refresh health data when view appears
@@ -99,61 +116,23 @@ struct HomeView: View {
 // MARK: - Welcome Header
 struct WelcomeHeader: View {
     let userName: String
-    let onCheckIn: () -> Void
-    let onWaterIntake: () -> Void
 
-    @State private var isPressed = false
-
-    private var greeting: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<21: return "Good evening"
-        default: return "Hey there"
-        }
+    private var firstName: String {
+        userName.components(separatedBy: " ").first ?? userName
     }
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(greeting + ",")
-                    .font(.title3)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                Text(userName)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-            }
+        HStack(spacing: 0) {
+            Text("Hi, ")
+                .font(.title)
+                .fontWeight(.bold)
 
-            Spacer()
-
-            // Quick Add Menu Button
-            Menu {
-                Button {
-                    onCheckIn()
-                } label: {
-                    Label("Daily Check-in", systemImage: "heart.text.square")
-                }
-
-                Button {
-                    onWaterIntake()
-                } label: {
-                    Label("Log Water", systemImage: "drop.fill")
-                }
-            } label: {
-                Image(systemName: "plus")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                    .frame(width: 52, height: 52)
-                    .background(Color.accentBlue)
-                    .clipShape(Circle())
-                    .shadow(color: Color.accentBlue.opacity(0.4), radius: 10, y: 5)
-            }
-            .accessibilityLabel("Quick actions menu")
-            .accessibilityHint("Double tap to open menu with daily check-in and water logging options")
+            Text(firstName)
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.accentBlue)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -172,7 +151,7 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
     var icon: String {
         switch self {
-        case .checkIn: return "heart.text.square.fill"
+        case .checkIn: return "heart.fill"
         case .water: return "drop.fill"
         case .exercises: return "figure.run"
         case .progress: return "chart.bar.fill"
@@ -180,6 +159,19 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
         case .programs: return "list.clipboard.fill"
         case .challenges: return "trophy.fill"
         case .settings: return "gearshape.fill"
+        }
+    }
+
+    var emoji: String {
+        switch self {
+        case .checkIn: return "❤️"
+        case .water: return "💧"
+        case .exercises: return "🏃"
+        case .progress: return "📊"
+        case .health: return "💗"
+        case .programs: return "📋"
+        case .challenges: return "🏆"
+        case .settings: return "⚙️"
         }
     }
 
@@ -198,14 +190,14 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
     var color: Color {
         switch self {
-        case .checkIn: return .accentRed
-        case .water: return .accentBlue
-        case .exercises: return .accentOrange
-        case .progress: return .accentGreen
-        case .health: return Color(hex: "FF2D55") // Pink
-        case .programs: return Color(hex: "0891b2") // Teal
-        case .challenges: return .accentYellow
-        case .settings: return .gray
+        case .checkIn: return Color(hex: "e74c3c") // Red
+        case .water: return Color(hex: "3498db") // Blue
+        case .exercises: return Color(hex: "e67e22") // Orange
+        case .progress: return Color(hex: "27ae60") // Green
+        case .health: return Color(hex: "e91e8c") // Pink
+        case .programs: return Color(hex: "1abc9c") // Teal
+        case .challenges: return Color(hex: "f1c40f") // Yellow/Gold
+        case .settings: return Color(hex: "5a6068") // Gray
         }
     }
 }
@@ -256,10 +248,10 @@ struct QuickOptionsGrid: View {
 
             // Dynamic Grid (supports 1-8 items)
             if !selectedActions.isEmpty {
-                LazyVGrid(columns: columns, spacing: 10) {
+                LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(selectedActions) { action in
                         QuickActionButton(
-                            icon: action.icon,
+                            emoji: action.emoji,
                             title: action.title,
                             color: action.color
                         ) {
@@ -464,13 +456,12 @@ struct EditableActionItem: View {
         VStack(spacing: 6) {
             ZStack(alignment: .topTrailing) {
                 ZStack {
-                    Circle()
-                        .fill(action.color.opacity(0.15))
-                        .frame(width: 50, height: 50)
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(action.color)
+                        .frame(width: 54, height: 54)
 
-                    Image(systemName: action.icon)
-                        .font(.title3)
-                        .foregroundStyle(action.color)
+                    Text(action.emoji)
+                        .font(.system(size: 24))
                 }
 
                 // Delete button
@@ -505,13 +496,13 @@ struct AddableActionItem: View {
             VStack(spacing: 6) {
                 ZStack(alignment: .topTrailing) {
                     ZStack {
-                        Circle()
-                            .fill(action.color.opacity(disabled ? 0.05 : 0.1))
-                            .frame(width: 50, height: 50)
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(action.color.opacity(disabled ? 0.2 : 0.4))
+                            .frame(width: 54, height: 54)
 
-                        Image(systemName: action.icon)
-                            .font(.title3)
-                            .foregroundStyle(action.color.opacity(disabled ? 0.3 : 0.5))
+                        Text(action.emoji)
+                            .font(.system(size: 24))
+                            .opacity(disabled ? 0.4 : 0.7)
                     }
 
                     // Add button
@@ -536,7 +527,7 @@ struct AddableActionItem: View {
 }
 
 struct QuickActionButton: View {
-    let icon: String
+    let emoji: String
     let title: String
     let color: Color
     let action: () -> Void
@@ -547,28 +538,27 @@ struct QuickActionButton: View {
         Button {
             action()
         } label: {
-            VStack(spacing: 6) {
-                // Icon circle
+            VStack(spacing: 8) {
+                // Large rounded square icon
                 ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(color)
+                        .frame(width: 64, height: 64)
+                        .shadow(color: color.opacity(0.3), radius: 4, y: 2)
 
-                    Image(systemName: icon)
-                        .font(.system(size: 18))
-                        .fontWeight(.semibold)
-                        .foregroundStyle(color)
+                    Text(emoji)
+                        .font(.system(size: 28))
                 }
 
                 // Title
                 Text(title)
-                    .font(.system(size: 10))
+                    .font(.system(size: 11))
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
         .scaleEffect(isPressed ? 0.92 : 1.0)
@@ -586,7 +576,9 @@ struct QuickActionButton: View {
 struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @Binding var selectedTab: Tab
+    @State private var isPressed = false
 
+    // Original blue palette
     private let ringStart = Color(hex: "60a5fa")
     private let ringEnd = Color(hex: "3b82f6")
     private let bgStart = Color(hex: "1e40af")
@@ -644,7 +636,7 @@ struct TodayRecoveryCard: View {
 
                     // Info
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Today's Recovery")
+                        Text("Today's Health")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.white.opacity(0.7))
@@ -654,36 +646,30 @@ struct TodayRecoveryCard: View {
 
                         Spacer().frame(height: 4)
 
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.right.circle.fill")
-                                .font(.caption)
-                            Text("View Details")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                        }
-                        .foregroundStyle(.white.opacity(0.6))
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
                     }
 
                     Spacer()
                 }
 
-                // Bottom row: Stats
-                HStack(spacing: 0) {
-                    RecoveryStat(icon: "moon.fill", label: "Sleep", value: sleepValue, color: Color(hex: "fcd34d"))
-
-                    Divider()
-                        .frame(height: 40)
-                        .background(Color.white.opacity(0.2))
-
-                    RecoveryStat(icon: "waveform.path.ecg", label: "HRV", value: hrvValue, color: Color(hex: "a78bfa"))
-
-                    Divider()
-                        .frame(height: 40)
-                        .background(Color.white.opacity(0.2))
-
-                    RecoveryStat(icon: "heart.fill", label: "Resting HR", value: hrValue, color: Color(hex: "ef4444"))
+                // Stats Grid
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 8) {
+                    HealthStatItem(icon: "figure.walk", value: stepsValue, label: "Steps", color: Color.accentGreen)
+                    HealthStatItem(icon: "flame.fill", value: caloriesValue, label: "Calories", color: Color.accentOrange)
+                    HealthStatItem(icon: "moon.fill", value: sleepValue, label: "Sleep", color: Color(hex: "fcd34d"))
+                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "HR", color: Color.accentRed)
+                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "a78bfa"))
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 4)
                 .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
@@ -699,11 +685,29 @@ struct TodayRecoveryCard: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
         .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Today's Recovery. Score \(healthKitManager.isAuthorized ? "\(score)" : "not available"). \(scoreMessage)")
+        .accessibilityLabel("Today's Health. Score \(healthKitManager.isAuthorized ? "\(score)" : "not available"). \(scoreMessage)")
         .accessibilityHint("Double tap to view health details")
+    }
+
+    private var stepsValue: String {
+        guard let steps = healthKitManager.healthData.steps else { return "--" }
+        if steps >= 1000 {
+            return String(format: "%.1fk", Double(steps) / 1000.0)
+        }
+        return "\(steps)"
+    }
+
+    private var caloriesValue: String {
+        guard let cals = healthKitManager.healthData.activeCalories else { return "--" }
+        return "\(Int(cals))"
     }
 
     private var sleepValue: String {
@@ -713,12 +717,34 @@ struct TodayRecoveryCard: View {
 
     private var hrvValue: String {
         guard let hrv = healthKitManager.healthData.hrv else { return "--" }
-        return "\(Int(hrv)) ms"
+        return "\(Int(hrv))"
     }
 
     private var hrValue: String {
         guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
-        return "\(Int(hr)) bpm"
+        return "\(Int(hr))"
+    }
+}
+
+// Compact health stat for grid layout
+struct HealthStatItem: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+            Text(label)
+                .font(.system(size: 9))
+                .foregroundStyle(.white.opacity(0.6))
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -814,7 +840,312 @@ struct DayScoreCell: View {
     }
 }
 
-// MARK: - Today's Workout Card (Compact)
+// MARK: - Current Activity Section (Workout + Challenge)
+struct CurrentActivitySection: View {
+    let activeChallenges: [Challenge]
+    let currentUserParticipant: (Challenge) -> ChallengeParticipant?
+    @Binding var selectedTab: Tab
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Today's Workout
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Today's Workout")
+                    .font(.headline)
+                    .fontWeight(.bold)
+
+                ActiveWorkoutCard(selectedTab: $selectedTab)
+            }
+
+            // Active Challenge (if exists)
+            if let challenge = activeChallenges.first {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Active Challenge")
+                        .font(.headline)
+                        .fontWeight(.bold)
+
+                    HomeChallengeCard(
+                        challenge: challenge,
+                        currentUserParticipant: currentUserParticipant(challenge),
+                        selectedTab: $selectedTab
+                    )
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Active Workout Card (Rich Design)
+struct ActiveWorkoutCard: View {
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var themeManager: ThemeManager
+    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
+    @Binding var selectedTab: Tab
+
+    @State private var showWorkoutExecution = false
+    @State private var showStartConfirmation = false
+    @State private var selectedWorkout: Workout?
+    @State private var isPressed = false
+
+    // Original blue gradient
+    private let gradientStart = Color(hex: "3b82f6")
+    private let gradientEnd = Color(hex: "1e40af")
+
+    private var activeSession: WorkoutSession? {
+        workoutManager.currentSession
+    }
+
+    private var currentWorkout: Workout? {
+        activeSession?.workout ?? workouts.first
+    }
+
+    private var isInProgress: Bool {
+        activeSession != nil && workoutManager.currentPhase != .idle && workoutManager.currentPhase != .completed
+    }
+
+    private var exerciseProgress: Double {
+        guard let workout = currentWorkout, workout.exerciseCount > 0 else { return 0 }
+        if isInProgress {
+            return Double(workoutManager.currentExerciseIndex + 1) / Double(workout.exerciseCount)
+        }
+        return 0
+    }
+
+    private var totalExercises: Int {
+        currentWorkout?.exerciseCount ?? 0
+    }
+
+    var body: some View {
+        if let workout = currentWorkout {
+            Button {
+                if isInProgress {
+                    showWorkoutExecution = true
+                } else {
+                    selectedWorkout = workout
+                    showStartConfirmation = true
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Title and chevron
+                    HStack {
+                        Text(workout.name)
+                            .font(.title3)
+                            .fontWeight(.bold)
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+
+                    // Stats row
+                    HStack(spacing: 16) {
+                        Label("\(totalExercises) exercises", systemImage: "dumbbell.fill")
+                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                        if isInProgress {
+                            Label(workoutManager.formattedElapsedTime, systemImage: "timer")
+                        }
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.9))
+
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.white.opacity(0.25))
+                                .frame(height: 5)
+
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(Color.white)
+                                .frame(width: geo.size.width * (isInProgress ? exerciseProgress : 0), height: 5)
+                        }
+                    }
+                    .frame(height: 5)
+                }
+                .foregroundStyle(.white)
+                .padding(16)
+                .background(
+                    LinearGradient(
+                        colors: [gradientStart, gradientEnd],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .scaleEffect(isPressed ? 0.98 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+            }
+            .buttonStyle(.plain)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
+            .alert("Start Workout?", isPresented: $showStartConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Start") {
+                    startWorkout()
+                }
+            } message: {
+                if let selected = selectedWorkout {
+                    Text("Begin \(selected.name)? (~\(selected.estimatedDuration) min)")
+                } else {
+                    Text("Start this workout?")
+                }
+            }
+            .fullScreenCover(isPresented: $showWorkoutExecution) {
+                if let workout = isInProgress ? currentWorkout : selectedWorkout {
+                    WorkoutExecutionView(workout: workout)
+                        .environmentObject(workoutManager)
+                        .environmentObject(themeManager)
+                }
+            }
+        } else {
+            // Empty state
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 50, height: 50)
+
+                    Text("💪")
+                        .font(.system(size: 24))
+                        .opacity(0.5)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("No Workout")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Text("Tap to create one")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+
+                Spacer()
+
+                Button {
+                    selectedTab = .programs
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.15))
+                        .clipShape(Circle())
+                }
+            }
+            .padding(14)
+            .background(
+                LinearGradient(
+                    colors: [gradientStart.opacity(0.4), gradientEnd.opacity(0.4)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+        }
+    }
+
+    private func startWorkout() {
+        workoutManager.resetState()
+        guard let workout = selectedWorkout, workout.exerciseCount > 0 else { return }
+        showWorkoutExecution = true
+    }
+}
+
+// MARK: - Home Challenge Card (Rich Design)
+struct HomeChallengeCard: View {
+    let challenge: Challenge
+    let currentUserParticipant: ChallengeParticipant?
+    @Binding var selectedTab: Tab
+    @State private var isPressed = false
+
+    // Original orange gradient
+    private let gradientStart = Color(hex: "f97316")
+    private let gradientEnd = Color(hex: "ea580c")
+
+    private var userRank: Int {
+        guard let participant = currentUserParticipant,
+              let participants = challenge.participants else { return 0 }
+        let sorted = participants.sorted { $0.completedDays > $1.completedDays }
+        return (sorted.firstIndex(where: { $0.id == participant.id }) ?? -1) + 1
+    }
+
+    private var totalParticipants: Int {
+        challenge.participants?.count ?? 0
+    }
+
+    private var currentStreak: Int {
+        currentUserParticipant?.currentStreak ?? 0
+    }
+
+    var body: some View {
+        Button {
+            selectedTab = .programs
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                // Title and chevron
+                HStack {
+                    Text(challenge.name)
+                        .font(.title3)
+                        .fontWeight(.bold)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                // Stats row
+                HStack(spacing: 16) {
+                    Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
+                    Label("\(Int(challenge.progress * 100))%", systemImage: "checkmark.circle")
+                    if currentStreak > 0 {
+                        Label("\(currentStreak) 🔥", systemImage: "flame")
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.9))
+
+                // Progress bar
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white.opacity(0.25))
+                            .frame(height: 5)
+
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white)
+                            .frame(width: geo.size.width * challenge.progress, height: 5)
+                    }
+                }
+                .frame(height: 5)
+            }
+            .foregroundStyle(.white)
+            .padding(16)
+            .background(
+                LinearGradient(
+                    colors: [gradientStart, gradientEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Today's Workout Card (Compact - Legacy)
 struct TodayWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
