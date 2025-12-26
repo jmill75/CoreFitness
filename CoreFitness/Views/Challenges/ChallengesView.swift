@@ -2553,6 +2553,8 @@ private struct SegmentView: View {
     let segment: SegmentData
     let totalSegments: Int
 
+    @State private var isPulsing = false
+
     private var fillColor: Color {
         if segment.isCompleted {
             return .white
@@ -2564,19 +2566,39 @@ private struct SegmentView: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
-            .fill(fillColor)
-            .frame(maxWidth: .infinity)
-            .overlay(
-                Group {
-                    if segment.isCurrent && totalSegments <= 14 {
-                        // Pulse animation for current day
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(.white, lineWidth: 2)
-                            .opacity(0.8)
-                    }
-                }
-            )
+        ZStack {
+            RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
+                .fill(fillColor)
+                .frame(maxWidth: .infinity)
+
+            if segment.isCurrent {
+                // Pulse glow effect
+                RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
+                    .fill(.white)
+                    .opacity(isPulsing ? 0.3 : 0.6)
+                    .scaleEffect(isPulsing ? 1.0 : 1.1)
+                    .animation(
+                        .easeInOut(duration: 1.0)
+                        .repeatForever(autoreverses: true),
+                        value: isPulsing
+                    )
+
+                // Border pulse
+                RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
+                    .stroke(.white, lineWidth: isPulsing ? 1 : 2)
+                    .opacity(isPulsing ? 0.5 : 1.0)
+                    .animation(
+                        .easeInOut(duration: 1.0)
+                        .repeatForever(autoreverses: true),
+                        value: isPulsing
+                    )
+            }
+        }
+        .onAppear {
+            if segment.isCurrent {
+                isPulsing = true
+            }
+        }
     }
 }
 
