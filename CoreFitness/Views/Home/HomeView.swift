@@ -133,6 +133,8 @@ struct WelcomeHeader: View {
                 .foregroundStyle(Color.accentBlue)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 }
 
