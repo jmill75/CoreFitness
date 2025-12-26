@@ -118,7 +118,7 @@ struct ChallengesView: View {
                         // Your Stats Section
                         if let userParticipant = challenge.participants?.first(where: { $0.oderId == "current_user" }) {
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionHeader(title: "Your Progress", action: nil) {}
+                                SectionHeader(title: "Challenge Progress", action: nil) {}
 
                                 YourProgressCard(participant: userParticipant, challenge: challenge)
                                     .padding(.horizontal, 16)
