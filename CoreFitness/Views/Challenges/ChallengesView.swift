@@ -2216,6 +2216,16 @@ struct ChallengeDetailView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
+
+                        // Segmented Progress Indicator
+                        SegmentedProgressIndicator(
+                            currentDay: challenge.currentDay,
+                            totalDays: challenge.durationDays,
+                            completedDays: currentUserParticipant?.completedDays ?? 0,
+                            accentColor: goalColor,
+                            isLightBackground: true
+                        )
+                        .padding(.top, 8)
                     }
                     .padding(24)
                     .frame(maxWidth: .infinity)
@@ -2449,6 +2459,8 @@ private struct SegmentedProgressIndicator: View {
     let currentDay: Int
     let totalDays: Int
     let completedDays: Int
+    var accentColor: Color = .white
+    var isLightBackground: Bool = false
 
     // Determine how to display segments based on total days
     private var displayMode: DisplayMode {
@@ -2504,12 +2516,25 @@ private struct SegmentedProgressIndicator: View {
         }
     }
 
+    private var labelColor: Color {
+        isLightBackground ? .secondary : .white.opacity(0.5)
+    }
+
+    private var currentLabelColor: Color {
+        isLightBackground ? accentColor : .white.opacity(0.8)
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             // Segment bar
             HStack(spacing: 3) {
                 ForEach(segments, id: \.index) { segment in
-                    SegmentView(segment: segment, totalSegments: segments.count)
+                    SegmentView(
+                        segment: segment,
+                        totalSegments: segments.count,
+                        accentColor: accentColor,
+                        isLightBackground: isLightBackground
+                    )
                 }
             }
             .frame(height: 24)
@@ -2518,7 +2543,7 @@ private struct SegmentedProgressIndicator: View {
             HStack {
                 Text("Day 1")
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(labelColor)
 
                 Spacer()
 
@@ -2526,14 +2551,14 @@ private struct SegmentedProgressIndicator: View {
                     Text("Day \(currentDay)")
                         .font(.caption2)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(currentLabelColor)
 
                     Spacer()
                 }
 
                 Text("Day \(totalDays)")
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(labelColor)
             }
         }
     }
@@ -2552,17 +2577,33 @@ private struct SegmentData {
 private struct SegmentView: View {
     let segment: SegmentData
     let totalSegments: Int
+    var accentColor: Color = .white
+    var isLightBackground: Bool = false
 
     @State private var isPulsing = false
 
     private var fillColor: Color {
-        if segment.isCompleted {
-            return .white
-        } else if segment.isCurrent {
-            return .white.opacity(0.7)
+        if isLightBackground {
+            if segment.isCompleted {
+                return accentColor
+            } else if segment.isCurrent {
+                return accentColor.opacity(0.7)
+            } else {
+                return accentColor.opacity(0.2)
+            }
         } else {
-            return .white.opacity(0.2)
+            if segment.isCompleted {
+                return .white
+            } else if segment.isCurrent {
+                return .white.opacity(0.7)
+            } else {
+                return .white.opacity(0.2)
+            }
         }
+    }
+
+    private var pulseColor: Color {
+        isLightBackground ? accentColor : .white
     }
 
     var body: some View {
@@ -2574,7 +2615,7 @@ private struct SegmentView: View {
             if segment.isCurrent {
                 // Pulse glow effect
                 RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
-                    .fill(.white)
+                    .fill(pulseColor)
                     .opacity(isPulsing ? 0.3 : 0.6)
                     .scaleEffect(isPulsing ? 1.0 : 1.1)
                     .animation(
@@ -2585,7 +2626,7 @@ private struct SegmentView: View {
 
                 // Border pulse
                 RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
-                    .stroke(.white, lineWidth: isPulsing ? 1 : 2)
+                    .stroke(pulseColor, lineWidth: isPulsing ? 1 : 2)
                     .opacity(isPulsing ? 0.5 : 1.0)
                     .animation(
                         .easeInOut(duration: 1.0)
