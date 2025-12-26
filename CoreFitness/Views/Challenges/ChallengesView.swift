@@ -379,19 +379,12 @@ private struct ActiveChallengeHero: View {
                     }
                 }
 
-                // Progress bar
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(.white.opacity(0.2))
-                            .frame(height: 8)
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(.white)
-                            .frame(width: geo.size.width * progress, height: 8)
-                    }
-                }
-                .frame(height: 8)
+                // Segmented Progress Indicator
+                SegmentedProgressIndicator(
+                    currentDay: challenge.currentDay,
+                    totalDays: challenge.durationDays,
+                    completedDays: challenge.participants?.first(where: { $0.oderId == "current_user" })?.completedDays ?? 0
+                )
 
                 // Participants
                 HStack {
@@ -2448,6 +2441,142 @@ struct ParticipantRow: View {
         .padding()
         .background(isCurrentUser ? Color.accentBlue.opacity(0.1) : Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Segmented Progress Indicator
+private struct SegmentedProgressIndicator: View {
+    let currentDay: Int
+    let totalDays: Int
+    let completedDays: Int
+
+    // Determine how to display segments based on total days
+    private var displayMode: DisplayMode {
+        if totalDays <= 14 {
+            return .daily
+        } else if totalDays <= 60 {
+            return .weekly
+        } else {
+            return .monthly
+        }
+    }
+
+    private enum DisplayMode {
+        case daily, weekly, monthly
+    }
+
+    private var segments: [SegmentData] {
+        switch displayMode {
+        case .daily:
+            return (1...totalDays).map { day in
+                SegmentData(
+                    index: day,
+                    label: "\(day)",
+                    isCompleted: day < currentDay,
+                    isCurrent: day == currentDay,
+                    isFuture: day > currentDay
+                )
+            }
+        case .weekly:
+            let weeks = (totalDays + 6) / 7
+            let currentWeek = (currentDay + 6) / 7
+            return (1...weeks).map { week in
+                SegmentData(
+                    index: week,
+                    label: "W\(week)",
+                    isCompleted: week < currentWeek,
+                    isCurrent: week == currentWeek,
+                    isFuture: week > currentWeek
+                )
+            }
+        case .monthly:
+            let months = (totalDays + 29) / 30
+            let currentMonth = (currentDay + 29) / 30
+            return (1...months).map { month in
+                SegmentData(
+                    index: month,
+                    label: "M\(month)",
+                    isCompleted: month < currentMonth,
+                    isCurrent: month == currentMonth,
+                    isFuture: month > currentMonth
+                )
+            }
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Segment bar
+            HStack(spacing: 3) {
+                ForEach(segments, id: \.index) { segment in
+                    SegmentView(segment: segment, totalSegments: segments.count)
+                }
+            }
+            .frame(height: 24)
+
+            // Labels for key points
+            HStack {
+                Text("Day 1")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.5))
+
+                Spacer()
+
+                if currentDay > 1 && currentDay < totalDays {
+                    Text("Day \(currentDay)")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.8))
+
+                    Spacer()
+                }
+
+                Text("Day \(totalDays)")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+    }
+}
+
+// MARK: - Segment Data
+private struct SegmentData {
+    let index: Int
+    let label: String
+    let isCompleted: Bool
+    let isCurrent: Bool
+    let isFuture: Bool
+}
+
+// MARK: - Segment View
+private struct SegmentView: View {
+    let segment: SegmentData
+    let totalSegments: Int
+
+    private var fillColor: Color {
+        if segment.isCompleted {
+            return .white
+        } else if segment.isCurrent {
+            return .white.opacity(0.7)
+        } else {
+            return .white.opacity(0.2)
+        }
+    }
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: totalSegments <= 14 ? 4 : 2)
+            .fill(fillColor)
+            .frame(maxWidth: .infinity)
+            .overlay(
+                Group {
+                    if segment.isCurrent && totalSegments <= 14 {
+                        // Pulse animation for current day
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(.white, lineWidth: 2)
+                            .opacity(0.8)
+                    }
+                }
+            )
     }
 }
 
