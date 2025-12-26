@@ -260,6 +260,9 @@ final class ChallengeDayLog {
     var entrySourceRaw: String?
     var entryTimestamp: Date?
 
+    // Photo attachments (stored as Data for SwiftData compatibility)
+    var photoData: [Data]?
+
     // Relationships
     var participant: ChallengeParticipant?
 
