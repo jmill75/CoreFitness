@@ -11,6 +11,7 @@ class UserProfileManager: ObservableObject {
     // MARK: - Model Context
     private var modelContext: ModelContext?
     private var profile: UserProfile?
+    private var isSyncing = false
 
     // MARK: - Published Properties (UI binding)
 
@@ -144,6 +145,10 @@ class UserProfileManager: ObservableObject {
     private func syncFromProfile() {
         guard let profile = profile else { return }
 
+        // Prevent didSet handlers from triggering saves during sync
+        isSyncing = true
+        defer { isSyncing = false }
+
         selectedThemeRaw = profile.selectedThemeRaw
         colorSchemePreferenceRaw = profile.colorSchemePreferenceRaw
         useMetricSystem = profile.useMetricSystem
@@ -176,7 +181,8 @@ class UserProfileManager: ObservableObject {
 
     /// Update the profile with a closure
     private func updateProfile(_ update: (UserProfile) -> Void) {
-        guard let profile = profile else { return }
+        // Skip saves during sync to prevent save loop
+        guard !isSyncing, let profile = profile else { return }
         update(profile)
         profile.markModified()
         try? modelContext?.save()

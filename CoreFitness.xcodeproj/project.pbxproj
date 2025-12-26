@@ -66,6 +66,7 @@
 		C5E0491DF7D11B692F761D5E /* WeeklySummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DBC7ADC5BD1621CA1591D39 /* WeeklySummaryView.swift */; };
 		CF8C0F984863B28C4575539A /* StrengthTrackingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8E3E40044135313012B0B3 /* StrengthTrackingView.swift */; };
 		E10EED454D35070855ED56D0 /* SideBySideComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8999988B9B03EE39A9F8AE2A /* SideBySideComparisonView.swift */; };
+		EAA414D175CE11A3CE6A2090 /* CloudKitStatusService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C381ADC9DF39D44304172C3 /* CloudKitStatusService.swift */; };
 		F0EB427EE83F44DECF41A717 /* ChartComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B16CF86D362E6C4AF87DF5 /* ChartComparisonView.swift */; };
 		FBBEEFCDE17376FE2DEF046E /* ChallengeComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 957031145F52C39E3A7C4EB0 /* ChallengeComparisonView.swift */; };
 /* End PBXBuildFile section */
@@ -131,6 +132,7 @@
 		0DEABBF980288963574555B7 /* ChallengeTimerService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeTimerService.swift; sourceTree = "<group>"; };
 		0F8F62398D0F0903658230BF /* DataRefreshService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DataRefreshService.swift; sourceTree = "<group>"; };
 		11281B6C9663C867E467687C /* ChallengeStatsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeStatsView.swift; sourceTree = "<group>"; };
+		1C381ADC9DF39D44304172C3 /* CloudKitStatusService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudKitStatusService.swift; sourceTree = "<group>"; };
 		43A94995AB949181CC227C3B /* HealthKitImportView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HealthKitImportView.swift; sourceTree = "<group>"; };
 		6511244DDE3034EC0FA2F000 /* ActivityTimerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ActivityTimerView.swift; sourceTree = "<group>"; };
 		6F754F932FBC86FD22105A18 /* ChallengeDailyCheckInView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ChallengeDailyCheckInView.swift; sourceTree = "<group>"; };
@@ -452,6 +454,7 @@
 				0DEABBF980288963574555B7 /* ChallengeTimerService.swift */,
 				0F8F62398D0F0903658230BF /* DataRefreshService.swift */,
 				E20C834047ACB1A82DFBF0D7 /* UserProfileManager.swift */,
+				1C381ADC9DF39D44304172C3 /* CloudKitStatusService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -893,6 +896,7 @@
 				C5E0491DF7D11B692F761D5E /* WeeklySummaryView.swift in Sources */,
 				13583DDFC7582F0EED7CA376 /* DataRefreshService.swift in Sources */,
 				8E9E199DB13EDF96B7C7ECAF /* UserProfileManager.swift in Sources */,
+				EAA414D175CE11A3CE6A2090 /* CloudKitStatusService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

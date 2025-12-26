@@ -154,6 +154,13 @@ struct SettingsView: View {
                     Text("Integrations")
                 }
 
+                // Data & Sync Section
+                Section {
+                    iCloudSyncStatusRow()
+                } header: {
+                    Text("Data & Sync")
+                }
+
                 // Support Section
                 Section {
                     NavigationLink {
@@ -294,6 +301,39 @@ struct UserProfileCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .padding(.horizontal)
         .padding(.vertical, 8)
+    }
+}
+
+// MARK: - iCloud Sync Status Row
+struct iCloudSyncStatusRow: View {
+    @StateObject private var cloudStatus = CloudKitStatusService.shared
+
+    var body: some View {
+        HStack {
+            Label {
+                Text("iCloud Sync")
+            } icon: {
+                Image(systemName: "icloud.fill")
+            }
+
+            Spacer()
+
+            HStack(spacing: 6) {
+                Image(systemName: cloudStatus.syncStatus.icon)
+                    .font(.caption)
+                    .foregroundStyle(cloudStatus.syncStatus.color)
+
+                Text(cloudStatus.syncStatus.statusText)
+                    .font(.subheadline)
+                    .foregroundColor(cloudStatus.syncStatus.isAvailable ? .secondary : .orange)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            Task {
+                await cloudStatus.checkStatus()
+            }
+        }
     }
 }
 
