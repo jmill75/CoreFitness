@@ -104,19 +104,13 @@ struct ChallengesView: View {
                     // Challenge Details Section (when active challenge exists)
                     if let challenge = activeChallenge {
                         // Leaderboard Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 16) {
                             SectionHeader(title: "Leaderboard", action: nil) {}
 
-                            VStack(spacing: 8) {
-                                ForEach(Array(challenge.sortedParticipants.enumerated()), id: \.element.id) { index, participant in
-                                    LeaderboardRowCompact(
-                                        rank: index + 1,
-                                        participant: participant,
-                                        totalDays: challenge.durationDays,
-                                        isCurrentUser: participant.oderId == "current_user"
-                                    )
-                                }
-                            }
+                            LeaderboardCard(
+                                participants: challenge.sortedParticipants,
+                                totalDays: challenge.durationDays
+                            )
                             .padding(.horizontal, 16)
                         }
                         .padding(.top, 24)
@@ -2451,6 +2445,313 @@ struct ParticipantRow: View {
         .padding()
         .background(isCurrentUser ? Color.accentBlue.opacity(0.1) : Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Leaderboard Card
+private struct LeaderboardCard: View {
+    let participants: [ChallengeParticipant]
+    let totalDays: Int
+
+    private var topThree: [ChallengeParticipant] {
+        Array(participants.prefix(3))
+    }
+
+    private var remaining: [ChallengeParticipant] {
+        Array(participants.dropFirst(3))
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Podium for top 3
+            if participants.count >= 1 {
+                PodiumView(participants: topThree, totalDays: totalDays)
+            }
+
+            // Remaining participants
+            if !remaining.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(remaining.enumerated()), id: \.element.id) { index, participant in
+                        LeaderboardListRow(
+                            rank: index + 4,
+                            participant: participant,
+                            totalDays: totalDays,
+                            isCurrentUser: participant.oderId == "current_user"
+                        )
+
+                        if index < remaining.count - 1 {
+                            Divider()
+                                .padding(.leading, 60)
+                        }
+                    }
+                }
+                .background(Color(.tertiarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+        }
+        .padding(20)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+}
+
+// MARK: - Podium View
+private struct PodiumView: View {
+    let participants: [ChallengeParticipant]
+    let totalDays: Int
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 12) {
+            // 2nd place (left)
+            if participants.count >= 2 {
+                PodiumPlace(
+                    participant: participants[1],
+                    rank: 2,
+                    totalDays: totalDays,
+                    height: 100
+                )
+            } else {
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+
+            // 1st place (center, tallest)
+            if participants.count >= 1 {
+                PodiumPlace(
+                    participant: participants[0],
+                    rank: 1,
+                    totalDays: totalDays,
+                    height: 130
+                )
+            }
+
+            // 3rd place (right)
+            if participants.count >= 3 {
+                PodiumPlace(
+                    participant: participants[2],
+                    rank: 3,
+                    totalDays: totalDays,
+                    height: 80
+                )
+            } else {
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+}
+
+// MARK: - Podium Place
+private struct PodiumPlace: View {
+    let participant: ChallengeParticipant
+    let rank: Int
+    let totalDays: Int
+    let height: CGFloat
+
+    @State private var isAnimating = false
+
+    private var medalColor: Color {
+        switch rank {
+        case 1: return Color(hex: "fbbf24") // Gold
+        case 2: return Color(hex: "9ca3af") // Silver
+        case 3: return Color(hex: "f97316") // Bronze
+        default: return .gray
+        }
+    }
+
+    private var medalIcon: String {
+        switch rank {
+        case 1: return "crown.fill"
+        case 2, 3: return "medal.fill"
+        default: return "circle.fill"
+        }
+    }
+
+    private var podiumGradient: LinearGradient {
+        switch rank {
+        case 1:
+            return LinearGradient(
+                colors: [Color(hex: "fbbf24"), Color(hex: "f59e0b")],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 2:
+            return LinearGradient(
+                colors: [Color(hex: "9ca3af"), Color(hex: "6b7280")],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case 3:
+            return LinearGradient(
+                colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        default:
+            return LinearGradient(colors: [.gray], startPoint: .top, endPoint: .bottom)
+        }
+    }
+
+    private var isCurrentUser: Bool {
+        participant.oderId == "current_user"
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            // Avatar with medal
+            ZStack {
+                // Glow for 1st place
+                if rank == 1 {
+                    Circle()
+                        .fill(medalColor.opacity(0.3))
+                        .frame(width: 80, height: 80)
+                        .blur(radius: 10)
+                        .scaleEffect(isAnimating ? 1.1 : 1.0)
+                }
+
+                // Avatar circle
+                Text(participant.avatarEmoji)
+                    .font(.system(size: rank == 1 ? 40 : 32))
+                    .frame(width: rank == 1 ? 70 : 56, height: rank == 1 ? 70 : 56)
+                    .background(
+                        Circle()
+                            .fill(Color(.tertiarySystemGroupedBackground))
+                    )
+                    .overlay(
+                        Circle()
+                            .stroke(medalColor, lineWidth: rank == 1 ? 4 : 3)
+                    )
+
+                // Medal badge
+                Image(systemName: medalIcon)
+                    .font(.system(size: rank == 1 ? 18 : 14))
+                    .foregroundStyle(medalColor)
+                    .background(
+                        Circle()
+                            .fill(Color(.secondarySystemGroupedBackground))
+                            .frame(width: rank == 1 ? 28 : 24, height: rank == 1 ? 28 : 24)
+                    )
+                    .offset(y: rank == 1 ? -35 : -28)
+            }
+
+            // Name
+            Text(participant.displayName)
+                .font(rank == 1 ? .subheadline : .caption)
+                .fontWeight(isCurrentUser ? .bold : .semibold)
+                .lineLimit(1)
+
+            // Stats
+            VStack(spacing: 2) {
+                Text("\(Int(participant.completionPercentage * 100))%")
+                    .font(rank == 1 ? .title2 : .headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(medalColor)
+
+                if participant.currentStreak > 0 {
+                    HStack(spacing: 2) {
+                        Image(systemName: "flame.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                        Text("\(participant.currentStreak)")
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
+
+            // Podium base
+            RoundedRectangle(cornerRadius: 8)
+                .fill(podiumGradient)
+                .frame(height: height - 60)
+                .overlay(
+                    Text("\(rank)")
+                        .font(.title2)
+                        .fontWeight(.heavy)
+                        .foregroundStyle(.white.opacity(0.5))
+                )
+        }
+        .frame(maxWidth: .infinity)
+        .onAppear {
+            if rank == 1 {
+                withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Leaderboard List Row
+private struct LeaderboardListRow: View {
+    let rank: Int
+    let participant: ChallengeParticipant
+    let totalDays: Int
+    let isCurrentUser: Bool
+
+    var body: some View {
+        HStack(spacing: 14) {
+            // Rank
+            Text("\(rank)")
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .frame(width: 28)
+
+            // Avatar
+            Text(participant.avatarEmoji)
+                .font(.title2)
+                .frame(width: 44, height: 44)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(Circle())
+
+            // Name and streak
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(participant.displayName)
+                        .font(.subheadline)
+                        .fontWeight(isCurrentUser ? .bold : .medium)
+
+                    if isCurrentUser {
+                        Text("You")
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.accentBlue)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                if participant.currentStreak > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                        Text("\(participant.currentStreak) day streak")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Progress
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(Int(participant.completionPercentage * 100))%")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.accentGreen)
+
+                Text("\(participant.completedDays)/\(totalDays)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(isCurrentUser ? Color.accentBlue.opacity(0.08) : Color.clear)
     }
 }
 
