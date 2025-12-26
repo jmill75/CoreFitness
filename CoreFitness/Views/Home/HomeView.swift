@@ -577,7 +577,7 @@ struct QuickActionButton: View {
     }
 }
 
-// MARK: - Today's Recovery Card (Compact with Sleep, HRV, HR)
+// MARK: - Today's Recovery Card (Large Hero Card)
 struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @Binding var selectedTab: Tab
@@ -605,56 +605,85 @@ struct TodayRecoveryCard: View {
         Button {
             selectedTab = .health
         } label: {
-            HStack(spacing: 12) {
-                // Compact Score Ring
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.15), lineWidth: 6)
-                        .frame(width: 56, height: 56)
+            VStack(spacing: 20) {
+                // Top row: Score Ring + Info
+                HStack(spacing: 16) {
+                    // Large Score Ring
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.15), lineWidth: 10)
+                            .frame(width: 100, height: 100)
 
-                    Circle()
-                        .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
-                        .stroke(
-                            LinearGradient(
-                                colors: [ringStart, ringEnd],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
-                        )
-                        .frame(width: 56, height: 56)
-                        .rotationEffect(.degrees(-90))
+                        Circle()
+                            .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [ringStart, ringEnd],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                style: StrokeStyle(lineWidth: 10, lineCap: .round)
+                            )
+                            .frame(width: 100, height: 100)
+                            .rotationEffect(.degrees(-90))
 
-                    Text(healthKitManager.isAuthorized ? "\(score)" : "--")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        VStack(spacing: 0) {
+                            Text(healthKitManager.isAuthorized ? "\(score)" : "--")
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                            Text("score")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+
+                    // Info
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Today's Recovery")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white.opacity(0.7))
+                        Text(scoreMessage)
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        Spacer().frame(height: 4)
+
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.right.circle.fill")
+                                .font(.caption)
+                            Text("View Details")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundStyle(.white.opacity(0.6))
+                    }
+
+                    Spacer()
                 }
 
-                // Info
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Recovery")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text(scoreMessage)
-                        .font(.subheadline)
-                        .fontWeight(.bold)
+                // Bottom row: Stats
+                HStack(spacing: 0) {
+                    RecoveryStat(icon: "moon.fill", label: "Sleep", value: sleepValue, color: Color(hex: "fcd34d"))
+
+                    Divider()
+                        .frame(height: 40)
+                        .background(Color.white.opacity(0.2))
+
+                    RecoveryStat(icon: "waveform.path.ecg", label: "HRV", value: hrvValue, color: Color(hex: "a78bfa"))
+
+                    Divider()
+                        .frame(height: 40)
+                        .background(Color.white.opacity(0.2))
+
+                    RecoveryStat(icon: "heart.fill", label: "Resting HR", value: hrValue, color: Color(hex: "ef4444"))
                 }
-
-                Spacer()
-
-                // Quick stats - Sleep, HRV, HR
-                HStack(spacing: 8) {
-                    CompactRecoveryStat(icon: "moon.fill", label: "Sleep", value: sleepValue, color: Color(hex: "fcd34d"))
-                    CompactRecoveryStat(icon: "waveform.path.ecg", label: "HRV", value: hrvValue, color: Color(hex: "a78bfa"))
-                    CompactRecoveryStat(icon: "heart.fill", label: "HR", value: hrValue, color: Color(hex: "ef4444"))
-                }
-
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.4))
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
             }
             .foregroundStyle(.white)
-            .padding(14)
+            .padding(20)
             .frame(maxWidth: .infinity)
             .background(
                 LinearGradient(
@@ -663,45 +692,46 @@ struct TodayRecoveryCard: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
         }
         .buttonStyle(.plain)
     }
 
     private var sleepValue: String {
         guard let hours = healthKitManager.healthData.sleepHours else { return "--" }
-        return String(format: "%.0fh", hours)
+        return String(format: "%.1fh", hours)
     }
 
     private var hrvValue: String {
         guard let hrv = healthKitManager.healthData.hrv else { return "--" }
-        return "\(Int(hrv))"
+        return "\(Int(hrv)) ms"
     }
 
     private var hrValue: String {
         guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
-        return "\(Int(hr))"
+        return "\(Int(hr)) bpm"
     }
 }
 
-struct CompactRecoveryStat: View {
+struct RecoveryStat: View {
     let icon: String
     let label: String
     let value: String
     let color: Color
 
     var body: some View {
-        VStack(spacing: 1) {
+        VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 10))
+                .font(.system(size: 16))
                 .foregroundStyle(color)
             Text(value)
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(size: 15, weight: .bold, design: .rounded))
             Text(label)
-                .font(.system(size: 8))
+                .font(.system(size: 11))
                 .foregroundStyle(.white.opacity(0.6))
         }
-        .frame(width: 32)
+        .frame(maxWidth: .infinity)
     }
 }
 

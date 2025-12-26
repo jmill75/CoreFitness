@@ -588,4 +588,155 @@ class HealthKitManager: ObservableObject {
             return .fitness
         }
     }
+
+    // MARK: - Historical Data Fetching (30 days)
+
+    /// Fetches HRV history for the past N days
+    func getHRVHistory(days: Int = 30) async -> [Double] {
+        guard let hrvType = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double?, Never>) in
+                let query = HKStatisticsQuery(
+                    quantityType: hrvType,
+                    quantitySamplePredicate: predicate,
+                    options: .discreteAverage
+                ) { _, statistics, _ in
+                    let avg = statistics?.averageQuantity()?.doubleValue(for: HKUnit.secondUnit(with: .milli))
+                    continuation.resume(returning: avg)
+                }
+                healthStore.execute(query)
+            }
+            results.append(value ?? 0)
+        }
+
+        return results
+    }
+
+    /// Fetches resting heart rate history for the past N days
+    func getRestingHRHistory(days: Int = 30) async -> [Double] {
+        guard let hrType = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double?, Never>) in
+                let query = HKStatisticsQuery(
+                    quantityType: hrType,
+                    quantitySamplePredicate: predicate,
+                    options: .discreteAverage
+                ) { _, statistics, _ in
+                    let avg = statistics?.averageQuantity()?.doubleValue(for: HKUnit(from: "count/min"))
+                    continuation.resume(returning: avg)
+                }
+                healthStore.execute(query)
+            }
+            results.append(value ?? 0)
+        }
+
+        return results
+    }
+
+    /// Fetches sleep history for the past N days
+    func getSleepHistory(days: Int = 30) async -> [Double] {
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double, Never>) in
+                let query = HKSampleQuery(
+                    sampleType: sleepType,
+                    predicate: predicate,
+                    limit: HKObjectQueryNoLimit,
+                    sortDescriptors: nil
+                ) { _, samples, _ in
+                    guard let samples = samples as? [HKCategorySample] else {
+                        continuation.resume(returning: 0)
+                        return
+                    }
+
+                    var totalSleep: TimeInterval = 0
+                    for sample in samples {
+                        if sample.value == HKCategoryValueSleepAnalysis.asleepCore.rawValue ||
+                           sample.value == HKCategoryValueSleepAnalysis.asleepDeep.rawValue ||
+                           sample.value == HKCategoryValueSleepAnalysis.asleepREM.rawValue {
+                            totalSleep += sample.endDate.timeIntervalSince(sample.startDate)
+                        }
+                    }
+                    continuation.resume(returning: totalSleep / 3600) // Convert to hours
+                }
+                healthStore.execute(query)
+            }
+            results.append(value)
+        }
+
+        return results
+    }
+
+    /// Fetches steps history for the past N days
+    func getStepsHistory(days: Int = 30) async -> [Double] {
+        guard let stepsType = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double?, Never>) in
+                let query = HKStatisticsQuery(
+                    quantityType: stepsType,
+                    quantitySamplePredicate: predicate,
+                    options: .cumulativeSum
+                ) { _, statistics, _ in
+                    let sum = statistics?.sumQuantity()?.doubleValue(for: HKUnit.count())
+                    continuation.resume(returning: sum)
+                }
+                healthStore.execute(query)
+            }
+            results.append(value ?? 0)
+        }
+
+        return results
+    }
 }

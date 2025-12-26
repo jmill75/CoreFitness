@@ -593,6 +593,7 @@ struct SavedProgramsStatItem: View {
 // MARK: - Saved Programs Detail View
 struct SavedProgramsDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @State private var selectedFilter: ProgramFilter = .all
     @State private var searchText = ""
 
@@ -604,25 +605,16 @@ struct SavedProgramsDetailView: View {
         case imported = "Imported"
     }
 
-    // Sample programs - replace with SwiftData query
-    private let samplePrograms: [SampleProgram] = [
-        SampleProgram(name: "Push Pull Legs", exercises: 18, duration: 60, difficulty: .intermediate, creationType: .userCreated, isActive: true, hasStarted: true, completedSessions: 12, prsHit: 5, createdAt: Date().addingTimeInterval(-86400 * 30)),
-        SampleProgram(name: "Full Body Strength", exercises: 12, duration: 45, difficulty: .beginner, creationType: .aiGenerated, isActive: false, hasStarted: true, completedSessions: 8, prsHit: 3, createdAt: Date().addingTimeInterval(-86400 * 14)),
-        SampleProgram(name: "HIIT Cardio Blast", exercises: 8, duration: 30, difficulty: .advanced, creationType: .preset, isActive: false, hasStarted: false, completedSessions: 0, prsHit: 0, createdAt: Date().addingTimeInterval(-86400 * 7)),
-        SampleProgram(name: "Upper Body Focus", exercises: 10, duration: 50, difficulty: .intermediate, creationType: .imported, isActive: false, hasStarted: true, completedSessions: 4, prsHit: 2, createdAt: Date().addingTimeInterval(-86400 * 21)),
-        SampleProgram(name: "Core & Mobility", exercises: 6, duration: 25, difficulty: .beginner, creationType: .userCreated, isActive: false, hasStarted: false, completedSessions: 0, prsHit: 0, createdAt: Date().addingTimeInterval(-86400 * 3))
-    ]
-
-    var filteredPrograms: [SampleProgram] {
-        var programs = samplePrograms
+    var filteredWorkouts: [Workout] {
+        var programs = workouts
 
         // Apply filter
         switch selectedFilter {
         case .all: break
         case .active: programs = programs.filter { $0.isActive }
-        case .userCreated: programs = programs.filter { $0.creationType == .userCreated }
-        case .aiGenerated: programs = programs.filter { $0.creationType == .aiGenerated }
-        case .imported: programs = programs.filter { $0.creationType == .imported }
+        case .userCreated: programs = programs.filter { $0.safeCreationType == .userCreated }
+        case .aiGenerated: programs = programs.filter { $0.safeCreationType == .aiGenerated }
+        case .imported: programs = programs.filter { $0.safeCreationType == .imported }
         }
 
         // Apply search
@@ -656,13 +648,13 @@ struct SavedProgramsDetailView: View {
 
                     // Programs list
                     LazyVStack(spacing: 12) {
-                        ForEach(filteredPrograms) { program in
-                            SavedProgramCard(program: program)
+                        ForEach(filteredWorkouts) { workout in
+                            SavedWorkoutCard(workout: workout)
                         }
                     }
                     .padding(.horizontal)
 
-                    if filteredPrograms.isEmpty {
+                    if filteredWorkouts.isEmpty {
                         VStack(spacing: 12) {
                             Image(systemName: "folder.badge.questionmark")
                                 .font(.system(size: 48))
@@ -715,27 +707,13 @@ struct ProgramFilterChip: View {
     }
 }
 
-// Sample program struct for preview
-struct SampleProgram: Identifiable {
-    let id = UUID()
-    let name: String
-    let exercises: Int
-    let duration: Int
-    let difficulty: Difficulty
-    let creationType: CreationType
-    let isActive: Bool
-    let hasStarted: Bool
-    let completedSessions: Int
-    let prsHit: Int
-    let createdAt: Date
-}
-
-struct SavedProgramCard: View {
-    let program: SampleProgram
+// MARK: - Saved Workout Card (Uses real Workout data)
+struct SavedWorkoutCard: View {
+    let workout: Workout
     @State private var isPressed = false
 
     private var creationTypeColor: Color {
-        switch program.creationType {
+        switch workout.safeCreationType {
         case .userCreated: return .accentBlue
         case .aiGenerated: return Color(hex: "06b6d4") // Cyan
         case .imported: return .accentOrange
@@ -744,7 +722,7 @@ struct SavedProgramCard: View {
     }
 
     private var difficultyColor: Color {
-        switch program.difficulty {
+        switch workout.difficulty {
         case .beginner: return .accentGreen
         case .intermediate: return .accentOrange
         case .advanced: return .accentRed
@@ -770,7 +748,7 @@ struct SavedProgramCard: View {
                             )
                             .frame(width: 56, height: 56)
 
-                        Image(systemName: program.creationType.icon)
+                        Image(systemName: workout.safeCreationType.icon)
                             .font(.title2)
                             .fontWeight(.semibold)
                             .foregroundStyle(.white)
@@ -779,13 +757,13 @@ struct SavedProgramCard: View {
                     VStack(alignment: .leading, spacing: 6) {
                         // Title and active badge
                         HStack(spacing: 8) {
-                            Text(program.name)
+                            Text(workout.name)
                                 .font(.headline)
                                 .fontWeight(.bold)
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
 
-                            if program.isActive {
+                            if workout.isActive {
                                 Text("ACTIVE")
                                     .font(.caption2)
                                     .fontWeight(.bold)
@@ -799,9 +777,9 @@ struct SavedProgramCard: View {
 
                         // Info row
                         HStack(spacing: 12) {
-                            Label("\(program.exercises)", systemImage: "figure.run")
-                            Label("\(program.duration) min", systemImage: "clock")
-                            Text(program.difficulty.rawValue)
+                            Label("\(workout.exerciseCount)", systemImage: "figure.run")
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                            Text(workout.difficulty.rawValue)
                                 .foregroundStyle(difficultyColor)
                         }
                         .font(.caption)
@@ -811,8 +789,8 @@ struct SavedProgramCard: View {
                         HStack(spacing: 8) {
                             // Creation type
                             HStack(spacing: 4) {
-                                Image(systemName: program.creationType.icon)
-                                Text(program.creationType.displayName)
+                                Image(systemName: workout.safeCreationType.icon)
+                                Text(workout.safeCreationType.displayName)
                             }
                             .font(.caption2)
                             .foregroundStyle(creationTypeColor)
@@ -822,10 +800,10 @@ struct SavedProgramCard: View {
                             .clipShape(Capsule())
 
                             // Status
-                            if program.hasStarted {
+                            if workout.hasBeenStarted {
                                 HStack(spacing: 4) {
                                     Image(systemName: "checkmark.circle.fill")
-                                    Text("\(program.completedSessions) sessions")
+                                    Text("\(workout.completedSessionsCount) sessions")
                                 }
                                 .font(.caption2)
                                 .foregroundStyle(Color.accentGreen)
@@ -855,12 +833,12 @@ struct SavedProgramCard: View {
                 .padding(16)
 
                 // Bottom stats bar
-                if program.hasStarted {
+                if workout.hasBeenStarted {
                     Divider()
                     HStack(spacing: 0) {
                         ProgramStatItem(
                             icon: "trophy.fill",
-                            value: "\(program.prsHit)",
+                            value: "\(workout.personalRecordsCount)",
                             label: "PRs",
                             color: .accentOrange
                         )
@@ -869,7 +847,7 @@ struct SavedProgramCard: View {
 
                         ProgramStatItem(
                             icon: "calendar",
-                            value: program.createdAt.formatted(.dateTime.month(.abbreviated).day()),
+                            value: workout.createdAt.formatted(.dateTime.month(.abbreviated).day()),
                             label: "Created",
                             color: .secondary
                         )
@@ -878,7 +856,7 @@ struct SavedProgramCard: View {
 
                         ProgramStatItem(
                             icon: "flame.fill",
-                            value: "\(program.completedSessions)",
+                            value: "\(workout.completedSessionsCount)",
                             label: "Sessions",
                             color: .accentRed
                         )

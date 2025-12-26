@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct HealthView: View {
 
@@ -88,13 +89,70 @@ struct HealthView: View {
 
 // MARK: - Score Trend Card (Line Graph)
 struct ScoreTrendCard: View {
+    @EnvironmentObject var healthKitManager: HealthKitManager
+    @Environment(\.modelContext) private var modelContext
+    @Query private var dailyHealthData: [DailyHealthData]
 
-    private let days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-    private let values: [Double] = [60, 75, 65, 82, 78, 88, 85]
     private let chartHeight: CGFloat = 120
 
-    private var maxValue: Double { values.max() ?? 100 }
-    private var minValue: Double { max(0, (values.min() ?? 0) - 10) }
+    // Calculate the dates for the past 7 days
+    private var weekDates: [Date] {
+        let calendar = Calendar.current
+        let today = Date()
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: -6 + $0, to: today) }
+    }
+
+    // Get recovery scores for the past 7 days from real data
+    private var values: [Double] {
+        weekDates.map { date in
+            let startOfDay = Calendar.current.startOfDay(for: date)
+            if let data = dailyHealthData.first(where: {
+                Calendar.current.isDate($0.date, inSameDayAs: startOfDay)
+            }) {
+                return Double(data.recoveryScore ?? data.calculateOverallScore())
+            }
+            // If today, use HealthKit manager's current score
+            if Calendar.current.isDateInToday(date) {
+                return Double(healthKitManager.calculateOverallScore())
+            }
+            return 0
+        }
+    }
+
+    private var hasData: Bool {
+        values.contains { $0 > 0 }
+    }
+
+    private var trendPercentage: Int {
+        guard values.count >= 2 else { return 0 }
+        let recent = values.suffix(3).reduce(0, +) / 3.0
+        let earlier = values.prefix(3).reduce(0, +) / 3.0
+        guard earlier > 0 else { return 0 }
+        return Int(((recent - earlier) / earlier) * 100)
+    }
+
+    private var dateRange: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        guard let first = weekDates.first, let last = weekDates.last else { return "" }
+        return "\(formatter.string(from: first)) - \(formatter.string(from: last))"
+    }
+
+    private func dayName(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date)
+    }
+
+    private func dayNumber(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: date)
+    }
+
+    private func isToday(_ date: Date) -> Bool {
+        Calendar.current.isDateInToday(date)
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -104,143 +162,176 @@ struct ScoreTrendCard: View {
                     Text("Weekly Trend")
                         .font(.headline)
                         .fontWeight(.bold)
-                    Text("Recovery score over 7 days")
+                    Text(dateRange)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                HStack(spacing: 6) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    Text("+5%")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
+                if hasData {
+                    HStack(spacing: 6) {
+                        Image(systemName: trendPercentage >= 0 ? "arrow.up.right" : "arrow.down.right")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("\(trendPercentage >= 0 ? "+" : "")\(trendPercentage)%")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(trendPercentage >= 0 ? Color.accentGreen : Color.accentOrange)
+                    .clipShape(Capsule())
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.accentGreen)
-                .clipShape(Capsule())
             }
 
-            // Line Graph with Y-axis labels
-            HStack(alignment: .top, spacing: 8) {
-                // Y-axis labels
-                VStack {
-                    Text("100")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("75")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("50")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("25")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(width: 28, height: chartHeight)
+            if hasData {
+                // Line Graph with Y-axis labels
+                HStack(alignment: .top, spacing: 8) {
+                    // Y-axis labels
+                    VStack {
+                        Text("100")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("75")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("50")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("25")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(width: 28, height: chartHeight)
 
-                // Chart area
-                GeometryReader { geometry in
-                    let width = geometry.size.width
-                    let stepX = width / CGFloat(values.count - 1)
+                    // Chart area
+                    GeometryReader { geometry in
+                        let width = geometry.size.width
+                        let stepX = width / CGFloat(values.count - 1)
+                        let validValues = values.filter { $0 > 0 }
 
-                    ZStack {
-                        // Grid lines
-                        VStack(spacing: 0) {
-                            ForEach(0..<4) { _ in
-                                Divider()
-                                    .background(Color.gray.opacity(0.2))
-                                Spacer()
+                        ZStack {
+                            // Grid lines
+                            VStack(spacing: 0) {
+                                ForEach(0..<4, id: \.self) { _ in
+                                    Divider()
+                                        .background(Color.gray.opacity(0.2))
+                                    Spacer()
+                                }
                             }
-                        }
 
-                        // Gradient fill under line
-                        Path { path in
-                            path.move(to: CGPoint(x: 0, y: chartHeight))
-                            for (index, value) in values.enumerated() {
-                                let x = CGFloat(index) * stepX
-                                let y = chartHeight - (CGFloat(value) / 100.0) * chartHeight
-                                path.addLine(to: CGPoint(x: x, y: y))
-                            }
-                            path.addLine(to: CGPoint(x: width, y: chartHeight))
-                            path.closeSubpath()
-                        }
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.brandPrimary.opacity(0.3), Color.brandPrimary.opacity(0.05)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                            if !validValues.isEmpty {
+                                // Gradient fill under line
+                                Path { path in
+                                    path.move(to: CGPoint(x: 0, y: chartHeight))
+                                    for (index, value) in values.enumerated() {
+                                        let x = CGFloat(index) * stepX
+                                        let y = chartHeight - (CGFloat(max(value, 0)) / 100.0) * chartHeight
+                                        path.addLine(to: CGPoint(x: x, y: y))
+                                    }
+                                    path.addLine(to: CGPoint(x: width, y: chartHeight))
+                                    path.closeSubpath()
+                                }
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.brandPrimary.opacity(0.3), Color.brandPrimary.opacity(0.05)],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
 
-                        // Line
-                        Path { path in
-                            for (index, value) in values.enumerated() {
-                                let x = CGFloat(index) * stepX
-                                let y = chartHeight - (CGFloat(value) / 100.0) * chartHeight
-                                if index == 0 {
-                                    path.move(to: CGPoint(x: x, y: y))
-                                } else {
-                                    path.addLine(to: CGPoint(x: x, y: y))
+                                // Line
+                                Path { path in
+                                    for (index, value) in values.enumerated() {
+                                        let x = CGFloat(index) * stepX
+                                        let y = chartHeight - (CGFloat(max(value, 0)) / 100.0) * chartHeight
+                                        if index == 0 {
+                                            path.move(to: CGPoint(x: x, y: y))
+                                        } else {
+                                            path.addLine(to: CGPoint(x: x, y: y))
+                                        }
+                                    }
+                                }
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [Color.brandPrimary, Color.accentGreen],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    ),
+                                    style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
+                                )
+
+                                // Data points with value labels
+                                ForEach(0..<values.count, id: \.self) { index in
+                                    let x = CGFloat(index) * stepX
+                                    let value = values[index]
+                                    let y = chartHeight - (CGFloat(max(value, 0)) / 100.0) * chartHeight
+
+                                    if value > 0 {
+                                        VStack(spacing: 4) {
+                                            Text("\(Int(value))")
+                                                .font(.system(size: 10, weight: .bold))
+                                                .foregroundStyle(Color.brandPrimary)
+
+                                            Circle()
+                                                .fill(Color.brandPrimary)
+                                                .frame(width: 10, height: 10)
+                                                .overlay(
+                                                    Circle()
+                                                        .fill(.white)
+                                                        .frame(width: 5, height: 5)
+                                                )
+                                        }
+                                        .position(x: x, y: y - 12)
+                                    }
                                 }
                             }
                         }
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.brandPrimary, Color.accentGreen],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round)
-                        )
-
-                        // Data points with value labels
-                        ForEach(0..<values.count, id: \.self) { index in
-                            let x = CGFloat(index) * stepX
-                            let y = chartHeight - (CGFloat(values[index]) / 100.0) * chartHeight
-
-                            VStack(spacing: 4) {
-                                Text("\(Int(values[index]))")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(Color.brandPrimary)
-
-                                Circle()
-                                    .fill(Color.brandPrimary)
-                                    .frame(width: 10, height: 10)
-                                    .overlay(
-                                        Circle()
-                                            .fill(.white)
-                                            .frame(width: 5, height: 5)
-                                    )
-                            }
-                            .position(x: x, y: y - 12)
-                        }
                     }
+                    .frame(height: chartHeight)
+                }
+            } else {
+                // Empty state
+                VStack(spacing: 12) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.largeTitle)
+                        .foregroundStyle(.tertiary)
+                    Text("No recovery data yet")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("Complete daily check-ins to see your trends")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
                 .frame(height: chartHeight)
+                .frame(maxWidth: .infinity)
             }
 
-            // Day labels (offset to align with chart)
+            // Day labels with dates (offset to align with chart)
             HStack(spacing: 8) {
                 Spacer()
                     .frame(width: 28)
 
                 HStack {
-                    ForEach(days, id: \.self) { day in
-                        Text(day)
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
+                    ForEach(Array(weekDates.enumerated()), id: \.offset) { index, date in
+                        VStack(spacing: 2) {
+                            Text(dayName(for: date))
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(isToday(date) ? Color.brandPrimary : .secondary)
+                            Text(dayNumber(for: date))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(isToday(date) ? .white : .primary)
+                                .frame(width: 22, height: 22)
+                                .background(isToday(date) ? Color.brandPrimary : Color.clear)
+                                .clipShape(Circle())
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
             }
@@ -301,20 +392,6 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return "Your resting heart rate when you're calm and relaxed. Lower values typically indicate better cardiovascular fitness."
         case .sleep: return "Total hours of sleep recorded. Adults typically need 7-9 hours for optimal recovery."
         case .steps: return "Total steps taken throughout the day. 10,000 steps is a common daily goal."
-        }
-    }
-
-    // Sample 30-day data for demo
-    var sampleData: [Double] {
-        switch self {
-        case .hrv:
-            return [42, 45, 38, 52, 48, 55, 50, 47, 44, 51, 53, 49, 46, 58, 54, 52, 48, 45, 50, 56, 53, 49, 47, 52, 55, 51, 48, 54, 57, 52]
-        case .restingHR:
-            return [62, 60, 64, 58, 61, 59, 63, 60, 58, 62, 59, 61, 57, 60, 62, 58, 61, 59, 63, 57, 60, 58, 62, 59, 61, 58, 60, 57, 59, 58]
-        case .sleep:
-            return [7.2, 6.8, 7.5, 8.1, 6.5, 7.8, 7.0, 6.9, 7.4, 8.0, 7.2, 6.7, 7.6, 7.3, 6.8, 7.9, 7.1, 6.6, 7.5, 8.2, 7.0, 6.9, 7.4, 7.8, 7.2, 6.8, 7.5, 7.1, 7.6, 7.3]
-        case .steps:
-            return [8500, 10200, 6800, 12400, 9100, 7600, 11300, 8900, 10500, 7200, 9800, 11000, 8400, 10100, 6900, 12000, 9500, 8100, 10800, 7400, 9200, 11500, 8700, 10300, 7000, 9600, 11200, 8300, 10000, 9400]
         }
     }
 
@@ -539,6 +616,15 @@ enum WaterIntakeSize: CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Water Drop Model
+struct WaterDrop: Identifiable {
+    let id = UUID()
+    var x: CGFloat
+    var y: CGFloat
+    var size: CGFloat
+    var opacity: Double
+}
+
 // MARK: - Water Intake Card (Enhanced)
 struct WaterIntakeCard: View {
 
@@ -550,35 +636,33 @@ struct WaterIntakeCard: View {
     @State private var checkmarkRotation: Double = 0
     @State private var showCheckmark = false
     @State private var checkmarkBounce: CGFloat = 1.0
+    @State private var waterDrops: [WaterDrop] = []
 
     var body: some View {
-        VStack(spacing: 20) {
-            // Header
-            HStack {
-                Image(systemName: "drop.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.accentBlue)
+        ZStack {
+            VStack(spacing: 20) {
+                // Header
+                HStack {
+                    Image(systemName: "drop.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.accentBlue)
 
-                Text("Water Intake")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
+                    Text("Water Intake")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
 
-                Spacer()
+                    Spacer()
 
-                HStack(spacing: 4) {
                     Text("\(Int(waterManager.ringProgress * 100))%")
                         .font(.subheadline)
                         .fontWeight(.bold)
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(waterManager.hasReachedGoal ? Color.accentGreen : Color.accentBlue)
+                        .clipShape(Capsule())
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(waterManager.hasReachedGoal ? Color.accentGreen : Color.accentBlue)
-                .clipShape(Capsule())
-            }
 
             // Current intake display with animated ring
             HStack(spacing: 24) {
@@ -717,14 +801,79 @@ struct WaterIntakeCard: View {
                 }
             }
             .frame(height: 10)
+                // View Details hint
+                HStack {
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.caption)
+                        Text("View Details")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .padding(20)
+            .background(.regularMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Water drops falling animation when goal reached
+            if waterManager.hasReachedGoal {
+                ForEach(waterDrops) { drop in
+                    Image(systemName: "drop.fill")
+                        .font(.system(size: drop.size))
+                        .foregroundStyle(Color.accentBlue.opacity(drop.opacity))
+                        .position(x: drop.x, y: drop.y)
+                }
+            }
         }
-        .padding(20)
-        .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .contentShape(Rectangle())
         .onTapGesture {
             showDetail = true
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+        .onChange(of: waterManager.hasReachedGoal) { _, reached in
+            if reached {
+                startWaterDropAnimation()
+            }
+        }
+        .onAppear {
+            if waterManager.hasReachedGoal {
+                startWaterDropAnimation()
+            }
+        }
+    }
+
+    // MARK: - Water Drop Animation
+    private func startWaterDropAnimation() {
+        waterDrops = []
+
+        // Create multiple water drops
+        for i in 0..<8 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+                let drop = WaterDrop(
+                    x: CGFloat.random(in: 40...320),
+                    y: -20,
+                    size: CGFloat.random(in: 10...18),
+                    opacity: Double.random(in: 0.4...0.8)
+                )
+                waterDrops.append(drop)
+
+                // Animate the drop falling
+                withAnimation(.easeIn(duration: Double.random(in: 0.8...1.2))) {
+                    if let index = waterDrops.firstIndex(where: { $0.id == drop.id }) {
+                        waterDrops[index].y = 250
+                        waterDrops[index].opacity = 0
+                    }
+                }
+
+                // Remove after animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    waterDrops.removeAll { $0.id == drop.id }
+                }
+            }
         }
     }
 
@@ -809,8 +958,73 @@ struct WaterQuickAddButton: View {
 struct MoodTrackerCard: View {
 
     @Binding var showDetail: Bool
+    @Query private var moodEntries: [MoodEntry]
     @State private var bounceValues: [Int: Bool] = [:]
     @State private var hasStartedAnimation = false
+
+    // Calculate the dates for the current week (Sun-Sat)
+    private var weekDates: [Date] {
+        let calendar = Calendar.current
+        let today = Date()
+        let weekday = calendar.component(.weekday, from: today) // 1 = Sunday
+        let daysFromSunday = weekday - 1
+        guard let sunday = calendar.date(byAdding: .day, value: -daysFromSunday, to: today) else { return [] }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: sunday) }
+    }
+
+    private var dateRange: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        guard let first = weekDates.first, let last = weekDates.last else { return "" }
+        return "\(formatter.string(from: first)) - \(formatter.string(from: last))"
+    }
+
+    // Get mood entries for this week
+    private func moodEntry(for date: Date) -> MoodEntry? {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        return moodEntries.first { Calendar.current.isDate($0.date, inSameDayAs: startOfDay) }
+    }
+
+    // Calculate mood summary counts from real data
+    private var moodCounts: [Mood: Int] {
+        var counts: [Mood: Int] = [:]
+        for date in weekDates where !isFutureDate(date) {
+            if let entry = moodEntry(for: date) {
+                counts[entry.mood, default: 0] += 1
+            }
+        }
+        return counts
+    }
+
+    private func dayAbbreviation(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        let day = formatter.string(from: date)
+        switch day {
+        case "Mon": return "M"
+        case "Tue": return "Tu"
+        case "Wed": return "W"
+        case "Thu": return "Th"
+        case "Fri": return "F"
+        case "Sat": return "Sa"
+        case "Sun": return "Su"
+        default: return String(day.prefix(2))
+        }
+    }
+
+    private func dayNumber(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "d"
+        return formatter.string(from: date)
+    }
+
+    private func isToday(_ date: Date) -> Bool {
+        Calendar.current.isDateInToday(date)
+    }
+
+    private func isFutureDate(_ date: Date) -> Bool {
+        date > Date()
+    }
 
     var body: some View {
         Button {
@@ -826,7 +1040,7 @@ struct MoodTrackerCard: View {
                         Text("Mood This Week")
                             .font(.headline)
                             .fontWeight(.bold)
-                        Text("Your emotional patterns")
+                        Text(dateRange)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -838,44 +1052,53 @@ struct MoodTrackerCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Mood grid with animated emojis (Sun-Sat)
-                HStack(spacing: 0) {
-                    ForEach(Array(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].enumerated()), id: \.offset) { index, day in
-                        VStack(spacing: 8) {
-                            Text(moodEmoji(for: day))
-                                .font(.title2)
+                // Mood grid with animated emojis and dates
+                HStack(spacing: 6) {
+                    ForEach(Array(weekDates.enumerated()), id: \.offset) { index, date in
+                        VStack(spacing: 4) {
+                            Text(moodEmoji(for: date))
+                                .font(.title3)
                                 .scaleEffect(bounceValues[index] == true ? 1.2 : 1.0)
                                 .rotationEffect(.degrees(bounceValues[index] == true ? -5 : 0))
-                            Text(dayAbbreviation(for: day))
-                                .font(.caption2)
+                                .opacity(isFutureDate(date) ? 0.3 : 1.0)
+                            Text(dayAbbreviation(for: date))
+                                .font(.system(size: 9))
                                 .fontWeight(.medium)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(isToday(date) ? Color.accentYellow : .secondary)
+                            Text(dayNumber(for: date))
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundStyle(isToday(date) ? .white : .primary)
+                                .frame(width: 20, height: 20)
+                                .background(isToday(date) ? Color.accentYellow : Color.clear)
+                                .clipShape(Circle())
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(moodColor(for: day).opacity(0.25))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(.vertical, 8)
+                        .background(moodColor(for: date).opacity(isFutureDate(date) ? 0.1 : 0.25))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                         .onAppear {
                             // Start animation for each day with staggered delay
                             if index == 0 && !hasStartedAnimation {
                                 hasStartedAnimation = true
                                 for i in 0..<7 {
-                                    startBounceAnimation(for: i)
+                                    if !isFutureDate(weekDates[safe: i] ?? Date()) {
+                                        startBounceAnimation(for: i)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-                .padding()
+                .padding(10)
                 .background(Color(.systemGray6))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
 
-                // Mood summary
-                HStack(spacing: 16) {
-                    MoodSummaryPill(emoji: "😄", label: "Great", count: 3, color: .accentGreen)
-                    MoodSummaryPill(emoji: "😊", label: "Good", count: 2, color: .accentBlue)
-                    MoodSummaryPill(emoji: "😐", label: "Okay", count: 1, color: .accentOrange)
-                    MoodSummaryPill(emoji: "😴", label: "Tired", count: 1, color: .accentTeal)
+                // Mood summary from real data
+                HStack(spacing: 12) {
+                    MoodSummaryPill(emoji: "🤩", label: "Amazing", count: moodCounts[.amazing] ?? 0, color: .accentGreen)
+                    MoodSummaryPill(emoji: "😊", label: "Good", count: moodCounts[.good] ?? 0, color: .accentBlue)
+                    MoodSummaryPill(emoji: "😐", label: "Okay", count: moodCounts[.okay] ?? 0, color: .accentOrange)
+                    MoodSummaryPill(emoji: "😴", label: "Tired", count: moodCounts[.tired] ?? 0, color: .accentTeal)
                 }
             }
             .padding()
@@ -885,41 +1108,28 @@ struct MoodTrackerCard: View {
         .buttonStyle(.plain)
     }
 
-    private func moodEmoji(for day: String) -> String {
-        switch day {
-        case "Mon": return "😊"
-        case "Tue": return "😄"
-        case "Wed": return "😐"
-        case "Thu": return "😊"
-        case "Fri": return "😄"
-        case "Sat": return "🤩"
-        case "Sun": return "😴"
-        default: return "😐"
+    // Get mood emoji from real data
+    private func moodEmoji(for date: Date) -> String {
+        if isFutureDate(date) { return "○" }
+        guard let entry = moodEntry(for: date) else { return "○" } // No data logged
+        switch entry.mood {
+        case .amazing: return "🤩"
+        case .good: return "😊"
+        case .okay: return "😐"
+        case .tired: return "😴"
+        case .stressed: return "😔"
         }
     }
 
-    private func dayAbbreviation(for day: String) -> String {
-        switch day {
-        case "Mon": return "M"
-        case "Tue": return "Tu"
-        case "Wed": return "W"
-        case "Thu": return "Th"
-        case "Fri": return "F"
-        case "Sat": return "Sa"
-        case "Sun": return "Su"
-        default: return ""
-        }
-    }
-
-    private func moodColor(for day: String) -> Color {
-        let emoji = moodEmoji(for: day)
-        switch emoji {
-        case "😄", "🤩": return .accentGreen
-        case "😊": return .accentBlue
-        case "😐": return .accentOrange
-        case "😔": return .accentRed
-        case "😴": return .accentTeal
-        default: return .gray
+    private func moodColor(for date: Date) -> Color {
+        if isFutureDate(date) { return .gray }
+        guard let entry = moodEntry(for: date) else { return .gray }
+        switch entry.mood {
+        case .amazing: return .accentGreen
+        case .good: return .accentBlue
+        case .okay: return .accentOrange
+        case .tired: return .accentTeal
+        case .stressed: return .accentRed
         }
     }
 
@@ -1270,101 +1480,39 @@ struct MoodBreakdownRow: View {
     }
 }
 
-// MARK: - Recovery Status Card (Same as Home)
+// MARK: - Recovery Status Card (Large Hero Card - Same as Home)
 struct RecoveryStatusCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
 
-    // Blue Ocean Theme
-    // Ring gradient: #60a5fa to #3b82f6
-    // Background: #1e40af to #1e3a8a
-    // Pill backgrounds: #60a5fa
-    // Icon colors: emoji colors (yellow moon, pink heart, red heart)
     private let ringStart = Color(hex: "60a5fa")
     private let ringEnd = Color(hex: "3b82f6")
     private let bgStart = Color(hex: "1e40af")
     private let bgEnd = Color(hex: "1e3a8a")
-    private let pillBgColor = Color(hex: "60a5fa")
-    private let sleepColor = Color(hex: "fcd34d")    // Yellow moon
-    private let hrvColor = Color(hex: "ec4899")      // Pink heart
-    private let hrColor = Color(hex: "ef4444")       // Red heart
 
     private var score: Int {
         healthKitManager.calculateOverallScore()
     }
 
-    private var scoreColor: Color {
-        switch score {
-        case 80...100: return .scoreExcellent
-        case 60..<80: return .scoreGood
-        case 40..<60: return .scoreFair
-        default: return .scorePoor
-        }
-    }
-
     private var scoreMessage: String {
-        if !healthKitManager.isAuthorized {
-            return "No health data"
-        }
+        if !healthKitManager.isAuthorized { return "Connect Health" }
         switch score {
-        case 80...100: return "You're crushing it today!"
-        case 60..<80: return "Good recovery, keep it up!"
-        case 40..<60: return "Take it easy today"
-        default: return "Consider a rest day"
+        case 80...100: return "Crushing it!"
+        case 60..<80: return "Good recovery"
+        case 40..<60: return "Take it easy"
+        default: return "Rest day"
         }
-    }
-
-    private var recommendation: String {
-        if !healthKitManager.isAuthorized {
-            return "Connect Apple Health to see your score"
-        }
-        switch score {
-        case 80...100: return "High intensity workout recommended"
-        case 60..<80: return "Moderate workout recommended"
-        case 40..<60: return "Light activity recommended"
-        default: return "Rest and recovery day"
-        }
-    }
-
-    private var sleepStatus: String {
-        guard let hours = healthKitManager.healthData.sleepHours else { return "--" }
-        if hours >= 7 { return "Good" }
-        else if hours >= 6 { return "Fair" }
-        else { return "Low" }
-    }
-
-    private var hrvStatus: String {
-        guard let hrv = healthKitManager.healthData.hrv else { return "--" }
-        if hrv >= 50 { return "High" }
-        else if hrv >= 30 { return "Normal" }
-        else { return "Low" }
-    }
-
-    private var hrStatus: String {
-        guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
-        if hr <= 60 { return "Low" }
-        else if hr <= 75 { return "Normal" }
-        else { return "High" }
     }
 
     var body: some View {
         VStack(spacing: 20) {
-            // Header
-            HStack {
-                Text("Today's Recovery")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Spacer()
-            }
-
-            HStack(spacing: 24) {
-                // Large Score Ring with gradient
+            // Top row: Score Ring + Info
+            HStack(spacing: 16) {
+                // Large Score Ring
                 ZStack {
-                    // Background ring
                     Circle()
-                        .stroke(Color.white.opacity(0.15), lineWidth: 14)
-                        .frame(width: 110, height: 110)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 10)
+                        .frame(width: 100, height: 100)
 
-                    // Green gradient progress ring
                     Circle()
                         .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
                         .stroke(
@@ -1373,62 +1521,54 @@ struct RecoveryStatusCard: View {
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            style: StrokeStyle(lineWidth: 14, lineCap: .round)
+                            style: StrokeStyle(lineWidth: 10, lineCap: .round)
                         )
-                        .frame(width: 110, height: 110)
+                        .frame(width: 100, height: 100)
                         .rotationEffect(.degrees(-90))
-                        .shadow(color: ringStart.opacity(0.5), radius: 6)
 
-                    // Score text
-                    VStack(spacing: 2) {
+                    VStack(spacing: 0) {
                         Text(healthKitManager.isAuthorized ? "\(score)" : "--")
                             .font(.system(size: 36, weight: .bold, design: .rounded))
-                        Text("SCORE")
-                            .font(.system(size: 10, weight: .semibold))
+                        Text("score")
+                            .font(.caption2)
+                            .fontWeight(.medium)
                             .foregroundStyle(.white.opacity(0.7))
                     }
                 }
 
-                // Message and recommendation
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(scoreMessage)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .lineLimit(2)
-
-                    Text(recommendation)
+                // Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Today's Recovery")
                         .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.85))
-                        .lineLimit(2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.7))
+                    Text(scoreMessage)
+                        .font(.title2)
+                        .fontWeight(.bold)
                 }
 
-                Spacer(minLength: 0)
+                Spacer()
             }
 
-            // Recovery factors row with colored icons
-            HStack(spacing: 10) {
-                RecoveryFactorPillHealth(
-                    icon: "moon.fill",
-                    label: "Sleep",
-                    value: sleepStatus,
-                    iconColor: sleepColor,
-                    bgColor: pillBgColor
-                )
-                RecoveryFactorPillHealth(
-                    icon: "waveform.path.ecg",
-                    label: "HRV",
-                    value: hrvStatus,
-                    iconColor: hrvColor,
-                    bgColor: pillBgColor
-                )
-                RecoveryFactorPillHealth(
-                    icon: "heart.fill",
-                    label: "HR",
-                    value: hrStatus,
-                    iconColor: hrColor,
-                    bgColor: pillBgColor
-                )
+            // Bottom row: Stats
+            HStack(spacing: 0) {
+                HealthRecoveryStat(icon: "moon.fill", label: "Sleep", value: sleepValue, color: Color(hex: "fcd34d"))
+
+                Divider()
+                    .frame(height: 40)
+                    .background(Color.white.opacity(0.2))
+
+                HealthRecoveryStat(icon: "waveform.path.ecg", label: "HRV", value: hrvValue, color: Color(hex: "a78bfa"))
+
+                Divider()
+                    .frame(height: 40)
+                    .background(Color.white.opacity(0.2))
+
+                HealthRecoveryStat(icon: "heart.fill", label: "Resting HR", value: hrValue, color: Color(hex: "ef4444"))
             }
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .foregroundStyle(.white)
         .padding(20)
@@ -1441,44 +1581,43 @@ struct RecoveryStatusCard: View {
             )
         )
         .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: ringStart.opacity(0.3), radius: 12, y: 6)
+        .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
+    }
+
+    private var sleepValue: String {
+        guard let hours = healthKitManager.healthData.sleepHours else { return "--" }
+        return String(format: "%.1fh", hours)
+    }
+
+    private var hrvValue: String {
+        guard let hrv = healthKitManager.healthData.hrv else { return "--" }
+        return "\(Int(hrv)) ms"
+    }
+
+    private var hrValue: String {
+        guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
+        return "\(Int(hr)) bpm"
     }
 }
 
-struct RecoveryFactorPillHealth: View {
+struct HealthRecoveryStat: View {
     let icon: String
     let label: String
     let value: String
-    let iconColor: Color
-    var bgColor: Color? = nil  // Optional separate bg color
+    let color: Color
 
     var body: some View {
-        HStack(spacing: 8) {
-            // Colored icon circle
-            ZStack {
-                Circle()
-                    .fill((bgColor ?? iconColor).opacity(0.3))
-                    .frame(width: 26, height: 26)
-
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(value)
-                    .font(.caption)
-                    .fontWeight(.bold)
-                Text(label)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.white.opacity(0.7))
-            }
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 16))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.6))
         }
-        .padding(.leading, 6)
-        .padding(.trailing, 12)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.12))
-        .clipShape(Capsule())
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -1990,11 +2129,18 @@ struct WaterDetailStatBox: View {
 // MARK: - Health Metric Detail View (30-Day Chart)
 struct HealthMetricDetailView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var healthKitManager: HealthKitManager
     let metricType: HealthMetricType
 
+    @State private var historicalData: [Double] = []
+    @State private var isLoading = true
+
     private let chartHeight: CGFloat = 200
-    private var data: [Double] { metricType.sampleData }
+    private var data: [Double] {
+        historicalData.isEmpty ? Array(repeating: 0, count: 30) : historicalData
+    }
     private var yRange: (min: Double, max: Double) { metricType.yAxisRange }
+    private var hasData: Bool { historicalData.contains { $0 > 0 } }
 
     private var average: Double {
         data.reduce(0, +) / Double(data.count)
@@ -2164,7 +2310,32 @@ struct HealthMetricDetailView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .overlay {
+                if isLoading {
+                    ProgressView("Loading data...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(.ultraThinMaterial)
+                }
+            }
+            .task {
+                await loadHistoricalData()
+            }
         }
+    }
+
+    private func loadHistoricalData() async {
+        isLoading = true
+        switch metricType {
+        case .hrv:
+            historicalData = await healthKitManager.getHRVHistory(days: 30)
+        case .restingHR:
+            historicalData = await healthKitManager.getRestingHRHistory(days: 30)
+        case .sleep:
+            historicalData = await healthKitManager.getSleepHistory(days: 30)
+        case .steps:
+            historicalData = await healthKitManager.getStepsHistory(days: 30)
+        }
+        isLoading = false
     }
 
     private func formatValue(_ value: Double) -> String {
@@ -2211,6 +2382,13 @@ struct StatBox: View {
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+// MARK: - Safe Array Subscript
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
 
