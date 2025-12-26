@@ -142,7 +142,7 @@ struct SettingsView: View {
                     NavigationLink {
                         HealthKitSettingsView()
                     } label: {
-                        Label("Apple Health", systemImage: "heart.fill")
+                        Label("My Health Data", systemImage: "heart.fill")
                     }
 
                     NavigationLink {
@@ -527,7 +527,7 @@ struct HealthKitSettingsView: View {
             Section {
                 Toggle("Sync Health Data", isOn: .constant(true))
             } footer: {
-                Text("Allow CoreFitness to read and write health data from Apple Health.")
+                Text("Allow CoreFitness to read and write your health data.")
             }
 
             Section {
@@ -540,7 +540,7 @@ struct HealthKitSettingsView: View {
                 Text("Data Types")
             }
         }
-        .navigationTitle("Apple Health")
+        .navigationTitle("My Health Data")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

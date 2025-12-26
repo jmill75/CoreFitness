@@ -5,7 +5,7 @@ import SwiftData
 enum EntrySource: String, Codable {
     case manual = "Manual Entry"
     case timer = "In-App Timer"
-    case healthkit = "Apple Health"
+    case healthkit = "My Health Data"
 
     var icon: String {
         switch self {

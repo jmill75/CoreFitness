@@ -45,7 +45,7 @@ struct HealthKitImportView: View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
-            Text("Loading workouts from Apple Health...")
+            Text("Loading workouts from Health...")
                 .foregroundStyle(.secondary)
         }
     }

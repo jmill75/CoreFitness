@@ -554,7 +554,7 @@ struct HealthMetricsSection: View {
                     .font(.title2)
                     .foregroundStyle(Color.accentRed)
 
-                Text("Apple Health Data")
+                Text("My Health Data")
                     .font(.headline)
                     .fontWeight(.bold)
 
