@@ -8,6 +8,7 @@ struct HomeView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var navigationState: NavigationState
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var workoutManager: WorkoutManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // MARK: - Bindings
@@ -20,6 +21,10 @@ struct HomeView: View {
     // MARK: - State
     @State private var showDailyCheckIn = false
     @State private var showWaterIntake = false
+    @State private var showWorkoutPopup = false
+    @State private var selectedWorkoutForPopup: Workout?
+    @State private var showWorkoutExecution = false
+    @State private var showShareAndStart = false
 
     // Get current user's participant for a challenge
     private func currentUserParticipant(for challenge: Challenge) -> ChallengeParticipant? {
@@ -30,96 +35,147 @@ struct HomeView: View {
     @State private var animationStage = 0
 
     var body: some View {
-        NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Welcome Header
-                        WelcomeHeader(userName: authManager.currentUser?.displayName ?? "Champion")
-                            .id("top")
-                            .opacity(animationStage >= 1 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
+        ZStack {
+            NavigationStack {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            // Welcome Header
+                            WelcomeHeader(userName: authManager.currentUser?.displayName ?? "Champion")
+                                .id("top")
+                                .opacity(animationStage >= 1 ? 1 : 0)
+                                .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
+                                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
 
-                        // Week Calendar (no card, at top)
-                        WeekCalendarStrip()
-                            .opacity(animationStage >= 2 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
+                            // Week Calendar (no card, at top)
+                            WeekCalendarStrip()
+                                .padding(.bottom, 8)
+                                .opacity(animationStage >= 2 ? 1 : 0)
+                                .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
+                                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
 
-                        // Today's Recovery - Improved Hero Card
-                        TodayRecoveryCard(selectedTab: $selectedTab)
-                            .opacity(animationStage >= 3 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
-                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
+                            // Today's Recovery - Improved Hero Card
+                            TodayRecoveryCard(selectedTab: $selectedTab)
+                                .opacity(animationStage >= 3 ? 1 : 0)
+                                .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
+                                .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
 
-                        // Current Activity Section (Workout + Challenge)
-                        CurrentActivitySection(
-                            activeChallenges: activeChallenges,
-                            currentUserParticipant: currentUserParticipant,
-                            selectedTab: $selectedTab
-                        )
-                        .opacity(animationStage >= 4 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
+                            // Current Activity Section (Workout + Challenge)
+                            CurrentActivitySection(
+                                activeChallenges: activeChallenges,
+                                currentUserParticipant: currentUserParticipant,
+                                selectedTab: $selectedTab,
+                                onShowWorkoutPopup: { workout in
+                                    selectedWorkoutForPopup = workout
+                                    showWorkoutPopup = true
+                                }
+                            )
+                            .opacity(animationStage >= 4 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
+                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
 
-                        // Quick Options Grid
-                        QuickOptionsGrid(
-                            onCheckIn: {
-                                showDailyCheckIn = true
-                                themeManager.mediumImpact()
-                            },
-                            onWaterIntake: {
-                                showWaterIntake = true
-                                themeManager.mediumImpact()
-                            },
-                            selectedTab: $selectedTab
-                        )
-                        .opacity(animationStage >= 5 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
+                            // Quick Options Grid
+                            QuickOptionsGrid(
+                                onCheckIn: {
+                                    showDailyCheckIn = true
+                                    themeManager.mediumImpact()
+                                },
+                                onWaterIntake: {
+                                    showWaterIntake = true
+                                    themeManager.mediumImpact()
+                                },
+                                selectedTab: $selectedTab
+                            )
+                            .opacity(animationStage >= 5 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
+                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
+                        }
+                        .padding()
+                        .padding(.bottom, 80)
                     }
-                    .padding()
-                    .padding(.bottom, 80)
-                }
-                .scrollIndicators(.hidden)
-                .background(Color(.systemGroupedBackground))
-                .onAppear {
-                    proxy.scrollTo("top", anchor: .top)
-                    if reduceMotion {
-                        animationStage = 5
-                    } else {
-                        for stage in 1...5 {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
-                                animationStage = stage
+                    .scrollIndicators(.hidden)
+                    .background(Color(.systemGroupedBackground))
+                    .onAppear {
+                        proxy.scrollTo("top", anchor: .top)
+                        if reduceMotion {
+                            animationStage = 5
+                        } else {
+                            for stage in 1...5 {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
+                                    animationStage = stage
+                                }
                             }
                         }
                     }
                 }
-            }
-            .fullScreenCover(isPresented: $showDailyCheckIn) {
-                DailyCheckInView()
-            }
-            .fullScreenCover(isPresented: $showWaterIntake) {
-                QuickWaterIntakeView()
-            }
-            .task {
-                // Refresh health data when view appears
-                await healthKitManager.refreshData()
-            }
-            .onChange(of: navigationState.showWaterIntake) { _, newValue in
-                if newValue {
-                    showWaterIntake = true
-                    // Reset navigation state
-                    navigationState.showWaterIntake = false
+                .fullScreenCover(isPresented: $showDailyCheckIn) {
+                    DailyCheckInView()
+                }
+                .fullScreenCover(isPresented: $showWaterIntake) {
+                    QuickWaterIntakeView()
+                }
+                .task {
+                    // Refresh health data when view appears
+                    await healthKitManager.refreshData()
+                }
+                .onChange(of: navigationState.showWaterIntake) { _, newValue in
+                    if newValue {
+                        showWaterIntake = true
+                        // Reset navigation state
+                        navigationState.showWaterIntake = false
+                    }
+                }
+                .onChange(of: navigationState.showDailyCheckIn) { _, newValue in
+                    if newValue {
+                        showDailyCheckIn = true
+                        // Reset navigation state
+                        navigationState.showDailyCheckIn = false
+                    }
                 }
             }
-            .onChange(of: navigationState.showDailyCheckIn) { _, newValue in
-                if newValue {
-                    showDailyCheckIn = true
-                    // Reset navigation state
-                    navigationState.showDailyCheckIn = false
+
+            // Workout popup overlay
+            if showWorkoutPopup, let workout = selectedWorkoutForPopup {
+                WorkoutStartPopup(
+                    workout: workout,
+                    onStart: {
+                        showWorkoutPopup = false
+                        // Small delay to let popup dismiss before presenting execution view
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showWorkoutExecution = true
+                        }
+                    },
+                    onShareAndStart: {
+                        showWorkoutPopup = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showShareAndStart = true
+                        }
+                    },
+                    onCancel: {
+                        showWorkoutPopup = false
+                    }
+                )
+                .ignoresSafeArea()
+            }
+        }
+        .fullScreenCover(isPresented: $showWorkoutExecution) {
+            if let workout = selectedWorkoutForPopup {
+                WorkoutExecutionView(workout: workout)
+                    .environmentObject(workoutManager)
+                    .environmentObject(themeManager)
+            }
+        }
+        .fullScreenCover(isPresented: $showShareAndStart) {
+            if let workout = selectedWorkoutForPopup {
+                ShareAndStartView(workout: workout) {
+                    // After sending invite, start workout
+                    showShareAndStart = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        showWorkoutExecution = true
+                    }
                 }
+                .environmentObject(workoutManager)
+                .environmentObject(themeManager)
             }
         }
     }
@@ -691,15 +747,28 @@ struct TodayRecoveryCard: View {
                     Spacer()
                 }
 
-                // Stats Grid
-                HStack(spacing: 0) {
-                    HealthStatItem(icon: "figure.walk", value: stepsValue, label: "Steps", color: Color.accentGreen)
-                    HealthStatItem(icon: "flame.fill", value: caloriesValue, label: "Calories", color: Color.accentOrange)
-                    HealthStatItem(icon: "moon.fill", value: sleepValue, label: "Sleep", color: Color(hex: "fcd34d"))
-                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "HR", color: Color.accentRed)
-                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "a78bfa"))
+                // Stats Grid - Two rows
+                VStack(spacing: 12) {
+                    // Row 1: Activity metrics
+                    HStack(spacing: 0) {
+                        HealthStatItem(icon: "figure.walk", value: stepsValue, label: "Steps", color: Color.accentGreen)
+                        HealthStatItem(icon: "flame.fill", value: caloriesValue, label: "Active Cal", color: Color.accentOrange)
+                        HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "a78bfa"))
+                        HealthStatItem(icon: "drop.fill", value: waterValue, label: "Water", color: Color(hex: "38bdf8"))
+                    }
+
+                    Divider()
+                        .background(Color.white.opacity(0.15))
+
+                    // Row 2: Heart & recovery metrics
+                    HStack(spacing: 0) {
+                        HealthStatItem(icon: "heart.fill", value: hrValue, label: "Resting HR", color: Color.accentRed)
+                        HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "34d399"))
+                        HealthStatItem(icon: "bolt.heart.fill", value: readinessValue, label: "Readiness", color: Color(hex: "fbbf24"))
+                        HealthStatItem(icon: "chart.line.uptrend.xyaxis", value: trendValue, label: "Trend", color: Color(hex: "60a5fa"))
+                    }
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 14)
                 .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -758,6 +827,29 @@ struct TodayRecoveryCard: View {
     private var hrValue: String {
         guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
         return "\(Int(hr))"
+    }
+
+    private var waterValue: String {
+        guard let water = healthKitManager.healthData.waterIntake else { return "--" }
+        let cups = water / 8.0 // Convert oz to cups (8oz per cup)
+        return String(format: "%.1f", cups)
+    }
+
+    private var readinessValue: String {
+        // Calculate readiness based on HRV and sleep
+        guard healthKitManager.isAuthorized else { return "--" }
+        let hrvScore = min(100, max(0, (healthKitManager.healthData.hrv ?? 40) / 80 * 100))
+        let sleepScore = min(100, max(0, (healthKitManager.healthData.sleepHours ?? 6) / 8 * 100))
+        let readiness = Int((hrvScore + sleepScore) / 2)
+        return "\(readiness)%"
+    }
+
+    private var trendValue: String {
+        // Show trend based on score comparison (simplified)
+        guard healthKitManager.isAuthorized else { return "--" }
+        if score >= 70 { return "↑" }
+        if score >= 50 { return "→" }
+        return "↓"
     }
 }
 
@@ -883,16 +975,17 @@ struct CurrentActivitySection: View {
     let activeChallenges: [Challenge]
     let currentUserParticipant: (Challenge) -> ChallengeParticipant?
     @Binding var selectedTab: Tab
+    var onShowWorkoutPopup: ((Workout) -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 24) {
             // Today's Workout
             VStack(alignment: .leading, spacing: 10) {
                 Text("Today's Workout")
                     .font(.headline)
                     .fontWeight(.bold)
 
-                ActiveWorkoutCard(selectedTab: $selectedTab)
+                ActiveWorkoutCard(selectedTab: $selectedTab, onShowPopup: onShowWorkoutPopup)
             }
 
             // Active Challenge (if exists)
@@ -910,6 +1003,8 @@ struct CurrentActivitySection: View {
                 }
             }
         }
+        .padding(.top, 8)
+        .padding(.bottom, 8)
     }
 }
 
@@ -919,9 +1014,9 @@ struct ActiveWorkoutCard: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @Binding var selectedTab: Tab
+    var onShowPopup: ((Workout) -> Void)?
 
     @State private var showWorkoutExecution = false
-    @State private var showStartConfirmation = false
     @State private var selectedWorkout: Workout?
     @State private var isPressed = false
 
@@ -956,11 +1051,12 @@ struct ActiveWorkoutCard: View {
     var body: some View {
         if let workout = currentWorkout {
             Button {
+                themeManager.mediumImpact()
                 if isInProgress {
                     showWorkoutExecution = true
                 } else {
                     selectedWorkout = workout
-                    showStartConfirmation = true
+                    onShowPopup?(workout)
                 }
             } label: {
                 HStack(spacing: 16) {
@@ -1044,18 +1140,6 @@ struct ActiveWorkoutCard: View {
             .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
                 isPressed = pressing
             }, perform: {})
-            .alert("Start Workout?", isPresented: $showStartConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Start") {
-                    startWorkout()
-                }
-            } message: {
-                if let selected = selectedWorkout {
-                    Text("Begin \(selected.name)? (~\(selected.estimatedDuration) min)")
-                } else {
-                    Text("Start this workout?")
-                }
-            }
             .fullScreenCover(isPresented: $showWorkoutExecution) {
                 if let workout = isInProgress ? currentWorkout : selectedWorkout {
                     WorkoutExecutionView(workout: workout)
@@ -1935,6 +2019,164 @@ struct WaterDropletView: View {
                     isAnimating = true
                 }
             }
+    }
+}
+
+// MARK: - Workout Start Popup
+struct WorkoutStartPopup: View {
+    let workout: Workout
+    let onStart: () -> Void
+    let onShareAndStart: () -> Void
+    let onCancel: () -> Void
+
+    @Environment(\.colorScheme) var colorScheme
+    @State private var animateIn = false
+
+    var body: some View {
+        ZStack {
+            // Blurred background
+            Color.black.opacity(animateIn ? 0.4 : 0)
+                .ignoresSafeArea()
+                .background(.ultraThinMaterial.opacity(animateIn ? 1 : 0))
+                .onTapGesture {
+                    dismissWithAnimation()
+                }
+
+            // Popup card
+            VStack(spacing: 0) {
+                // Header
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "2d6a4f"), Color(hex: "1b4332")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 70, height: 70)
+
+                        Image(systemName: "figure.strengthtraining.traditional")
+                            .font(.system(size: 30, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    Text(workout.name)
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    HStack(spacing: 16) {
+                        Label("\(workout.exerciseCount) exercises", systemImage: "dumbbell.fill")
+                        Label("~\(workout.estimatedDuration) min", systemImage: "clock")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.top, 28)
+                .padding(.bottom, 24)
+
+                Divider()
+
+                // Options
+                VStack(spacing: 0) {
+                    // Start button
+                    Button {
+                        onStart()
+                    } label: {
+                        HStack {
+                            Image(systemName: "play.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 40, height: 40)
+                                .background(Color(hex: "2d6a4f"))
+                                .clipShape(Circle())
+
+                            Text("Start Workout")
+                                .font(.body)
+                                .fontWeight(.semibold)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Divider()
+                        .padding(.leading, 76)
+
+                    // Share and Start button
+                    Button {
+                        onShareAndStart()
+                    } label: {
+                        HStack {
+                            Image(systemName: "square.and.arrow.up.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 40, height: 40)
+                                .background(Color.accentBlue)
+                                .clipShape(Circle())
+
+                            Text("Share & Start")
+                                .font(.body)
+                                .fontWeight(.semibold)
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Divider()
+
+                // Cancel button
+                Button {
+                    dismissWithAnimation()
+                } label: {
+                    Text("Cancel")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .background(colorScheme == .dark ? Color(hex: "1C1C1E") : .white)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.2), radius: 20, y: 10)
+            .padding(.horizontal, 24)
+            .scaleEffect(animateIn ? 1 : 0.9)
+            .opacity(animateIn ? 1 : 0)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                animateIn = true
+            }
+        }
+    }
+
+    private func dismissWithAnimation() {
+        withAnimation(.easeOut(duration: 0.2)) {
+            animateIn = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            onCancel()
+        }
     }
 }
 
