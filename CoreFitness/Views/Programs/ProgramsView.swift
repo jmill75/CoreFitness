@@ -226,6 +226,8 @@ private struct QuickCreateButton: View {
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
@@ -322,7 +324,7 @@ private struct ActiveWorkoutHeroCard: View {
                         .frame(height: 24)
                         .background(Color.white.opacity(0.2))
 
-                    WorkoutStatPill(icon: "chart.bar.fill", value: workout.difficulty.rawValue, label: "Level")
+                    WorkoutStatPill(icon: "chart.bar.fill", value: workout.difficulty.shortName, label: "Level")
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -371,12 +373,15 @@ private struct WorkoutStatPill: View {
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.bold)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(.white)
 
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.white.opacity(0.7))
+                .lineLimit(1)
         }
         .frame(maxWidth: .infinity)
     }
@@ -396,44 +401,66 @@ private struct ActiveChallengeHeroCard: View {
     private let gradientStart = Color(hex: "f97316")
     private let gradientEnd = Color(hex: "ea580c")
 
+    private var totalParticipants: Int {
+        challenge.participants?.count ?? 0
+    }
+
     var body: some View {
         Button {
             themeManager.mediumImpact()
             onTap()
         } label: {
             HStack(spacing: 16) {
-                // Trophy icon
+                // Challenge icon
                 ZStack {
                     Circle()
                         .fill(Color.white.opacity(0.2))
-                        .frame(width: 50, height: 50)
-
+                        .frame(width: 56, height: 56)
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
-                // Challenge info
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("ACTIVE CHALLENGE")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .tracking(0.5)
-                        .foregroundStyle(.white.opacity(0.7))
+                VStack(alignment: .leading, spacing: 8) {
+                    // Status badge
+                    HStack(spacing: 8) {
+                        Text("ACTIVE CHALLENGE")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
 
+                        if totalParticipants > 0 {
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("\(totalParticipants) participants")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+
+                    // Title
                     Text(challenge.name)
-                        .font(.headline)
+                        .font(.title3)
                         .fontWeight(.bold)
-                        .foregroundStyle(.white)
+
+                    // Stats row
+                    HStack(spacing: 14) {
+                        Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
+                        Label("\(Int(challenge.progress * 100))%", systemImage: "checkmark.circle")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.85))
 
                     // Progress bar
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 3)
+                            RoundedRectangle(cornerRadius: 4)
                                 .fill(Color.white.opacity(0.25))
                                 .frame(height: 6)
 
-                            RoundedRectangle(cornerRadius: 3)
+                            RoundedRectangle(cornerRadius: 4)
                                 .fill(Color.white)
                                 .frame(width: geo.size.width * challenge.progress, height: 6)
                         }
@@ -443,24 +470,19 @@ private struct ActiveChallengeHeroCard: View {
 
                 Spacer()
 
-                // Stats and arrow
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Day \(challenge.currentDay)")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
+                // Go button
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
-
-                    Text("\(Int(challenge.progress * 100))%")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white.opacity(0.6))
                 }
             }
-            .padding(18)
+            .foregroundStyle(.white)
+            .padding(20)
+            .frame(minHeight: 140)
             .background(
                 LinearGradient(
                     colors: [gradientStart, gradientEnd],
@@ -583,10 +605,12 @@ private struct LibraryCard: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
+                        .lineLimit(1)
 
                     Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
 
                 Spacer()
@@ -629,9 +653,9 @@ private struct LibraryCardCompact: View {
             themeManager.mediumImpact()
             action()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 10)
                         .fill(
                             LinearGradient(
                                 colors: gradient,
@@ -639,10 +663,10 @@ private struct LibraryCardCompact: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
 
                     Image(systemName: icon)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
@@ -650,17 +674,19 @@ private struct LibraryCardCompact: View {
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
-                Spacer()
+                Spacer(minLength: 4)
 
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.semibold)
                     .foregroundStyle(.tertiary)
             }
-            .padding(14)
+            .padding(12)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
             .scaleEffect(isPressed ? 0.97 : 1.0)
         }
         .buttonStyle(.plain)

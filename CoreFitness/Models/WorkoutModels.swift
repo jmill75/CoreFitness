@@ -313,6 +313,14 @@ enum Difficulty: String, Codable, CaseIterable {
 
     var displayName: String { rawValue.capitalized }
 
+    var shortName: String {
+        switch self {
+        case .beginner: return "Easy"
+        case .intermediate: return "Medium"
+        case .advanced: return "Hard"
+        }
+    }
+
     var color: String {
         switch self {
         case .beginner: return "accentGreen"
