@@ -343,7 +343,7 @@ struct MusicPlayerMiniView: View {
         .buttonStyle(.plain)
         .sheet(isPresented: $showMusicSheet) {
             MusicControlSheet()
-                .presentationDetents([.height(480)])
+                .presentationDetents([.height(580)])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -355,121 +355,107 @@ struct MusicControlSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Now Playing
-                    VStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(musicService.selectedProvider.color.opacity(0.15))
-                                .frame(width: 180, height: 180)
-
-                            if let track = musicService.currentTrack, let artwork = track.artwork {
-                                artwork
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 180, height: 180)
-                                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                            } else {
-                                Image(systemName: "music.note")
-                                    .font(.system(size: 50))
-                                    .foregroundStyle(musicService.selectedProvider.color)
-                            }
-                        }
-                        .shadow(color: musicService.selectedProvider.color.opacity(0.3), radius: 20, y: 10)
-
-                        VStack(spacing: 4) {
-                            Text(musicService.currentTrack?.title ?? "No Track Playing")
-                                .font(.title3)
-                                .fontWeight(.bold)
-
-                            Text(musicService.currentTrack?.artist ?? "Open a music app to start")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        // Playback controls
-                        HStack(spacing: 32) {
-                            Button {
-                                musicService.skipToPrevious()
-                            } label: {
-                                Image(systemName: "backward.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.primary)
-                            }
-
-                            Button {
-                                musicService.togglePlayPause()
-                            } label: {
-                                Image(systemName: musicService.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                                    .font(.system(size: 64))
-                                    .foregroundStyle(musicService.selectedProvider.color)
-                            }
-
-                            Button {
-                                musicService.skipToNext()
-                            } label: {
-                                Image(systemName: "forward.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.primary)
-                            }
-                        }
-                        .padding(.vertical, 8)
-                    }
-
-                    // Music provider selector
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Music App")
-                            .font(.headline)
-                            .fontWeight(.bold)
-
-                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                            ForEach(MusicService.MusicProvider.allCases) { provider in
-                                MusicProviderButton(
-                                    provider: provider,
-                                    isSelected: musicService.selectedProvider == provider,
-                                    isInstalled: musicService.isAppInstalled(provider)
-                                ) {
-                                    musicService.selectedProvider = provider
-                                }
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(.regularMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-
-                    // Open app button
-                    Button {
-                        musicService.openMusicApp()
-                    } label: {
-                        HStack {
-                            Image(systemName: musicService.selectedProvider.icon)
-                            Text("Open \(musicService.selectedProvider.rawValue)")
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(musicService.selectedProvider.color)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-            }
-            .navigationTitle("Music")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+        VStack(spacing: 0) {
+            // Header with title and done button
+            HStack {
+                Text("Music")
+                    .font(.headline)
                     .fontWeight(.semibold)
+                Spacer()
+                Button("Done") {
+                    dismiss()
+                }
+                .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 24)
+
+            // Album artwork
+            ZStack {
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(musicService.selectedProvider.color.opacity(0.15))
+                    .frame(width: 220, height: 220)
+
+                if let track = musicService.currentTrack, let artwork = track.artwork {
+                    artwork
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 220, height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 24))
+                } else {
+                    Image(systemName: "music.note")
+                        .font(.system(size: 60))
+                        .foregroundStyle(musicService.selectedProvider.color)
                 }
             }
+            .shadow(color: musicService.selectedProvider.color.opacity(0.3), radius: 25, y: 12)
+
+            // Track info
+            VStack(spacing: 6) {
+                Text(musicService.currentTrack?.title ?? "No Track Playing")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text(musicService.currentTrack?.artist ?? "Open a music app to start")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 20)
+
+            // Playback controls
+            HStack(spacing: 44) {
+                Button {
+                    musicService.skipToPrevious()
+                } label: {
+                    Image(systemName: "backward.fill")
+                        .font(.title)
+                        .foregroundStyle(.primary)
+                }
+
+                Button {
+                    musicService.togglePlayPause()
+                } label: {
+                    Image(systemName: musicService.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 72))
+                        .foregroundStyle(musicService.selectedProvider.color)
+                }
+
+                Button {
+                    musicService.skipToNext()
+                } label: {
+                    Image(systemName: "forward.fill")
+                        .font(.title)
+                        .foregroundStyle(.primary)
+                }
+            }
+            .padding(.top, 20)
+            .padding(.bottom, 24)
+
+            // Open app button
+            Button {
+                musicService.openMusicApp()
+            } label: {
+                HStack {
+                    Image(systemName: musicService.selectedProvider.icon)
+                    Text("Open \(musicService.selectedProvider.rawValue)")
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(musicService.selectedProvider.color)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal, 20)
+
+            Spacer()
+
+            // Settings hint
+            Text("Change music provider in Settings")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 20)
         }
     }
 }

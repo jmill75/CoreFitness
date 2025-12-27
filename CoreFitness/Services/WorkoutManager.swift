@@ -402,7 +402,10 @@ class WorkoutManager: ObservableObject {
         // Pre-fill with target values or last logged
         if let exercise = currentExercise {
             loggedReps = exercise.targetReps
-            loggedWeight = exercise.targetWeight ?? getLastWeight(for: exercise) ?? 0
+            // Only reset weight on first set, otherwise keep the last logged weight
+            if currentSetNumber == 1 && loggedWeight == 0 {
+                loggedWeight = exercise.targetWeight ?? getLastWeight(for: exercise) ?? 0
+            }
         }
         showSetLogger = true
         currentPhase = .loggingSet
@@ -429,6 +432,9 @@ class WorkoutManager: ObservableObject {
         modelContext?.insert(completedSet)
         try? modelContext?.save()
 
+        // Remember the weight for next set
+        loggedWeight = weight
+
         showSetLogger = false
 
         // Store completed set info for feedback
@@ -437,6 +443,9 @@ class WorkoutManager: ObservableObject {
 
         // Show PR celebration if new record (takes priority)
         if isPR && weight > 0 {
+            // Save the new Personal Record
+            savePR(exerciseName: exerciseName, weight: weight, reps: reps)
+
             prExerciseName = exerciseName
             prWeight = weight
             showPRCelebration = true
@@ -535,6 +544,22 @@ class WorkoutManager: ObservableObject {
             .max() ?? 0
 
         return newWeight > maxPreviousWeight
+    }
+
+    /// Save a new personal record
+    private func savePR(exerciseName: String, weight: Double, reps: Int) {
+        guard let context = modelContext else { return }
+
+        let pr = PersonalRecord(exerciseName: exerciseName, weight: weight, reps: reps)
+        context.insert(pr)
+        try? context.save()
+
+        // Post notification for UI updates
+        NotificationCenter.default.post(name: .personalRecordAchieved, object: nil, userInfo: [
+            "exerciseName": exerciseName,
+            "weight": weight,
+            "reps": reps
+        ])
     }
 
     /// Start rest timer between sets
@@ -656,6 +681,20 @@ class WorkoutManager: ObservableObject {
         // End Live Activity
         liveActivityManager.endActivity()
 
+        // Check and update achievements
+        checkAchievements()
+
+        // Advance program to next workout if applicable
+        advanceProgramProgress()
+
+        // Post notification for data sync across views
+        NotificationCenter.default.post(name: .workoutCompleted, object: nil, userInfo: [
+            "sessionId": currentSession?.id as Any,
+            "workoutId": currentWorkout?.id as Any,
+            "duration": elapsedTime,
+            "exercisesCompleted": currentExerciseIndex + 1
+        ])
+
         themeManager?.notifySuccess()
     }
 
@@ -692,6 +731,110 @@ class WorkoutManager: ObservableObject {
         showSetLogger = false
         showWorkoutComplete = false
         showExitConfirmation = false
+    }
+
+    // MARK: - Achievement & Progress Tracking
+
+    /// Check and update achievements after workout completion
+    private func checkAchievements() {
+        guard let context = modelContext else { return }
+
+        // Get total completed workouts
+        let sessionsDescriptor = FetchDescriptor<WorkoutSession>()
+        guard let allSessions = try? context.fetch(sessionsDescriptor) else { return }
+        let completedCount = allSessions.filter { $0.status == .completed }.count
+
+        // Get all achievements to check
+        let achievementsDescriptor = FetchDescriptor<Achievement>()
+        guard let achievements = try? context.fetch(achievementsDescriptor) else { return }
+
+        // Get already earned achievements
+        let userAchievementsDescriptor = FetchDescriptor<UserAchievement>()
+        let earnedAchievements = (try? context.fetch(userAchievementsDescriptor)) ?? []
+        let earnedIds = Set(earnedAchievements.map { $0.achievementId })
+
+        for achievement in achievements {
+            // Skip if already earned
+            guard !earnedIds.contains(achievement.id) else { continue }
+
+            var shouldUnlock = false
+
+            switch achievement.id {
+            case "first_workout":
+                shouldUnlock = completedCount >= 1
+            case "5_workouts":
+                shouldUnlock = completedCount >= 5
+            case "10_workouts":
+                shouldUnlock = completedCount >= 10
+            case "25_workouts":
+                shouldUnlock = completedCount >= 25
+            case "50_workouts":
+                shouldUnlock = completedCount >= 50
+            case "100_workouts":
+                shouldUnlock = completedCount >= 100
+            default:
+                // Check streak achievements
+                if achievement.id.contains("streak") {
+                    shouldUnlock = checkStreakAchievement(requirement: achievement.requirement, sessions: allSessions)
+                }
+            }
+
+            if shouldUnlock {
+                let userAchievement = UserAchievement(achievementId: achievement.id, progress: achievement.requirement, isComplete: true)
+                context.insert(userAchievement)
+
+                // Post notification
+                NotificationCenter.default.post(name: .achievementUnlocked, object: nil, userInfo: [
+                    "achievementId": achievement.id,
+                    "achievementName": achievement.name
+                ])
+            }
+        }
+
+        try? context.save()
+    }
+
+    /// Check if streak achievement is met
+    private func checkStreakAchievement(requirement: Int, sessions: [WorkoutSession]) -> Bool {
+        let calendar = Calendar.current
+        var streak = 0
+        var checkDate = calendar.startOfDay(for: Date())
+
+        while true {
+            let hasWorkout = sessions.contains {
+                guard $0.status == .completed, let completed = $0.completedAt else { return false }
+                return calendar.isDate(completed, inSameDayAs: checkDate)
+            }
+            if hasWorkout {
+                streak += 1
+                checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate) ?? checkDate
+            } else {
+                break
+            }
+        }
+
+        return streak >= requirement
+    }
+
+    /// Advance to the next workout in the program (if applicable)
+    private func advanceProgramProgress() {
+        guard let workout = currentWorkout,
+              let context = modelContext else { return }
+
+        // Increment the workout's personal records count if any PRs were set
+        // Note: The session is already saved with completed status and date
+
+        // If this is the active workout, we may want to advance to next in queue
+        // The workout's `lastSessionDate` and `completedSessionsCount` are
+        // computed properties that automatically update from sessions
+
+        // Deactivate current workout after completion
+        workout.isActive = false
+
+        // Find next workout in library that should become active (if any)
+        // This is handled by ProgramsView/HomeView which query for current workout
+
+        try? context.save()
     }
 
     // MARK: - Helper Methods

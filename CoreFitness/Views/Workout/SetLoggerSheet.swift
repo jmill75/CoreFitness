@@ -1,13 +1,17 @@
 import SwiftUI
+import SwiftData
 
 struct SetLoggerSheet: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
     @State private var reps: Int = 10
     @State private var weight: Double = 0
     @State private var selectedRPE: Int? = nil
+    @State private var lastWorkoutSets: [CompletedSet] = []
+    @State private var lastWorkoutDate: Date?
 
 
     var body: some View {
@@ -17,15 +21,35 @@ struct SetLoggerSheet: View {
                 Color.black.ignoresSafeArea()
 
                 VStack(spacing: 28) {
-                    // Set number header with exercise name
+                    // Set number header with exercise name and category
                     VStack(spacing: 8) {
-                        Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
-                            .font(.headline)
-                            .foregroundStyle(.gray)
-
                         Text("Set \(workoutManager.currentSetNumber)")
                             .font(.system(size: 40, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
+
+                        // Exercise category badge
+                        if let category = workoutManager.currentExercise?.exercise?.safeCategory {
+                            Text(category.rawValue.uppercased())
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .tracking(1.5)
+                                .foregroundStyle(categoryColor(category))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(categoryColor(category).opacity(0.2))
+                                .clipShape(Capsule())
+                        }
+
+                        Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.top, 8)
+
+                        // Last workout reference
+                        if !lastWorkoutSets.isEmpty {
+                            lastWorkoutView
+                        }
                     }
                     .padding(.top, 8)
 
@@ -207,6 +231,7 @@ struct SetLoggerSheet: View {
             .onAppear {
                 reps = workoutManager.loggedReps
                 weight = workoutManager.loggedWeight
+                fetchLastWorkout()
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -234,6 +259,97 @@ struct SetLoggerSheet: View {
         }
     }
 
+    private func categoryColor(_ category: ExerciseCategory) -> Color {
+        switch category {
+        case .strength: return .orange
+        case .cardio: return .red
+        case .yoga: return .purple
+        case .pilates: return .pink
+        case .hiit: return .yellow
+        case .stretching: return .mint
+        case .running: return .blue
+        case .cycling: return .green
+        case .swimming: return .cyan
+        case .calisthenics: return .indigo
+        }
+    }
+
+    // MARK: - Last Workout View
+    private var lastWorkoutView: some View {
+        VStack(spacing: 6) {
+            // Header with date
+            HStack(spacing: 4) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .font(.caption2)
+                Text("Last: \(lastWorkoutDateText)")
+                    .font(.caption)
+            }
+            .foregroundStyle(.white.opacity(0.5))
+
+            // Sets display
+            HStack(spacing: 8) {
+                ForEach(lastWorkoutSets.sorted(by: { $0.setNumber < $1.setNumber }), id: \.id) { set in
+                    Text("\(Int(set.weight))")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(.top, 12)
+    }
+
+    private var lastWorkoutDateText: String {
+        guard let date = lastWorkoutDate else { return "" }
+        let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day ?? 0
+        if days == 0 {
+            return "Today"
+        } else if days == 1 {
+            return "Yesterday"
+        } else if days < 7 {
+            return "\(days) days ago"
+        } else if days < 14 {
+            return "1 week ago"
+        } else {
+            return "\(days / 7) weeks ago"
+        }
+    }
+
+    private func fetchLastWorkout() {
+        guard let exerciseId = workoutManager.currentExercise?.exercise?.id,
+              let currentSessionId = workoutManager.currentSession?.id else { return }
+
+        // Fetch all completed sets
+        let descriptor = FetchDescriptor<CompletedSet>()
+
+        do {
+            let allSets = try modelContext.fetch(descriptor)
+
+            // Filter to this exercise from previous sessions
+            let relevantSets = allSets.filter { set in
+                set.workoutExercise?.exercise?.id == exerciseId &&
+                set.session?.id != currentSessionId
+            }
+
+            // Group by session and get the most recent session's sets
+            let sessionGroups = Dictionary(grouping: relevantSets) { $0.session?.id }
+
+            // Find the most recent session
+            if let mostRecentEntry = sessionGroups.compactMap({ (sessionId, sets) -> (Date, [CompletedSet])? in
+                guard let date = sets.first?.session?.startedAt else { return nil }
+                return (date, sets)
+            }).sorted(by: { $0.0 > $1.0 }).first {
+                lastWorkoutSets = mostRecentEntry.1
+                lastWorkoutDate = mostRecentEntry.0
+            }
+        } catch {
+            print("Failed to fetch last workout: \(error)")
+        }
+    }
 }
 
 // MARK: - Repeating Button (Press-and-Hold)

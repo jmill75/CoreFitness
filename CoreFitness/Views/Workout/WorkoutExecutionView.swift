@@ -707,7 +707,7 @@ struct UnifiedWorkoutView: View {
             // Music control bar at bottom
             WorkoutMusicBar(showMusicSheet: $showMusicSheet)
                 .padding(.horizontal, 16)
-                .padding(.bottom, 8)
+                .padding(.bottom, 40)
 
             // Skip exercise at very bottom
             skipExerciseButton
@@ -724,7 +724,7 @@ struct UnifiedWorkoutView: View {
         }
         .sheet(isPresented: $showMusicSheet) {
             MusicControlSheet()
-                .presentationDetents([.height(480)])
+                .presentationDetents([.height(580)])
                 .presentationDragIndicator(.visible)
         }
     }
