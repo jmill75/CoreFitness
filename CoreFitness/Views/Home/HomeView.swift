@@ -271,6 +271,7 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
 // MARK: - Quick Options Grid (Customizable)
 struct QuickOptionsGrid: View {
+    @EnvironmentObject var navigationState: NavigationState
     let onCheckIn: () -> Void
     let onWaterIntake: () -> Void
     @Binding var selectedTab: Tab
@@ -380,6 +381,7 @@ struct QuickOptionsGrid: View {
             selectedTab = .health
         case .challenges:
             selectedTab = .programs
+            navigationState.showChallenges = true
         case .settings:
             selectedTab = .settings
         }
@@ -1205,6 +1207,7 @@ struct ActiveWorkoutCard: View {
 
 // MARK: - Home Challenge Card (Rich Design)
 struct HomeChallengeCard: View {
+    @EnvironmentObject var navigationState: NavigationState
     let challenge: Challenge
     let currentUserParticipant: ChallengeParticipant?
     @Environment(\.accessibilityReduceMotion) var reduceMotion
@@ -1233,6 +1236,7 @@ struct HomeChallengeCard: View {
     var body: some View {
         Button {
             selectedTab = .programs
+            navigationState.showChallenges = true
         } label: {
             HStack(spacing: 16) {
                 // Challenge icon
