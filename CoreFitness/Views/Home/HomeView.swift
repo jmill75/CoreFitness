@@ -725,7 +725,7 @@ struct TodayRecoveryCard: View {
 
                     // Info
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Today's Health")
+                        Text("Today's Recovery")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.white.opacity(0.85))
@@ -749,26 +749,11 @@ struct TodayRecoveryCard: View {
                     Spacer()
                 }
 
-                // Stats Grid - Two rows
-                VStack(spacing: 12) {
-                    // Row 1: Activity metrics
-                    HStack(spacing: 0) {
-                        HealthStatItem(icon: "figure.walk", value: stepsValue, label: "Steps", color: Color.accentGreen)
-                        HealthStatItem(icon: "flame.fill", value: caloriesValue, label: "Active Cal", color: Color.accentOrange)
-                        HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "a78bfa"))
-                        HealthStatItem(icon: "drop.fill", value: waterValue, label: "Water", color: Color(hex: "38bdf8"))
-                    }
-
-                    Divider()
-                        .background(Color.white.opacity(0.15))
-
-                    // Row 2: Heart & recovery metrics
-                    HStack(spacing: 0) {
-                        HealthStatItem(icon: "heart.fill", value: hrValue, label: "Resting HR", color: Color.accentRed)
-                        HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "34d399"))
-                        HealthStatItem(icon: "bolt.heart.fill", value: readinessValue, label: "Readiness", color: Color(hex: "fbbf24"))
-                        HealthStatItem(icon: "chart.line.uptrend.xyaxis", value: trendValue, label: "Trend", color: Color(hex: "60a5fa"))
-                    }
+                // Recovery Stats - Single row
+                HStack(spacing: 0) {
+                    HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "a78bfa"))
+                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "34d399"))
+                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "Resting HR", color: Color.accentRed)
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
@@ -797,9 +782,9 @@ struct TodayRecoveryCard: View {
             }
         }, perform: {})
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Today's Health Score")
+        .accessibilityLabel("Today's Recovery Score")
         .accessibilityValue(healthKitManager.isAuthorized ? "\(score) out of 100. \(scoreMessage)" : "Not connected. Connect Health app to see your score.")
-        .accessibilityHint("Double tap to view detailed health metrics")
+        .accessibilityHint("Double tap to view detailed recovery metrics")
         .accessibilityAddTraits(.isButton)
     }
 

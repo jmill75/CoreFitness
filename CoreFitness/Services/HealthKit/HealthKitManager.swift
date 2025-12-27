@@ -739,4 +739,73 @@ class HealthKitManager: ObservableObject {
 
         return results
     }
+
+    /// Fetches active calories history for the past N days
+    func getCaloriesHistory(days: Int = 30) async -> [Double] {
+        guard let caloriesType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double?, Never>) in
+                let query = HKStatisticsQuery(
+                    quantityType: caloriesType,
+                    quantitySamplePredicate: predicate,
+                    options: .cumulativeSum
+                ) { _, statistics, _ in
+                    let sum = statistics?.sumQuantity()?.doubleValue(for: HKUnit.kilocalorie())
+                    continuation.resume(returning: sum)
+                }
+                healthStore.execute(query)
+            }
+            results.append(value ?? 0)
+        }
+
+        return results
+    }
+
+    /// Fetches water intake history for the past N days (returns cups)
+    func getWaterHistory(days: Int = 30) async -> [Double] {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return []
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        var results: [Double] = []
+
+        for dayOffset in (0..<days).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -dayOffset, to: now) else { continue }
+            let startOfDay = calendar.startOfDay(for: date)
+            let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+
+            let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+
+            let value = await withCheckedContinuation { (continuation: CheckedContinuation<Double?, Never>) in
+                let query = HKStatisticsQuery(
+                    quantityType: waterType,
+                    quantitySamplePredicate: predicate,
+                    options: .cumulativeSum
+                ) { _, statistics, _ in
+                    let sum = statistics?.sumQuantity()?.doubleValue(for: HKUnit.fluidOunceUS())
+                    // Convert oz to cups (8 oz per cup)
+                    continuation.resume(returning: sum.map { $0 / 8.0 })
+                }
+                healthStore.execute(query)
+            }
+            results.append(value ?? 0)
+        }
+
+        return results
+    }
 }

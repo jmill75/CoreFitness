@@ -464,6 +464,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
     case restingHR = "Resting HR"
     case sleep = "Sleep"
     case steps = "Steps"
+    case calories = "Active Calories"
+    case water = "Water"
 
     var icon: String {
         switch self {
@@ -471,6 +473,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return "heart.fill"
         case .sleep: return "moon.fill"
         case .steps: return "figure.walk"
+        case .calories: return "flame.fill"
+        case .water: return "drop.fill"
         }
     }
 
@@ -480,6 +484,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return "bpm"
         case .sleep: return "hrs"
         case .steps: return ""
+        case .calories: return "kcal"
+        case .water: return "cups"
         }
     }
 
@@ -489,6 +495,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return AppGradients.health
         case .sleep: return AppGradients.ocean
         case .steps: return AppGradients.energetic
+        case .calories: return LinearGradient(colors: [Color(hex: "f97316"), Color(hex: "ea580c")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .water: return LinearGradient(colors: [Color(hex: "0ea5e9"), Color(hex: "0284c7")], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 
@@ -498,6 +506,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return .accentRed
         case .sleep: return .accentBlue
         case .steps: return .accentOrange
+        case .calories: return Color(hex: "f97316")
+        case .water: return Color(hex: "0ea5e9")
         }
     }
 
@@ -507,6 +517,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return "Your resting heart rate when you're calm and relaxed. Lower values typically indicate better cardiovascular fitness."
         case .sleep: return "Total hours of sleep recorded. Adults typically need 7-9 hours for optimal recovery."
         case .steps: return "Total steps taken throughout the day. 10,000 steps is a common daily goal."
+        case .calories: return "Active calories burned through physical activity. This excludes your basal metabolic rate."
+        case .water: return "Water intake tracked throughout the day. Aim for 8 cups (64 oz) daily for optimal hydration."
         }
     }
 
@@ -516,6 +528,8 @@ enum HealthMetricType: String, CaseIterable, Identifiable {
         case .restingHR: return (50, 80)
         case .sleep: return (4, 10)
         case .steps: return (0, 15000)
+        case .calories: return (0, 1000)
+        case .water: return (0, 12)
         }
     }
 }
@@ -545,6 +559,16 @@ struct HealthMetricsSection: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         return formatter.string(from: NSNumber(value: steps)) ?? "--"
+    }
+
+    private var caloriesValue: String {
+        guard let cals = healthKitManager.healthData.activeCalories else { return "--" }
+        return "\(Int(cals))"
+    }
+
+    private var waterValue: String {
+        guard let water = healthKitManager.healthData.waterIntake else { return "--" }
+        return String(format: "%.1f", water / 8.0) // Convert oz to cups
     }
 
     var body: some View {
@@ -606,6 +630,36 @@ struct HealthMetricsSection: View {
                     gradient: AppGradients.energetic
                 ) {
                     selectedMetric = .steps
+                }
+
+                HealthMetricCard(
+                    title: "Active Cal",
+                    value: caloriesValue,
+                    unit: "kcal",
+                    trend: .neutral,
+                    icon: "flame.fill",
+                    gradient: LinearGradient(
+                        colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                ) {
+                    selectedMetric = .calories
+                }
+
+                HealthMetricCard(
+                    title: "Water",
+                    value: waterValue,
+                    unit: "cups",
+                    trend: .neutral,
+                    icon: "drop.fill",
+                    gradient: LinearGradient(
+                        colors: [Color(hex: "0ea5e9"), Color(hex: "0284c7")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                ) {
+                    selectedMetric = .water
                 }
             }
         }
@@ -2442,7 +2496,51 @@ struct WaterDetailStatBox: View {
     }
 }
 
-// MARK: - Health Metric Detail View (30-Day Chart)
+// MARK: - Time Period for Charts
+enum TimePeriod: String, CaseIterable {
+    case day = "Day"
+    case week = "Week"
+    case month = "Month"
+    case year = "Year"
+
+    var days: Int {
+        switch self {
+        case .day: return 1
+        case .week: return 7
+        case .month: return 30
+        case .year: return 365
+        }
+    }
+
+    var dataPoints: Int {
+        switch self {
+        case .day: return 24      // Hourly for day
+        case .week: return 7      // Daily for week
+        case .month: return 30    // Daily for month
+        case .year: return 12     // Monthly for year
+        }
+    }
+
+    var chartTitle: String {
+        switch self {
+        case .day: return "Today"
+        case .week: return "Last 7 Days"
+        case .month: return "Last 30 Days"
+        case .year: return "Last 12 Months"
+        }
+    }
+
+    var xAxisLabels: (start: String, middle: String, end: String) {
+        switch self {
+        case .day: return ("12am", "12pm", "Now")
+        case .week: return ("7d ago", "3d ago", "Today")
+        case .month: return ("30d ago", "15d ago", "Today")
+        case .year: return ("12m ago", "6m ago", "Now")
+        }
+    }
+}
+
+// MARK: - Health Metric Detail View
 struct HealthMetricDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var healthKitManager: HealthKitManager
@@ -2450,20 +2548,23 @@ struct HealthMetricDetailView: View {
 
     @State private var historicalData: [Double] = []
     @State private var isLoading = true
+    @State private var selectedPeriod: TimePeriod = .month
 
     private let chartHeight: CGFloat = 200
     private var data: [Double] {
-        historicalData.isEmpty ? Array(repeating: 0, count: 30) : historicalData
+        historicalData.isEmpty ? Array(repeating: 0, count: selectedPeriod.dataPoints) : historicalData
     }
     private var yRange: (min: Double, max: Double) { metricType.yAxisRange }
     private var hasData: Bool { historicalData.contains { $0 > 0 } }
 
     private var average: Double {
-        data.reduce(0, +) / Double(data.count)
+        let validData = data.filter { $0 > 0 }
+        guard !validData.isEmpty else { return 0 }
+        return validData.reduce(0, +) / Double(validData.count)
     }
 
-    private var maxVal: Double { data.max() ?? 0 }
-    private var minVal: Double { data.min() ?? 0 }
+    private var maxVal: Double { data.filter { $0 > 0 }.max() ?? 0 }
+    private var minVal: Double { data.filter { $0 > 0 }.min() ?? 0 }
 
     var body: some View {
         NavigationStack {
@@ -2495,9 +2596,23 @@ struct HealthMetricDetailView: View {
                     }
                     .padding(.horizontal)
 
-                    // 30-day chart
+                    // Time period picker
+                    Picker("Time Period", selection: $selectedPeriod) {
+                        ForEach(TimePeriod.allCases, id: \.self) { period in
+                            Text(period.rawValue).tag(period)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    .onChange(of: selectedPeriod) { _, _ in
+                        Task {
+                            await loadHistoricalData()
+                        }
+                    }
+
+                    // Chart section
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Last 30 Days")
+                        Text(selectedPeriod.chartTitle)
                             .font(.headline)
                             .fontWeight(.bold)
                             .padding(.horizontal)
@@ -2671,11 +2786,11 @@ struct HealthMetricDetailView: View {
                         HStack {
                             Spacer().frame(width: 48)
                             HStack {
-                                Text("30d ago")
+                                Text(selectedPeriod.xAxisLabels.start)
                                 Spacer()
-                                Text("15d ago")
+                                Text(selectedPeriod.xAxisLabels.middle)
                                 Spacer()
-                                Text("Today")
+                                Text(selectedPeriod.xAxisLabels.end)
                             }
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -2713,26 +2828,31 @@ struct HealthMetricDetailView: View {
 
     private func loadHistoricalData() async {
         isLoading = true
+        let days = selectedPeriod.days
         switch metricType {
         case .hrv:
-            historicalData = await healthKitManager.getHRVHistory(days: 30)
+            historicalData = await healthKitManager.getHRVHistory(days: days)
         case .restingHR:
-            historicalData = await healthKitManager.getRestingHRHistory(days: 30)
+            historicalData = await healthKitManager.getRestingHRHistory(days: days)
         case .sleep:
-            historicalData = await healthKitManager.getSleepHistory(days: 30)
+            historicalData = await healthKitManager.getSleepHistory(days: days)
         case .steps:
-            historicalData = await healthKitManager.getStepsHistory(days: 30)
+            historicalData = await healthKitManager.getStepsHistory(days: days)
+        case .calories:
+            historicalData = await healthKitManager.getCaloriesHistory(days: days)
+        case .water:
+            historicalData = await healthKitManager.getWaterHistory(days: days)
         }
         isLoading = false
     }
 
     private func formatValue(_ value: Double) -> String {
         switch metricType {
-        case .steps:
+        case .steps, .calories:
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
             return formatter.string(from: NSNumber(value: Int(value))) ?? "--"
-        case .sleep:
+        case .sleep, .water:
             return String(format: "%.1f", value)
         default:
             return "\(Int(value))"
@@ -2743,7 +2863,9 @@ struct HealthMetricDetailView: View {
         switch metricType {
         case .steps:
             return "\(Int(value / 1000))k"
-        case .sleep:
+        case .calories:
+            return "\(Int(value))"
+        case .sleep, .water:
             return String(format: "%.0f", value)
         default:
             return "\(Int(value))"
