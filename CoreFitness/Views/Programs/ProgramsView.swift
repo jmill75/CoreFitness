@@ -60,18 +60,24 @@ struct ProgramsView: View {
 
                     // MARK: - Active Workout Hero Card
                     if let workout = currentWorkout {
-                        ActiveWorkoutHeroCard(workout: workout)
-                            .opacity(animationStage >= 3 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
-                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
+                        VStack(alignment: .leading, spacing: 12) {
+                            LibrarySectionHeader(title: "Current Workout")
+                            ActiveWorkoutHeroCard(workout: workout)
+                        }
+                        .opacity(animationStage >= 3 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
                     }
 
                     // MARK: - Active Challenge Card
                     if let challenge = activeChallenge {
-                        ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
-                            .opacity(animationStage >= 4 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
-                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
+                        VStack(alignment: .leading, spacing: 12) {
+                            LibrarySectionHeader(title: "Active Challenge")
+                            ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
+                        }
+                        .opacity(animationStage >= 4 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
                     }
 
                     // MARK: - Library Section
@@ -1235,6 +1241,7 @@ struct ExerciseLibraryView: View {
     @State private var selectedExercise: Exercise?
     @State private var viewMode: ExerciseViewMode = .browse
     @State private var animationStage = 0
+    @State private var showFavoritesSheet = false
 
     enum ExerciseViewMode {
         case browse, search
@@ -1292,6 +1299,14 @@ struct ExerciseLibraryView: View {
             .sheet(item: $selectedExercise) { exercise in
                 ExerciseDetailView(exercise: exercise)
                     .presentationDetents([.large])
+            }
+            .sheet(isPresented: $showFavoritesSheet) {
+                FavoritesSheet(exercises: favoriteExercises) { exercise in
+                    showFavoritesSheet = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        selectedExercise = exercise
+                    }
+                }
             }
             .onAppear {
                 if reduceMotion {
@@ -1378,14 +1393,15 @@ struct ExerciseLibraryView: View {
 
                 Spacer()
 
-                Button {
-                    showFavoritesOnly = true
-                    selectedCategory = nil
-                } label: {
-                    Text("See All")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(Color(hex: "0ea5e9"))
+                if favoriteExercises.count > 1 {
+                    Button {
+                        showFavoritesSheet = true
+                    } label: {
+                        Text("See All")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color(hex: "0ea5e9"))
+                    }
                 }
             }
             .padding(.horizontal)
@@ -1786,6 +1802,105 @@ private struct FavoriteExerciseCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Favorites Sheet
+private struct FavoritesSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let exercises: [Exercise]
+    let onSelect: (Exercise) -> Void
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 12),
+        GridItem(.flexible(), spacing: 12)
+    ]
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(exercises) { exercise in
+                        FavoriteGridCard(exercise: exercise) {
+                            onSelect(exercise)
+                        }
+                    }
+                }
+                .padding()
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Favorites")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Favorite Grid Card
+private struct FavoriteGridCard: View {
+    let exercise: Exercise
+    let onTap: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(Color.accentRed.opacity(0.15))
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: exercise.safeCategory.icon)
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color.accentRed)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "heart.fill")
+                        .font(.caption)
+                        .foregroundStyle(Color.accentRed)
+                }
+
+                Spacer()
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(exercise.name)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    Text(exercise.safeCategory.displayName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(14)
+            .frame(height: 130)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
     }
 }
 

@@ -14,7 +14,7 @@ struct CountdownView: View {
         switch count {
         case 3: return .accentRed
         case 2: return .accentOrange
-        case 1: return .accentYellow
+        case 1: return .accentGreen
         default: return .accentGreen
         }
     }

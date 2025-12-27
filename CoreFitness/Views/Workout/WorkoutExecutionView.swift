@@ -126,6 +126,17 @@ struct WorkoutExecutionView: View {
             }
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showExerciseCompleteFeedback)
+        .overlay {
+            if workoutManager.showNextExerciseTransition {
+                NextExerciseTransitionView(
+                    exerciseName: workoutManager.nextExerciseName,
+                    exerciseNumber: workoutManager.nextExerciseNumber,
+                    totalExercises: workoutManager.totalExerciseCount
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showNextExerciseTransition)
     }
 }
 
@@ -355,6 +366,89 @@ struct CelebrationParticle: Identifiable {
     var color: Color
     var size: CGFloat
     var opacity: Double
+}
+
+// MARK: - Next Exercise Transition View
+struct NextExerciseTransitionView: View {
+    let exerciseName: String
+    let exerciseNumber: Int
+    let totalExercises: Int
+
+    @State private var showContent = false
+    @State private var arrowOffset: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            // Dark overlay
+            Color.black.opacity(0.85)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                // "Up Next" label
+                HStack(spacing: 8) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .font(.title2)
+                        .offset(x: arrowOffset)
+                    Text("UP NEXT")
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .tracking(2)
+                }
+                .foregroundStyle(.cyan)
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : -20)
+
+                // Exercise name
+                Text(exerciseName)
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .scaleEffect(showContent ? 1 : 0.8)
+                    .opacity(showContent ? 1 : 0)
+
+                // Progress indicator
+                HStack(spacing: 6) {
+                    Text("Exercise")
+                        .foregroundStyle(.white.opacity(0.6))
+                    Text("\(exerciseNumber)")
+                        .fontWeight(.bold)
+                        .foregroundStyle(.cyan)
+                    Text("of")
+                        .foregroundStyle(.white.opacity(0.6))
+                    Text("\(totalExercises)")
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                }
+                .font(.subheadline)
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 20)
+
+                // Progress dots
+                HStack(spacing: 8) {
+                    ForEach(0..<totalExercises, id: \.self) { index in
+                        Circle()
+                            .fill(index < exerciseNumber ? Color.cyan : Color.white.opacity(0.3))
+                            .frame(width: index == exerciseNumber - 1 ? 10 : 6,
+                                   height: index == exerciseNumber - 1 ? 10 : 6)
+                            .scaleEffect(showContent ? 1 : 0)
+                            .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showContent)
+                    }
+                }
+                .padding(.top, 8)
+            }
+        }
+        .onAppear {
+            // Animate content in
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                showContent = true
+            }
+
+            // Arrow bounce animation
+            withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) {
+                arrowOffset = 5
+            }
+        }
+    }
 }
 
 // MARK: - PR Celebration View with Fireworks

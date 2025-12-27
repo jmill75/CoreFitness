@@ -12,6 +12,7 @@ struct SetLoggerSheet: View {
     @State private var selectedRPE: Int? = nil
     @State private var lastWorkoutSets: [CompletedSet] = []
     @State private var lastWorkoutDate: Date?
+    @State private var showSetLoggedFeedback = false
 
 
     var body: some View {
@@ -207,7 +208,13 @@ struct SetLoggerSheet: View {
 
                     // Save button
                     Button {
-                        workoutManager.logSet(reps: reps, weight: weight, rpe: selectedRPE)
+                        showSetLoggedFeedback = true
+                        themeManager.mediumImpact()
+
+                        // Delay the actual save to show feedback
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            workoutManager.logSet(reps: reps, weight: weight, rpe: selectedRPE)
+                        }
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "checkmark.circle.fill")
@@ -226,7 +233,18 @@ struct SetLoggerSheet: View {
                     .padding(.bottom, 8)
                 }
                 .padding()
+
+                // Set Logged Feedback Overlay
+                if showSetLoggedFeedback {
+                    SetLoggedFeedbackView(
+                        setNumber: workoutManager.currentSetNumber,
+                        reps: reps,
+                        weight: weight
+                    )
+                    .transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.2), value: showSetLoggedFeedback)
             .preferredColorScheme(.dark)
             .onAppear {
                 reps = workoutManager.loggedReps
@@ -387,6 +405,85 @@ struct RepeatingButton<Label: View>: View {
                         timer = nil
                     }
             )
+    }
+}
+
+// MARK: - Set Logged Feedback View
+struct SetLoggedFeedbackView: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let setNumber: Int
+    let reps: Int
+    let weight: Double
+
+    @State private var showContent = false
+    @State private var checkmarkScale: CGFloat = 0
+
+    var body: some View {
+        ZStack {
+            // Blurred background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+
+            // Extra dark tint
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+
+            // Content
+            VStack(spacing: 20) {
+                // Checkmark circle
+                ZStack {
+                    // Glow
+                    Circle()
+                        .fill(Color.green.opacity(0.3))
+                        .frame(width: 140, height: 140)
+                        .blur(radius: 20)
+
+                    // Circle background
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.green, Color.green.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                        .shadow(color: Color.green.opacity(0.5), radius: 15, y: 5)
+
+                    // Checkmark
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 50, weight: .bold))
+                        .foregroundStyle(.white)
+                        .scaleEffect(checkmarkScale)
+                }
+
+                // Text
+                VStack(spacing: 8) {
+                    Text("SET LOGGED")
+                        .font(.title2)
+                        .fontWeight(.black)
+                        .foregroundStyle(.white)
+
+                    Text("Set \(setNumber) • \(reps) reps • \(themeManager.formatWeight(weight))")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+                .opacity(showContent ? 1 : 0)
+                .offset(y: showContent ? 0 : 20)
+            }
+        }
+        .onAppear {
+            // Animate checkmark
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                checkmarkScale = 1.0
+            }
+
+            // Animate text
+            withAnimation(.easeOut(duration: 0.3).delay(0.1)) {
+                showContent = true
+            }
+        }
     }
 }
 

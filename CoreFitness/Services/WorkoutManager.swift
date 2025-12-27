@@ -50,6 +50,12 @@ class WorkoutManager: ObservableObject {
     @Published var completedSetNumber: Int = 0
     @Published var completedExerciseName: String = ""
 
+    // Next Exercise Transition
+    @Published var showNextExerciseTransition: Bool = false
+    @Published var nextExerciseName: String = ""
+    @Published var nextExerciseNumber: Int = 0
+    @Published var totalExerciseCount: Int = 0
+
     // MARK: - Private Properties
     private var timer: Timer?
     private var restTimer: Timer?
@@ -615,13 +621,28 @@ class WorkoutManager: ObservableObject {
             return
         }
 
-        currentExerciseIndex += 1
-        currentSetNumber = 1
-        prefillFromLastSession()
-        currentPhase = .exercising
+        // Get next exercise info for transition
+        let exercises = currentSession?.workout?.exercises?.sorted(by: { $0.order < $1.order }) ?? []
+        let nextIndex = currentExerciseIndex + 1
+        if nextIndex < exercises.count {
+            nextExerciseName = exercises[nextIndex].exercise?.name ?? "Next Exercise"
+            nextExerciseNumber = nextIndex + 1
+            totalExerciseCount = exercises.count
+        }
 
-        notifyWatchExerciseChanged()
+        // Show transition
+        showNextExerciseTransition = true
         themeManager?.mediumImpact()
+
+        // After transition, switch to next exercise
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.showNextExerciseTransition = false
+            self?.currentExerciseIndex += 1
+            self?.currentSetNumber = 1
+            self?.prefillFromLastSession()
+            self?.currentPhase = .exercising
+            self?.notifyWatchExerciseChanged()
+        }
     }
 
     /// Go back to previous exercise
