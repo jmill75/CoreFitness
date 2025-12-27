@@ -133,9 +133,19 @@ struct WelcomeHeader: View {
         userName.components(separatedBy: " ").first ?? userName
     }
 
+    private var timeGreeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<21: return "Good evening"
+        default: return "Good night"
+        }
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            Text("Hi, ")
+            Text("\(timeGreeting), ")
                 .font(.title)
                 .fontWeight(.bold)
 
@@ -165,27 +175,14 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
     var icon: String {
         switch self {
-        case .checkIn: return "heart.fill"
+        case .checkIn: return "checkmark.circle.fill"
         case .water: return "drop.fill"
-        case .exercises: return "figure.run"
-        case .progress: return "chart.bar.fill"
-        case .health: return "heart.fill"
-        case .programs: return "list.clipboard.fill"
-        case .challenges: return "trophy.fill"
+        case .exercises: return "figure.highintensity.intervaltraining"
+        case .progress: return "chart.line.uptrend.xyaxis"
+        case .health: return "heart.text.clipboard.fill"
+        case .programs: return "rectangle.stack.fill"
+        case .challenges: return "flag.checkered"
         case .settings: return "gearshape.fill"
-        }
-    }
-
-    var emoji: String {
-        switch self {
-        case .checkIn: return "❤️"
-        case .water: return "💧"
-        case .exercises: return "🏃"
-        case .progress: return "📊"
-        case .health: return "💗"
-        case .programs: return "📋"
-        case .challenges: return "🏆"
-        case .settings: return "⚙️"
         }
     }
 
@@ -271,7 +268,7 @@ struct QuickOptionsGrid: View {
                 LazyVGrid(columns: columns, spacing: 12) {
                     ForEach(selectedActions) { action in
                         QuickActionButton(
-                            emoji: action.emoji,
+                            icon: action.icon,
                             title: action.title,
                             color: action.color
                         ) {
@@ -480,8 +477,9 @@ struct EditableActionItem: View {
                         .fill(action.color)
                         .frame(width: 54, height: 54)
 
-                    Text(action.emoji)
-                        .font(.system(size: 24))
+                    Image(systemName: action.icon)
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(.white)
                 }
 
                 // Delete button
@@ -520,8 +518,9 @@ struct AddableActionItem: View {
                             .fill(action.color.opacity(disabled ? 0.2 : 0.4))
                             .frame(width: 54, height: 54)
 
-                        Text(action.emoji)
-                            .font(.system(size: 24))
+                        Image(systemName: action.icon)
+                            .font(.system(size: 22, weight: .medium))
+                            .foregroundStyle(.white)
                             .opacity(disabled ? 0.4 : 0.7)
                     }
 
@@ -547,7 +546,7 @@ struct AddableActionItem: View {
 }
 
 struct QuickActionButton: View {
-    let emoji: String
+    let icon: String
     let title: String
     let color: Color
     let action: () -> Void
@@ -560,15 +559,22 @@ struct QuickActionButton: View {
             action()
         } label: {
             VStack(spacing: 8) {
-                // Large rounded square icon
+                // Clean icon with gradient background
                 ZStack {
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(color)
+                        .fill(
+                            LinearGradient(
+                                colors: [color, color.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 64, height: 64)
-                        .shadow(color: color.opacity(0.3), radius: 4, y: 2)
+                        .shadow(color: color.opacity(0.35), radius: 6, y: 3)
 
-                    Text(emoji)
-                        .font(.system(size: 28))
+                    Image(systemName: icon)
+                        .font(.system(size: 26, weight: .medium))
+                        .foregroundStyle(.white)
                 }
 
                 // Title
@@ -671,30 +677,30 @@ struct TodayRecoveryCard: View {
 
                         Spacer().frame(height: 4)
 
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.5))
+                        HStack(spacing: 4) {
+                            Text("View Details")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                            Image(systemName: "arrow.right")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(.white.opacity(0.6))
                     }
 
                     Spacer()
                 }
 
                 // Stats Grid
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 8) {
+                HStack(spacing: 0) {
                     HealthStatItem(icon: "figure.walk", value: stepsValue, label: "Steps", color: Color.accentGreen)
                     HealthStatItem(icon: "flame.fill", value: caloriesValue, label: "Calories", color: Color.accentOrange)
                     HealthStatItem(icon: "moon.fill", value: sleepValue, label: "Sleep", color: Color(hex: "fcd34d"))
                     HealthStatItem(icon: "heart.fill", value: hrValue, label: "HR", color: Color.accentRed)
                     HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "a78bfa"))
                 }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 4)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 8)
                 .background(Color.white.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
             }
@@ -957,47 +963,72 @@ struct ActiveWorkoutCard: View {
                     showStartConfirmation = true
                 }
             } label: {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Title and chevron
-                    HStack {
+                HStack(spacing: 16) {
+                    // Workout icon
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 56, height: 56)
+                        Image(systemName: "figure.strengthtraining.traditional")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Status badge
+                        Text(isInProgress ? "IN PROGRESS" : "READY TO START")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
+
+                        // Title
                         Text(workout.name)
                             .font(.title3)
                             .fontWeight(.bold)
 
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-
-                    // Stats row
-                    HStack(spacing: 16) {
-                        Label("\(totalExercises) exercises", systemImage: "dumbbell.fill")
-                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
-                        if isInProgress {
-                            Label(workoutManager.formattedElapsedTime, systemImage: "timer")
+                        // Stats row
+                        HStack(spacing: 14) {
+                            Label("\(totalExercises)", systemImage: "dumbbell.fill")
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                            if isInProgress {
+                                Label(workoutManager.formattedElapsedTime, systemImage: "timer")
+                            }
                         }
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.9))
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.85))
 
-                    // Progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.white.opacity(0.25))
-                                .frame(height: 5)
+                        // Progress bar
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white.opacity(0.25))
+                                    .frame(height: 6)
 
-                            RoundedRectangle(cornerRadius: 3)
-                                .fill(Color.white)
-                                .frame(width: geo.size.width * (isInProgress ? exerciseProgress : 0), height: 5)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white)
+                                    .frame(width: geo.size.width * (isInProgress ? exerciseProgress : 0), height: 6)
+                            }
                         }
+                        .frame(height: 6)
+
                     }
-                    .frame(height: 5)
+
+                    Spacer()
+
+                    // Play/Go button
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: isInProgress ? "play.fill" : "arrow.right")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
                 }
                 .foregroundStyle(.white)
-                .padding(16)
+                .padding(20)
+                .frame(minHeight: 140)
                 .background(
                     LinearGradient(
                         colors: [gradientStart, gradientEnd],
@@ -1005,7 +1036,7 @@ struct ActiveWorkoutCard: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
                 .scaleEffect(isPressed ? 0.98 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
             }
@@ -1119,47 +1150,86 @@ struct HomeChallengeCard: View {
         Button {
             selectedTab = .programs
         } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                // Title and chevron
-                HStack {
+            HStack(spacing: 16) {
+                // Challenge icon
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    // Status badge with rank
+                    HStack(spacing: 8) {
+                        Text("ACTIVE CHALLENGE")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
+
+                        if userRank > 0 && totalParticipants > 0 {
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("Rank #\(userRank) of \(totalParticipants)")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+
+                    // Title
                     Text(challenge.name)
                         .font(.title3)
                         .fontWeight(.bold)
 
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-
-                // Stats row
-                HStack(spacing: 16) {
-                    Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
-                    Label("\(Int(challenge.progress * 100))%", systemImage: "checkmark.circle")
-                    if currentStreak > 0 {
-                        Label("\(currentStreak) 🔥", systemImage: "flame")
+                    // Stats row
+                    HStack(spacing: 14) {
+                        Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
+                        Label("\(Int(challenge.progress * 100))%", systemImage: "checkmark.circle")
+                        if currentStreak > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "flame.fill")
+                                Text("\(currentStreak)")
+                            }
+                            .foregroundStyle(Color(hex: "fcd34d"))
+                        }
                     }
-                }
-                .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.9))
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.85))
 
-                // Progress bar
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.25))
-                            .frame(height: 5)
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.25))
+                                .frame(height: 6)
 
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white)
-                            .frame(width: geo.size.width * challenge.progress, height: 5)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white)
+                                .frame(width: geo.size.width * challenge.progress, height: 6)
+                        }
                     }
+                    .frame(height: 6)
                 }
-                .frame(height: 5)
+
+                Spacer()
+
+                // Go button
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
             }
             .foregroundStyle(.white)
-            .padding(16)
+            .padding(20)
+            .frame(minHeight: 140)
             .background(
                 LinearGradient(
                     colors: [gradientStart, gradientEnd],
@@ -1167,7 +1237,7 @@ struct HomeChallengeCard: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
             .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
