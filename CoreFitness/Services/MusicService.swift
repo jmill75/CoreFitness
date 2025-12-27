@@ -343,7 +343,7 @@ struct MusicPlayerMiniView: View {
         .buttonStyle(.plain)
         .sheet(isPresented: $showMusicSheet) {
             MusicControlSheet()
-                .presentationDetents([.medium])
+                .presentationDetents([.height(480)])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -357,23 +357,23 @@ struct MusicControlSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     // Now Playing
-                    VStack(spacing: 16) {
+                    VStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(musicService.selectedProvider.color.opacity(0.15))
-                                .frame(width: 200, height: 200)
+                                .frame(width: 180, height: 180)
 
                             if let track = musicService.currentTrack, let artwork = track.artwork {
                                 artwork
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 200, height: 200)
+                                    .frame(width: 180, height: 180)
                                     .clipShape(RoundedRectangle(cornerRadius: 20))
                             } else {
                                 Image(systemName: "music.note")
-                                    .font(.system(size: 60))
+                                    .font(.system(size: 50))
                                     .foregroundStyle(musicService.selectedProvider.color)
                             }
                         }
@@ -415,7 +415,7 @@ struct MusicControlSheet: View {
                                     .foregroundStyle(.primary)
                             }
                         }
-                        .padding(.vertical)
+                        .padding(.vertical, 8)
                     }
 
                     // Music provider selector
@@ -456,7 +456,9 @@ struct MusicControlSheet: View {
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
                 }
-                .padding()
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
             }
             .navigationTitle("Music")
             .navigationBarTitleDisplayMode(.inline)

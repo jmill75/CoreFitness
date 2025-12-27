@@ -305,9 +305,23 @@ struct AchievementGridView: View {
         GridItem(.flexible(), spacing: 16)
     ]
 
+    // Sort with earned achievements first
+    private var sortedAchievements: [Achievement] {
+        achievements.sorted { a, b in
+            let aEarned = userAchievements.first { $0.achievementId == a.id }?.isComplete ?? false
+            let bEarned = userAchievements.first { $0.achievementId == b.id }?.isComplete ?? false
+
+            if aEarned != bEarned {
+                return aEarned // Earned first
+            }
+            // Then by points (higher first)
+            return a.points > b.points
+        }
+    }
+
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(achievements, id: \.id) { achievement in
+            ForEach(sortedAchievements, id: \.id) { achievement in
                 AchievementTileView(
                     achievement: achievement,
                     userAchievement: userAchievements.first { $0.achievementId == achievement.id }
@@ -462,6 +476,19 @@ struct AchievementDetailSheet: View {
 
     var body: some View {
         VStack(spacing: 24) {
+            // Close button
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.top, 8)
+
             // Large Badge
             ZStack {
                 Circle()
@@ -482,7 +509,6 @@ struct AchievementDetailSheet: View {
                     .opacity(isEarned ? 1 : 0.5)
                     .grayscale(isEarned ? 0 : 0.8)
             }
-            .padding(.top, 20)
 
             // Title and Description
             VStack(spacing: 8) {

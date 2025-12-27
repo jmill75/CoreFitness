@@ -76,6 +76,9 @@ struct MainTabView: View {
                 }
                 .tag(Tab.settings)
         }
+        .safeAreaInset(edge: .bottom, spacing: -10) {
+            Color.clear.frame(height: 0)
+        }
     }
 }
 

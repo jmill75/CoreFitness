@@ -670,10 +670,12 @@ struct ExitConfirmationView: View {
 struct UnifiedWorkoutView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
+    @ObservedObject private var musicService = MusicService.shared
 
     // Local state for editing
     @State private var reps: Int = 10
     @State private var weight: Double = 0
+    @State private var showMusicSheet = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -702,6 +704,11 @@ struct UnifiedWorkoutView: View {
 
             Spacer(minLength: 16)
 
+            // Music control bar at bottom
+            WorkoutMusicBar(showMusicSheet: $showMusicSheet)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+
             // Skip exercise at very bottom
             skipExerciseButton
                 .padding(.bottom, 16)
@@ -714,6 +721,11 @@ struct UnifiedWorkoutView: View {
         }
         .onChange(of: workoutManager.currentExerciseIndex) { _, _ in
             loadCurrentValues()
+        }
+        .sheet(isPresented: $showMusicSheet) {
+            MusicControlSheet()
+                .presentationDetents([.height(480)])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -1144,6 +1156,110 @@ struct FitnessStylePausedView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
+    }
+}
+
+// MARK: - Workout Music Bar
+struct WorkoutMusicBar: View {
+    @ObservedObject private var musicService = MusicService.shared
+    @Binding var showMusicSheet: Bool
+
+    var body: some View {
+        Button {
+            showMusicSheet = true
+        } label: {
+            HStack(spacing: 10) {
+                // Artwork or icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(musicService.selectedProvider.color.opacity(0.3))
+                        .frame(width: 36, height: 36)
+
+                    if let track = musicService.currentTrack, let artwork = track.artwork {
+                        artwork
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 36, height: 36)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                    } else {
+                        Image(systemName: "music.note")
+                            .font(.system(size: 14))
+                            .foregroundStyle(musicService.selectedProvider.color)
+                    }
+                }
+
+                // Track info
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(musicService.currentTrack?.title ?? "Not Playing")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    Text(musicService.currentTrack?.artist ?? "Tap to open music")
+                        .font(.caption2)
+                        .foregroundStyle(.gray)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                // Playback controls
+                HStack(spacing: 4) {
+                    Button {
+                        musicService.skipToPrevious()
+                    } label: {
+                        Image(systemName: "backward.fill")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        if musicService.currentTrack != nil {
+                            musicService.togglePlayPause()
+                        } else {
+                            musicService.openMusicApp()
+                        }
+                    } label: {
+                        Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.body)
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(musicService.selectedProvider.color.opacity(0.3))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        musicService.skipToNext()
+                    } label: {
+                        Image(systemName: "forward.fill")
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Open app button
+                Button {
+                    musicService.openMusicApp()
+                } label: {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.caption)
+                        .foregroundStyle(musicService.selectedProvider.color)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Color.gray.opacity(0.2))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
     }
 }
 
