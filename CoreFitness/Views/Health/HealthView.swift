@@ -7,6 +7,9 @@ struct HealthView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @EnvironmentObject var themeManager: ThemeManager
 
+    // MARK: - Bindings
+    @Binding var selectedTab: Tab
+
     // MARK: - State
     @State private var showWaterIntake = false
     @State private var showMoodDetail = false
@@ -15,50 +18,60 @@ struct HealthView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header with + button
-                    ViewHeader("Health", isLoading: healthKitManager.isLoading) {
-                        Button {
-                            showDailyCheckIn = true
-                        } label: {
-                            Label("Daily Check-in", systemImage: "heart.text.square")
-                        }
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Header with + button
+                        ViewHeader("Health", isLoading: healthKitManager.isLoading) {
+                            Button {
+                                showDailyCheckIn = true
+                            } label: {
+                                Label("Daily Check-in", systemImage: "heart.text.square")
+                            }
 
-                        Button {
-                            showWaterIntake = true
-                        } label: {
-                            Label("Log Water", systemImage: "drop.fill")
+                            Button {
+                                showWaterIntake = true
+                            } label: {
+                                Label("Log Water", systemImage: "drop.fill")
+                            }
+                        }
+                        .id("top")
+
+                        if isInitialLoad && healthKitManager.isLoading {
+                            // Show skeleton loading state
+                            HealthViewSkeleton()
+                        } else {
+                            // Recovery Status - Hero Card
+                            RecoveryStatusCard()
+
+                            // Score Trend - Compact
+                            ScoreTrendCard()
+
+                            // Health Metrics Grid
+                            HealthMetricsSection()
+
+                            // Water Intake
+                            WaterIntakeCard(showDetail: $showWaterIntake)
+
+                            // Mood Tracker
+                            MoodTrackerCard(showDetail: $showMoodDetail)
                         }
                     }
-
-                    if isInitialLoad && healthKitManager.isLoading {
-                        // Show skeleton loading state
-                        HealthViewSkeleton()
-                    } else {
-                        // Recovery Status - Hero Card
-                        RecoveryStatusCard()
-
-                        // Score Trend - Compact
-                        ScoreTrendCard()
-
-                        // Health Metrics Grid
-                        HealthMetricsSection()
-
-                        // Water Intake
-                        WaterIntakeCard(showDetail: $showWaterIntake)
-
-                        // Mood Tracker
-                        MoodTrackerCard(showDetail: $showMoodDetail)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 100)
+                }
+                .scrollIndicators(.hidden)
+                .background(Color(.systemGroupedBackground))
+                .toolbar(.hidden, for: .navigationBar)
+                .onChange(of: selectedTab) { _, newTab in
+                    if newTab == .health {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 100)
             }
-            .scrollIndicators(.hidden)
-            .background(Color(.systemGroupedBackground))
-            .toolbar(.hidden, for: .navigationBar)
             .fullScreenCover(isPresented: $showWaterIntake) {
                 WaterIntakeDetailView()
                     .background(.ultraThinMaterial)
@@ -2903,5 +2916,5 @@ extension Array {
 }
 
 #Preview {
-    HealthView()
+    HealthView(selectedTab: .constant(.health))
 }

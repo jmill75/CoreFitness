@@ -9,6 +9,7 @@ class NavigationState: ObservableObject {
     @Published var showWaterIntake: Bool = false
     @Published var showDailyCheckIn: Bool = false
     @Published var showChallenges: Bool = false
+    @Published var showExercises: Bool = false
     @Published var pendingDeepLink: DeepLinkDestination?
 
     enum DeepLinkDestination {

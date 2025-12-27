@@ -6,21 +6,26 @@ struct SettingsView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var themeManager: ThemeManager
 
+    // MARK: - Bindings
+    @Binding var selectedTab: Tab
+
     // MARK: - State
     @State private var showSubscription = false
     @State private var showSignOutAlert = false
 
     var body: some View {
         NavigationStack {
-            List {
-                // Header Section
-                Section {
-                    Text("Settings")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
-                }
-                .listRowBackground(Color.clear)
+            ScrollViewReader { proxy in
+                List {
+                    // Header Section
+                    Section {
+                        Text("Settings")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
+                    }
+                    .listRowBackground(Color.clear)
+                    .id("top")
 
                 // User Profile Section
                 Section {
@@ -230,8 +235,16 @@ struct SettingsView: View {
                 }
                 .listRowBackground(Color.clear)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .navigationBar)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(.hidden, for: .navigationBar)
+                .onChange(of: selectedTab) { _, newTab in
+                    if newTab == .settings {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
+                }
+            }
             .sheet(isPresented: $showSubscription) {
                 SubscriptionView()
                     .presentationBackground(.regularMaterial)
@@ -1113,7 +1126,7 @@ struct QuickActionsSettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    SettingsView(selectedTab: .constant(.settings))
         .environmentObject(AuthManager())
         .environmentObject(ThemeManager())
 }

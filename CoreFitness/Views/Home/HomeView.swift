@@ -107,6 +107,13 @@ struct HomeView: View {
                             }
                         }
                     }
+                    .onChange(of: selectedTab) { _, newTab in
+                        if newTab == .home {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                proxy.scrollTo("top", anchor: .top)
+                            }
+                        }
+                    }
                 }
                 .fullScreenCover(isPresented: $showDailyCheckIn) {
                     DailyCheckInView()
@@ -373,7 +380,10 @@ struct QuickOptionsGrid: View {
             onCheckIn()
         case .water:
             onWaterIntake()
-        case .exercises, .programs:
+        case .exercises:
+            selectedTab = .programs
+            navigationState.showExercises = true
+        case .programs:
             selectedTab = .programs
         case .progress:
             selectedTab = .progress
@@ -395,6 +405,7 @@ struct EditQuickActionsSheet: View {
     let onSave: ([QuickActionType]) -> Void
 
     @State private var currentActions: [QuickActionType] = []
+    @State private var editMode: EditMode = .active
 
     private var availableActions: [QuickActionType] {
         QuickActionType.allCases.filter { !currentActions.contains($0) }
@@ -402,90 +413,80 @@ struct EditQuickActionsSheet: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Current Shortcuts Section
-                    VStack(alignment: .leading, spacing: 12) {
+            List {
+                // Current Shortcuts Section
+                Section {
+                    if currentActions.isEmpty {
                         HStack {
-                            Text("Your Shortcuts")
-                                .font(.headline)
-                                .fontWeight(.bold)
                             Spacer()
-                            Text("\(currentActions.count) of 8")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        if currentActions.isEmpty {
-                            HStack {
-                                Spacer()
-                                VStack(spacing: 8) {
-                                    Image(systemName: "tray")
-                                        .font(.title)
-                                        .foregroundStyle(.tertiary)
-                                    Text("No shortcuts added")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.vertical, 30)
-                                Spacer()
+                            VStack(spacing: 8) {
+                                Image(systemName: "tray")
+                                    .font(.title)
+                                    .foregroundStyle(.tertiary)
+                                Text("No shortcuts added")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
                             }
-                            .background(Color(.tertiarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        } else {
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                ForEach(currentActions) { action in
-                                    EditableActionItem(action: action) {
-                                        removeAction(action)
-                                    }
-                                }
-                            }
+                            .padding(.vertical, 20)
+                            Spacer()
                         }
+                        .listRowBackground(Color(.tertiarySystemGroupedBackground))
+                    } else {
+                        ForEach(currentActions) { action in
+                            ReorderableActionRow(action: action)
+                        }
+                        .onMove(perform: moveAction)
+                        .onDelete(perform: deleteAction)
                     }
-                    .padding()
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-
-                    // Available Shortcuts Section
-                    if !availableActions.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Add Shortcuts")
-                                .font(.headline)
-                                .fontWeight(.bold)
-
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                ForEach(availableActions) { action in
-                                    AddableActionItem(action: action, disabled: currentActions.count >= 8) {
-                                        addAction(action)
-                                    }
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(Color(.secondarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                } header: {
+                    HStack {
+                        Text("Your Shortcuts")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                            .textCase(nil)
+                        Spacer()
+                        Text("\(currentActions.count) of 8")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textCase(nil)
                     }
-
-                    // Info text
-                    Text("Tap the minus to remove a shortcut. Tap an available shortcut to add it.")
+                    .padding(.bottom, 4)
+                } footer: {
+                    Text("Drag to reorder. Swipe left to remove.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
                 }
-                .padding()
+
+                // Available Shortcuts Section
+                if !availableActions.isEmpty {
+                    Section {
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 12) {
+                            ForEach(availableActions) { action in
+                                AddableActionItem(action: action, disabled: currentActions.count >= 8) {
+                                    addAction(action)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    } header: {
+                        Text("Add Shortcuts")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.primary)
+                            .textCase(nil)
+                            .padding(.bottom, 4)
+                    }
+                }
             }
-            .background(Color(.systemGroupedBackground))
+            .listStyle(.insetGrouped)
+            .environment(\.editMode, $editMode)
             .navigationTitle("Edit Quick Actions")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -508,10 +509,12 @@ struct EditQuickActionsSheet: View {
         }
     }
 
-    private func removeAction(_ action: QuickActionType) {
-        withAnimation(.spring(response: 0.3)) {
-            currentActions.removeAll { $0 == action }
-        }
+    private func moveAction(from source: IndexSet, to destination: Int) {
+        currentActions.move(fromOffsets: source, toOffset: destination)
+    }
+
+    private func deleteAction(at offsets: IndexSet) {
+        currentActions.remove(atOffsets: offsets)
     }
 
     private func addAction(_ action: QuickActionType) {
@@ -522,42 +525,31 @@ struct EditQuickActionsSheet: View {
     }
 }
 
-// MARK: - Editable Action Item (with delete button)
-struct EditableActionItem: View {
+// MARK: - Reorderable Action Row
+struct ReorderableActionRow: View {
     let action: QuickActionType
-    let onDelete: () -> Void
 
     var body: some View {
-        VStack(spacing: 6) {
-            ZStack(alignment: .topTrailing) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(action.color)
-                        .frame(width: 54, height: 54)
+        HStack(spacing: 14) {
+            // Icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(action.color)
+                    .frame(width: 40, height: 40)
 
-                    Image(systemName: action.icon)
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(.white)
-                }
-
-                // Delete button
-                Button(action: onDelete) {
-                    Image(systemName: "minus.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(.white, .red)
-                        .frame(width: 44, height: 44)
-                }
-                .offset(x: 6, y: -6)
-                .accessibilityLabel("Remove \(action.title)")
+                Image(systemName: action.icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.white)
             }
 
+            // Title
             Text(action.title)
-                .font(.caption2)
+                .font(.body)
                 .fontWeight(.medium)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+
+            Spacer()
         }
-        .accessibilityElement(children: .contain)
+        .padding(.vertical, 4)
     }
 }
 

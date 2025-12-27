@@ -38,6 +38,13 @@ struct ProgressTabView: View {
                 .onAppear {
                     proxy.scrollTo("top", anchor: .top)
                 }
+                .onChange(of: selectedTab) { _, newTab in
+                    if newTab == .progress {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
+                }
             }
             .navigationBarHidden(true)
         }

@@ -10,6 +10,9 @@ struct ProgramsView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
 
+    // MARK: - Bindings
+    @Binding var selectedTab: Tab
+
     // MARK: - Queries
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @Query(sort: \Challenge.startDate, order: .reverse) private var challenges: [Challenge]
@@ -35,13 +38,15 @@ struct ProgramsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // MARK: - Header
-                    ProgramsHeader()
-                        .opacity(animationStage >= 1 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
-                        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // MARK: - Header
+                        ProgramsHeader()
+                            .id("top")
+                            .opacity(animationStage >= 1 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
+                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
 
                     // MARK: - Quick Create Actions
                     QuickCreateActions(
@@ -90,16 +95,25 @@ struct ProgramsView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 100)
             }
-            .scrollIndicators(.hidden)
-            .background(Color(.systemGroupedBackground))
-            .toolbar(.hidden, for: .navigationBar)
-            .onAppear {
-                if reduceMotion {
-                    animationStage = 5
-                } else {
-                    for stage in 1...5 {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
-                            animationStage = stage
+                .scrollIndicators(.hidden)
+                .background(Color(.systemGroupedBackground))
+                .toolbar(.hidden, for: .navigationBar)
+                .onAppear {
+                    proxy.scrollTo("top", anchor: .top)
+                    if reduceMotion {
+                        animationStage = 5
+                    } else {
+                        for stage in 1...5 {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
+                                animationStage = stage
+                            }
+                        }
+                    }
+                }
+                .onChange(of: selectedTab) { _, newTab in
+                    if newTab == .programs {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo("top", anchor: .top)
                         }
                     }
                 }
@@ -126,6 +140,12 @@ struct ProgramsView: View {
                 if newValue {
                     showChallenges = true
                     navigationState.showChallenges = false
+                }
+            }
+            .onChange(of: navigationState.showExercises) { _, newValue in
+                if newValue {
+                    showExerciseLibrary = true
+                    navigationState.showExercises = false
                 }
             }
         }
@@ -1202,82 +1222,66 @@ struct ImportOptionCard: View {
 struct ExerciseLibraryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     @EnvironmentObject var themeManager: ThemeManager
     @Query(sort: \Exercise.name) private var exercises: [Exercise]
 
     @State private var searchText = ""
     @State private var selectedCategory: ExerciseCategory?
+    @State private var selectedMuscleGroup: MuscleGroup?
+    @State private var selectedEquipment: Equipment?
     @State private var selectedDifficulty: Difficulty?
     @State private var showFavoritesOnly = false
     @State private var selectedExercise: Exercise?
+    @State private var viewMode: ExerciseViewMode = .browse
+    @State private var animationStage = 0
+
+    enum ExerciseViewMode {
+        case browse, search
+    }
 
     private var filteredExercises: [Exercise] {
         exercises.filter { exercise in
             let matchesSearch = searchText.isEmpty ||
                 exercise.name.localizedCaseInsensitiveContains(searchText)
             let matchesCategory = selectedCategory == nil || exercise.safeCategory == selectedCategory
+            let matchesMuscle = selectedMuscleGroup == nil || exercise.muscleGroup == selectedMuscleGroup
+            let matchesEquipment = selectedEquipment == nil || exercise.equipment == selectedEquipment
             let matchesDifficulty = selectedDifficulty == nil || exercise.safeDifficulty == selectedDifficulty
             let matchesFavorites = !showFavoritesOnly || exercise.isFavorite
-            return matchesSearch && matchesCategory && matchesDifficulty && matchesFavorites
+            return matchesSearch && matchesCategory && matchesMuscle && matchesEquipment && matchesDifficulty && matchesFavorites
         }
+    }
+
+    private var favoriteExercises: [Exercise] {
+        exercises.filter { $0.isFavorite }
+    }
+
+    private func exerciseCount(for category: ExerciseCategory) -> Int {
+        exercises.filter { $0.safeCategory == category }.count
+    }
+
+    private var hasActiveFilters: Bool {
+        selectedMuscleGroup != nil || selectedEquipment != nil || selectedDifficulty != nil || showFavoritesOnly
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    // Filter chips
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            FilterChip(
-                                title: "Favorites",
-                                icon: "heart.fill",
-                                isSelected: showFavoritesOnly,
-                                color: .accentRed
-                            ) {
-                                showFavoritesOnly.toggle()
-                            }
-
-                            Divider().frame(height: 24)
-
-                            ForEach(ExerciseCategory.allCases, id: \.self) { category in
-                                FilterChip(
-                                    title: category.displayName,
-                                    icon: category.icon,
-                                    isSelected: selectedCategory == category,
-                                    color: Color(hex: "0ea5e9")
-                                ) {
-                                    selectedCategory = selectedCategory == category ? nil : category
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
+                VStack(spacing: 0) {
+                    if searchText.isEmpty && selectedCategory == nil {
+                        // Browse Mode - Show categories
+                        browseContent
+                    } else {
+                        // Filter/Search Mode - Show results
+                        searchResultsContent
                     }
-
-                    // Results count
-                    HStack {
-                        Text("\(filteredExercises.count) exercises")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-
-                    // Exercise list
-                    LazyVStack(spacing: 10) {
-                        ForEach(filteredExercises) { exercise in
-                            ExerciseListCard(exercise: exercise) {
-                                selectedExercise = exercise
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
                 }
-                .padding(.vertical)
             }
+            .scrollIndicators(.hidden)
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Exercises")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .searchable(text: $searchText, prompt: "Search exercises")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -1289,7 +1293,556 @@ struct ExerciseLibraryView: View {
                 ExerciseDetailView(exercise: exercise)
                     .presentationDetents([.large])
             }
+            .onAppear {
+                if reduceMotion {
+                    animationStage = 3
+                } else {
+                    for stage in 1...3 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.08) {
+                            animationStage = stage
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    // MARK: - Browse Content
+    private var browseContent: some View {
+        VStack(spacing: 24) {
+            // Quick Stats Header
+            quickStatsHeader
+                .opacity(animationStage >= 1 ? 1 : 0)
+                .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
+                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
+
+            // Favorites Section (if any)
+            if !favoriteExercises.isEmpty {
+                favoritesSection
+                    .opacity(animationStage >= 2 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
+                    .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
+            }
+
+            // Categories Grid
+            categoriesGrid
+                .opacity(animationStage >= 3 ? 1 : 0)
+                .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 10))
+                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.1), value: animationStage)
+
+            // Quick Filters
+            quickFiltersSection
+                .opacity(animationStage >= 3 ? 1 : 0)
+                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.15), value: animationStage)
+        }
+        .padding(.bottom, 100)
+    }
+
+    // MARK: - Quick Stats Header
+    private var quickStatsHeader: some View {
+        HStack(spacing: 16) {
+            ExerciseStatBadge(
+                value: "\(exercises.count)",
+                label: "Total",
+                icon: "dumbbell.fill",
+                color: Color(hex: "0ea5e9")
+            )
+
+            ExerciseStatBadge(
+                value: "\(favoriteExercises.count)",
+                label: "Favorites",
+                icon: "heart.fill",
+                color: .accentRed
+            )
+
+            ExerciseStatBadge(
+                value: "\(ExerciseCategory.allCases.count)",
+                label: "Categories",
+                icon: "square.grid.2x2.fill",
+                color: Color(hex: "22c55e")
+            )
+        }
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
+    // MARK: - Favorites Section
+    private var favoritesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "heart.fill")
+                    .foregroundStyle(Color.accentRed)
+                Text("Favorites")
+                    .font(.headline)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                Button {
+                    showFavoritesOnly = true
+                    selectedCategory = nil
+                } label: {
+                    Text("See All")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color(hex: "0ea5e9"))
+                }
+            }
+            .padding(.horizontal)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(favoriteExercises.prefix(8)) { exercise in
+                        FavoriteExerciseCard(exercise: exercise) {
+                            selectedExercise = exercise
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+
+    // MARK: - Categories Grid
+    private var categoriesGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Browse by Category")
+                .font(.headline)
+                .fontWeight(.bold)
+                .padding(.horizontal)
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                ForEach(ExerciseCategory.allCases, id: \.self) { category in
+                    CategoryCard(
+                        category: category,
+                        count: exerciseCount(for: category)
+                    ) {
+                        themeManager.mediumImpact()
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedCategory = category
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Quick Filters Section
+    private var quickFiltersSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Filters")
+                .font(.headline)
+                .fontWeight(.bold)
+                .padding(.horizontal)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    // By Muscle Group
+                    QuickFilterButton(
+                        title: "Muscle Group",
+                        icon: "figure.arms.open",
+                        color: Color(hex: "f97316")
+                    ) {
+                        // Show muscle group picker
+                    }
+
+                    // By Equipment
+                    QuickFilterButton(
+                        title: "Equipment",
+                        icon: "dumbbell.fill",
+                        color: Color(hex: "8b5cf6")
+                    ) {
+                        // Show equipment picker
+                    }
+
+                    // By Difficulty
+                    QuickFilterButton(
+                        title: "Difficulty",
+                        icon: "chart.bar.fill",
+                        color: Color(hex: "22c55e")
+                    ) {
+                        // Show difficulty picker
+                    }
+
+                    // Home Workouts
+                    QuickFilterButton(
+                        title: "Home",
+                        icon: "house.fill",
+                        color: Color(hex: "0ea5e9")
+                    ) {
+                        selectedEquipment = .bodyweight
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+
+    // MARK: - Search Results Content
+    private var searchResultsContent: some View {
+        VStack(spacing: 16) {
+            // Active filters bar
+            if selectedCategory != nil || hasActiveFilters {
+                activeFiltersBar
+            }
+
+            // Results header
+            HStack {
+                Text("\(filteredExercises.count) exercises")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                if selectedCategory != nil || hasActiveFilters {
+                    Button {
+                        withAnimation(.spring(response: 0.3)) {
+                            clearAllFilters()
+                        }
+                    } label: {
+                        Text("Clear All")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(Color(hex: "0ea5e9"))
+                    }
+                }
+            }
+            .padding(.horizontal)
+
+            // Exercise list
+            if filteredExercises.isEmpty {
+                emptyStateView
+            } else {
+                LazyVStack(spacing: 10) {
+                    ForEach(filteredExercises) { exercise in
+                        ExerciseListCard(exercise: exercise) {
+                            selectedExercise = exercise
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .padding(.vertical)
+    }
+
+    // MARK: - Active Filters Bar
+    private var activeFiltersBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                if let category = selectedCategory {
+                    ActiveFilterChip(
+                        title: category.displayName,
+                        icon: category.icon,
+                        color: categoryColor(for: category)
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedCategory = nil
+                        }
+                    }
+                }
+
+                if showFavoritesOnly {
+                    ActiveFilterChip(
+                        title: "Favorites",
+                        icon: "heart.fill",
+                        color: .accentRed
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            showFavoritesOnly = false
+                        }
+                    }
+                }
+
+                if let muscle = selectedMuscleGroup {
+                    ActiveFilterChip(
+                        title: muscle.displayName,
+                        icon: "figure.arms.open",
+                        color: Color(hex: "f97316")
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedMuscleGroup = nil
+                        }
+                    }
+                }
+
+                if let equipment = selectedEquipment {
+                    ActiveFilterChip(
+                        title: equipment.displayName,
+                        icon: "dumbbell.fill",
+                        color: Color(hex: "8b5cf6")
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedEquipment = nil
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    // MARK: - Empty State
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundStyle(.tertiary)
+
+            Text("No exercises found")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+
+            Text("Try adjusting your filters or search term")
+                .font(.subheadline)
+                .foregroundStyle(.tertiary)
+
+            Button {
+                clearAllFilters()
+            } label: {
+                Text("Clear Filters")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color(hex: "0ea5e9"))
+                    .clipShape(Capsule())
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
+    }
+
+    // MARK: - Helpers
+    private func clearAllFilters() {
+        selectedCategory = nil
+        selectedMuscleGroup = nil
+        selectedEquipment = nil
+        selectedDifficulty = nil
+        showFavoritesOnly = false
+        searchText = ""
+    }
+
+    private func categoryColor(for category: ExerciseCategory) -> Color {
+        switch category {
+        case .strength: return Color(hex: "0ea5e9")
+        case .cardio: return .accentRed
+        case .yoga: return Color(hex: "a78bfa")
+        case .pilates: return Color(hex: "2dd4bf")
+        case .hiit: return .accentOrange
+        case .stretching: return .accentGreen
+        case .running: return Color(hex: "fbbf24")
+        case .cycling: return Color(hex: "60a5fa")
+        case .swimming: return Color(hex: "22d3ee")
+        case .calisthenics: return Color(hex: "f97316")
+        }
+    }
+}
+
+// MARK: - Exercise Stat Badge
+private struct ExerciseStatBadge: View {
+    let value: String
+    let label: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(color)
+                Text(value)
+                    .font(.title3)
+                    .fontWeight(.bold)
+            }
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Category Card
+private struct CategoryCard: View {
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    let category: ExerciseCategory
+    let count: Int
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    private var gradient: LinearGradient {
+        let colors: [Color] = {
+            switch category {
+            case .strength: return [Color(hex: "0ea5e9"), Color(hex: "0284c7")]
+            case .cardio: return [Color(hex: "ef4444"), Color(hex: "dc2626")]
+            case .yoga: return [Color(hex: "a78bfa"), Color(hex: "8b5cf6")]
+            case .pilates: return [Color(hex: "2dd4bf"), Color(hex: "14b8a6")]
+            case .hiit: return [Color(hex: "f97316"), Color(hex: "ea580c")]
+            case .stretching: return [Color(hex: "22c55e"), Color(hex: "16a34a")]
+            case .running: return [Color(hex: "fbbf24"), Color(hex: "f59e0b")]
+            case .cycling: return [Color(hex: "60a5fa"), Color(hex: "3b82f6")]
+            case .swimming: return [Color(hex: "22d3ee"), Color(hex: "06b6d4")]
+            case .calisthenics: return [Color(hex: "fb923c"), Color(hex: "f97316")]
+            }
+        }()
+        return LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: category.icon)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    Spacer()
+
+                    Text("\(count)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.2))
+                        .clipShape(Capsule())
+                }
+
+                Spacer()
+
+                Text(category.displayName)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+            }
+            .padding(14)
+            .frame(height: 110)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(gradient)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.1), radius: 4, y: 2)
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(reduceMotion ? .none : .spring(response: 0.25, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
+    }
+}
+
+// MARK: - Favorite Exercise Card
+private struct FavoriteExerciseCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let exercise: Exercise
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "0ea5e9").opacity(0.15))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: exercise.safeCategory.icon)
+                        .font(.system(size: 16))
+                        .foregroundStyle(Color(hex: "0ea5e9"))
+                }
+
+                Text(exercise.name)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+
+                Text(exercise.safeCategory.displayName)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 100)
+            .padding(12)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Quick Filter Button
+private struct QuickFilterButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(color)
+
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Active Filter Chip
+private struct ActiveFilterChip: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let onRemove: () -> Void
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+
+            Text(title)
+                .font(.caption)
+                .fontWeight(.medium)
+
+            Button(action: onRemove) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+            }
+        }
+        .foregroundStyle(color)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.15))
+        .clipShape(Capsule())
     }
 }
 
@@ -1536,7 +2089,7 @@ struct ExerciseStatCard: View {
 }
 
 #Preview {
-    ProgramsView()
+    ProgramsView(selectedTab: .constant(.programs))
         .environmentObject(WorkoutManager())
         .environmentObject(ThemeManager())
         .environmentObject(NavigationState())

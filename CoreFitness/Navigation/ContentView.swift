@@ -52,7 +52,7 @@ struct MainTabView: View {
                 }
                 .tag(Tab.home)
 
-            ProgramsView()
+            ProgramsView(selectedTab: $selectedTab)
                 .tabItem {
                     Label(Tab.programs.rawValue, systemImage: Tab.programs.icon)
                 }
@@ -64,13 +64,13 @@ struct MainTabView: View {
                 }
                 .tag(Tab.progress)
 
-            HealthView()
+            HealthView(selectedTab: $selectedTab)
                 .tabItem {
                     Label(Tab.health.rawValue, systemImage: Tab.health.icon)
                 }
                 .tag(Tab.health)
 
-            SettingsView()
+            SettingsView(selectedTab: $selectedTab)
                 .tabItem {
                     Label(Tab.settings.rawValue, systemImage: Tab.settings.icon)
                 }
