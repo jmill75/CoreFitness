@@ -40,6 +40,9 @@ class UserProfileManager: ObservableObject {
     @Published var restTimerDuration: Int = 90 {
         didSet { updateProfile { $0.restTimerDuration = restTimerDuration } }
     }
+    @Published var autoPlayExerciseVideos: Bool = true {
+        didSet { updateProfile { $0.autoPlayExerciseVideos = autoPlayExerciseVideos } }
+    }
 
     // Quick Actions
     @Published var quickActionsData: Data = Data() {
@@ -161,6 +164,7 @@ class UserProfileManager: ObservableObject {
         hapticsEnabled = profile.hapticsEnabled
         soundsEnabled = profile.soundsEnabled
         restTimerDuration = profile.restTimerDuration
+        autoPlayExerciseVideos = profile.autoPlayExerciseVideos
         quickActionsData = profile.quickActionsData
         dailyCheckInReminderEnabled = profile.dailyCheckInReminderEnabled
         dailyCheckInTimeRaw = profile.dailyCheckInTimeRaw

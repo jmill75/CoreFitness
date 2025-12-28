@@ -657,6 +657,7 @@ final class UserProfile {
     var restTimerVibrate: Bool = true
     var restTimerSound: Bool = false
     var showHeartRateZones: Bool = true
+    var autoPlayExerciseVideos: Bool = true // auto-play exercise demo videos/GIFs
 
     // Notification Preferences
     var notificationsEnabled: Bool = true

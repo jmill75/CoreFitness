@@ -20,18 +20,18 @@ enum MessageType: String, Codable {
 @Model
 final class WorkoutInvitation {
     var id: UUID = UUID()
-    var workoutId: UUID
-    var workoutName: String
-    var senderUserId: String
-    var senderDisplayName: String
-    var recipientPhone: String
-    var recipientName: String
+    var workoutId: UUID = UUID()
+    var workoutName: String = ""
+    var senderUserId: String = ""
+    var senderDisplayName: String = ""
+    var recipientPhone: String = ""
+    var recipientName: String = ""
     var statusRaw: String = InvitationStatus.pending.rawValue
     var messageTypeRaw: String = MessageType.unknown.rawValue
-    var inviteCode: String
-    var exerciseList: String
-    var estimatedDuration: Int
-    var exerciseCount: Int
+    var inviteCode: String = ""
+    var exerciseList: String = ""
+    var estimatedDuration: Int = 0
+    var exerciseCount: Int = 0
     var createdAt: Date = Date()
     var respondedAt: Date?
 

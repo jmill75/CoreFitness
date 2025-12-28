@@ -12,7 +12,11 @@ struct ExerciseData {
         let descriptor = FetchDescriptor<Exercise>()
         let existingCount = (try? context.fetchCount(descriptor)) ?? 0
 
-        guard existingCount == 0 else { return }
+        guard existingCount == 0 else {
+            // Even if exercises exist, update video URLs for any missing ones
+            updateExerciseVideoURLs(in: context)
+            return
+        }
 
         // Create all exercises
         let exercises = allExercises()
@@ -23,31 +27,64 @@ struct ExerciseData {
         try? context.save()
     }
 
+    // MARK: - Update Video URLs
+    /// Updates existing exercises with video URLs if they're missing
+    @MainActor
+    static func updateExerciseVideoURLs(in context: ModelContext) {
+        let descriptor = FetchDescriptor<Exercise>()
+        guard let existingExercises = try? context.fetch(descriptor) else { return }
+
+        // Create a lookup of video URLs by exercise name
+        let templateExercises = allExercises()
+        var videoURLLookup: [String: String] = [:]
+        for exercise in templateExercises {
+            if let url = exercise.videoURL, !url.isEmpty {
+                videoURLLookup[exercise.name.lowercased()] = url
+            }
+        }
+
+        var updatedCount = 0
+        for exercise in existingExercises {
+            // Only update if exercise doesn't have a video URL
+            if exercise.videoURL == nil || exercise.videoURL?.isEmpty == true {
+                if let url = videoURLLookup[exercise.name.lowercased()] {
+                    exercise.videoURL = url
+                    updatedCount += 1
+                }
+            }
+        }
+
+        if updatedCount > 0 {
+            try? context.save()
+            print("Updated \(updatedCount) exercises with video URLs")
+        }
+    }
+
     // MARK: - All Exercises
     static func allExercises() -> [Exercise] {
         var exercises: [Exercise] = []
 
         // Strength - Chest
         exercises.append(contentsOf: [
-            Exercise(name: "Bench Press", muscleGroup: .chest, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Lie on bench, grip barbell slightly wider than shoulder width. Lower to chest, press up."),
+            Exercise(name: "Bench Press", muscleGroup: .chest, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Lie on bench, grip barbell slightly wider than shoulder width. Lower to chest, press up.", videoURL: "https://v2.exercisedb.io/image/GiQSHxYRwL-Vex"),
             Exercise(name: "Incline Bench Press", muscleGroup: .chest, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Set bench to 30-45 degree incline. Press barbell from upper chest."),
             Exercise(name: "Decline Bench Press", muscleGroup: .chest, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Set bench to decline. Press barbell from lower chest."),
-            Exercise(name: "Dumbbell Bench Press", muscleGroup: .chest, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 6, instructions: "Lie on bench with dumbbells. Press up, bringing dumbbells together at top."),
-            Exercise(name: "Dumbbell Flyes", muscleGroup: .chest, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Lie on bench, arms extended. Lower weights in arc motion, squeeze chest to bring back up."),
-            Exercise(name: "Push-Ups", muscleGroup: .chest, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 8, instructions: "Hands shoulder-width apart, lower chest to ground, push back up. Keep core tight."),
+            Exercise(name: "Dumbbell Bench Press", muscleGroup: .chest, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 6, instructions: "Lie on bench with dumbbells. Press up, bringing dumbbells together at top.", videoURL: "https://v2.exercisedb.io/image/8P-eVSmNHqcCfP"),
+            Exercise(name: "Dumbbell Flyes", muscleGroup: .chest, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Lie on bench, arms extended. Lower weights in arc motion, squeeze chest to bring back up.", videoURL: "https://v2.exercisedb.io/image/oGqNNcJzFEp0bj"),
+            Exercise(name: "Push-Ups", muscleGroup: .chest, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 8, instructions: "Hands shoulder-width apart, lower chest to ground, push back up. Keep core tight.", videoURL: "https://v2.exercisedb.io/image/5N0dZIPoPnTjhY"),
             Exercise(name: "Diamond Push-Ups", muscleGroup: .chest, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 8, instructions: "Hands together forming diamond shape. Lower and press up."),
             Exercise(name: "Wide Push-Ups", muscleGroup: .chest, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 7, instructions: "Hands wider than shoulder width. Lower and press up."),
-            Exercise(name: "Cable Crossover", muscleGroup: .chest, equipment: .cable, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Stand between cables, bring handles together in front of chest in arc motion."),
+            Exercise(name: "Cable Crossover", muscleGroup: .chest, equipment: .cable, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Stand between cables, bring handles together in front of chest in arc motion.", videoURL: "https://v2.exercisedb.io/image/MHTaOBJCKGlYNF"),
             Exercise(name: "Chest Dips", muscleGroup: .chest, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 8, instructions: "On dip bars, lean forward slightly. Lower body, press back up."),
         ])
 
         // Strength - Back
         exercises.append(contentsOf: [
-            Exercise(name: "Deadlift", muscleGroup: .back, equipment: .barbell, category: .strength, difficulty: .advanced, location: .gym, estimatedCaloriesPerMinute: 10, instructions: "Stand with feet hip-width, grip barbell. Keep back straight, lift by extending hips and knees."),
+            Exercise(name: "Deadlift", muscleGroup: .back, equipment: .barbell, category: .strength, difficulty: .advanced, location: .gym, estimatedCaloriesPerMinute: 10, instructions: "Stand with feet hip-width, grip barbell. Keep back straight, lift by extending hips and knees.", videoURL: "https://v2.exercisedb.io/image/UH0xHuq-l0MBZV"),
             Exercise(name: "Bent Over Row", muscleGroup: .back, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Hinge at hips, pull barbell to lower chest. Squeeze shoulder blades together."),
-            Exercise(name: "Pull-Ups", muscleGroup: .back, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 9, instructions: "Hang from bar, pull chin above bar. Lower with control."),
+            Exercise(name: "Pull-Ups", muscleGroup: .back, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 9, instructions: "Hang from bar, pull chin above bar. Lower with control.", videoURL: "https://v2.exercisedb.io/image/6O1dAJQqQoUkhZ"),
             Exercise(name: "Chin-Ups", muscleGroup: .back, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 9, instructions: "Underhand grip, pull chin above bar. Focus on squeezing biceps and back."),
-            Exercise(name: "Lat Pulldown", muscleGroup: .back, equipment: .cable, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 6, instructions: "Grip bar wide, pull down to upper chest. Squeeze lats at bottom."),
+            Exercise(name: "Lat Pulldown", muscleGroup: .back, equipment: .cable, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 6, instructions: "Grip bar wide, pull down to upper chest. Squeeze lats at bottom.", videoURL: "https://v2.exercisedb.io/image/8Q3dCLSsSqWmjB"),
             Exercise(name: "Seated Cable Row", muscleGroup: .back, equipment: .cable, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 6, instructions: "Sit with feet on platform, pull handle to torso. Keep back straight."),
             Exercise(name: "Single Arm Dumbbell Row", muscleGroup: .back, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 6, instructions: "One hand and knee on bench, row dumbbell to hip."),
             Exercise(name: "T-Bar Row", muscleGroup: .back, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Straddle barbell, grip handle, row weight to chest."),
@@ -58,9 +95,9 @@ struct ExerciseData {
         // Strength - Shoulders
         exercises.append(contentsOf: [
             Exercise(name: "Overhead Press", muscleGroup: .shoulders, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Stand with barbell at shoulders, press overhead. Keep core tight."),
-            Exercise(name: "Dumbbell Shoulder Press", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 6, instructions: "Seated or standing, press dumbbells overhead from shoulder level."),
+            Exercise(name: "Dumbbell Shoulder Press", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 6, instructions: "Seated or standing, press dumbbells overhead from shoulder level.", videoURL: "https://v2.exercisedb.io/image/qZ8NMKJPvYhFcV"),
             Exercise(name: "Arnold Press", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 6, instructions: "Start with palms facing you, rotate as you press overhead."),
-            Exercise(name: "Lateral Raises", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Arms at sides, raise dumbbells out to shoulder height."),
+            Exercise(name: "Lateral Raises", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Arms at sides, raise dumbbells out to shoulder height.", videoURL: "https://v2.exercisedb.io/image/N7T2OClTlYOAz7"),
             Exercise(name: "Front Raises", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Arms in front, raise dumbbells to shoulder height."),
             Exercise(name: "Rear Delt Flyes", muscleGroup: .shoulders, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Bent over, raise dumbbells out to sides squeezing rear delts."),
             Exercise(name: "Pike Push-Ups", muscleGroup: .shoulders, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 7, instructions: "In pike position (inverted V), lower head toward ground."),
@@ -71,30 +108,30 @@ struct ExerciseData {
 
         // Strength - Arms
         exercises.append(contentsOf: [
-            Exercise(name: "Barbell Curl", muscleGroup: .biceps, equipment: .barbell, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Stand with barbell, curl up keeping elbows stationary."),
-            Exercise(name: "Dumbbell Curl", muscleGroup: .biceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Curl dumbbells alternating or together. Control the movement."),
+            Exercise(name: "Barbell Curl", muscleGroup: .biceps, equipment: .barbell, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Stand with barbell, curl up keeping elbows stationary.", videoURL: "https://v2.exercisedb.io/image/BivJnJkX7c96XZ"),
+            Exercise(name: "Dumbbell Curl", muscleGroup: .biceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Curl dumbbells alternating or together. Control the movement.", videoURL: "https://v2.exercisedb.io/image/dv7JZb0hSvvkLp"),
             Exercise(name: "Hammer Curl", muscleGroup: .biceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Palms facing each other, curl dumbbells up."),
             Exercise(name: "Preacher Curl", muscleGroup: .biceps, equipment: .dumbbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Arms on preacher bench pad, curl weight up."),
             Exercise(name: "Concentration Curl", muscleGroup: .biceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 4, instructions: "Seated, elbow on inner thigh, curl dumbbell up."),
             Exercise(name: "Tricep Pushdown", muscleGroup: .triceps, equipment: .cable, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Push cable attachment down, keeping elbows at sides."),
             Exercise(name: "Skull Crushers", muscleGroup: .triceps, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Lie on bench, lower barbell to forehead, extend arms."),
-            Exercise(name: "Overhead Tricep Extension", muscleGroup: .triceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Hold dumbbell overhead, lower behind head, extend."),
-            Exercise(name: "Tricep Dips", muscleGroup: .triceps, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Hands on bench behind you, lower and press up."),
+            Exercise(name: "Overhead Tricep Extension", muscleGroup: .triceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 5, instructions: "Hold dumbbell overhead, lower behind head, extend.", videoURL: "https://v2.exercisedb.io/image/sK7NhMJXvYZFbV"),
+            Exercise(name: "Tricep Dips", muscleGroup: .triceps, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Hands on bench behind you, lower and press up.", videoURL: "https://v2.exercisedb.io/image/2U7dGPWwWuAqnF"),
             Exercise(name: "Close Grip Bench Press", muscleGroup: .triceps, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Hands close together on barbell, press focusing on triceps."),
         ])
 
         // Strength - Legs
         exercises.append(contentsOf: [
-            Exercise(name: "Barbell Squat", muscleGroup: .quadriceps, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 9, instructions: "Bar on upper back, squat down until thighs parallel. Drive through heels."),
+            Exercise(name: "Barbell Squat", muscleGroup: .quadriceps, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 9, instructions: "Bar on upper back, squat down until thighs parallel. Drive through heels.", videoURL: "https://v2.exercisedb.io/image/U6iCKNyoJLDCbf"),
             Exercise(name: "Front Squat", muscleGroup: .quadriceps, equipment: .barbell, category: .strength, difficulty: .advanced, location: .gym, estimatedCaloriesPerMinute: 9, instructions: "Bar on front of shoulders, squat keeping torso upright."),
             Exercise(name: "Goblet Squat", muscleGroup: .quadriceps, equipment: .dumbbell, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 8, instructions: "Hold dumbbell at chest, squat down between legs."),
-            Exercise(name: "Leg Press", muscleGroup: .quadriceps, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Press platform away, lower with control. Don't lock knees."),
-            Exercise(name: "Leg Extension", muscleGroup: .quadriceps, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Extend legs against pad, squeeze quads at top."),
-            Exercise(name: "Lunges", muscleGroup: .quadriceps, equipment: .bodyweight, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 7, instructions: "Step forward, lower back knee toward ground. Push back up."),
+            Exercise(name: "Leg Press", muscleGroup: .quadriceps, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Press platform away, lower with control. Don't lock knees.", videoURL: "https://v2.exercisedb.io/image/9R4dDMTtTrXnkC"),
+            Exercise(name: "Leg Extension", muscleGroup: .quadriceps, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Extend legs against pad, squeeze quads at top.", videoURL: "https://v2.exercisedb.io/image/1T6dFOVvVtZpmE"),
+            Exercise(name: "Lunges", muscleGroup: .quadriceps, equipment: .bodyweight, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 7, instructions: "Step forward, lower back knee toward ground. Push back up.", videoURL: "https://v2.exercisedb.io/image/VUh6NJ2a0MKL3Z"),
             Exercise(name: "Walking Lunges", muscleGroup: .quadriceps, equipment: .bodyweight, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 8, instructions: "Continuous lunges moving forward. Keep torso upright."),
             Exercise(name: "Bulgarian Split Squat", muscleGroup: .quadriceps, equipment: .bodyweight, category: .strength, difficulty: .intermediate, location: .both, estimatedCaloriesPerMinute: 8, instructions: "Rear foot elevated, squat on front leg."),
-            Exercise(name: "Romanian Deadlift", muscleGroup: .hamstrings, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 8, instructions: "Slight knee bend, hinge at hips lowering bar along legs."),
-            Exercise(name: "Leg Curl", muscleGroup: .hamstrings, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Curl legs under pad, squeeze hamstrings."),
+            Exercise(name: "Romanian Deadlift", muscleGroup: .hamstrings, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 8, instructions: "Slight knee bend, hinge at hips lowering bar along legs.", videoURL: "https://v2.exercisedb.io/image/pXLkTPAVGXhZBe"),
+            Exercise(name: "Leg Curl", muscleGroup: .hamstrings, equipment: .machine, category: .strength, difficulty: .beginner, location: .gym, estimatedCaloriesPerMinute: 5, instructions: "Curl legs under pad, squeeze hamstrings.", videoURL: "https://v2.exercisedb.io/image/0S5dENUuUsYolD"),
             Exercise(name: "Hip Thrust", muscleGroup: .glutes, equipment: .barbell, category: .strength, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 7, instructions: "Upper back on bench, thrust hips up with barbell on hips."),
             Exercise(name: "Glute Bridge", muscleGroup: .glutes, equipment: .bodyweight, category: .strength, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 5, instructions: "Lie on back, drive hips up squeezing glutes."),
             Exercise(name: "Calf Raises", muscleGroup: .calves, equipment: .bodyweight, category: .strength, difficulty: .beginner, location: .both, estimatedCaloriesPerMinute: 4, instructions: "Rise up on toes, lower with control. Can add weight."),
@@ -103,15 +140,15 @@ struct ExerciseData {
 
         // Core
         exercises.append(contentsOf: [
-            Exercise(name: "Plank", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 5, instructions: "Hold push-up position on forearms. Keep body straight, core tight."),
+            Exercise(name: "Plank", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 5, instructions: "Hold push-up position on forearms. Keep body straight, core tight.", videoURL: "https://v2.exercisedb.io/image/7P2dBKRrRpVliA"),
             Exercise(name: "Side Plank", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 4, instructions: "On side, prop on elbow. Keep body in straight line."),
             Exercise(name: "Crunches", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Lie on back, curl shoulders toward hips. Don't pull on neck."),
             Exercise(name: "Bicycle Crunches", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 7, instructions: "Alternate elbow to opposite knee in cycling motion."),
             Exercise(name: "Leg Raises", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Lie flat, raise legs to vertical. Lower with control."),
             Exercise(name: "Hanging Leg Raises", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .advanced, location: .both, estimatedCaloriesPerMinute: 7, instructions: "Hang from bar, raise legs to parallel or higher."),
-            Exercise(name: "Russian Twists", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Seated, lean back, rotate torso side to side."),
+            Exercise(name: "Russian Twists", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 6, instructions: "Seated, lean back, rotate torso side to side.", videoURL: "https://v2.exercisedb.io/image/3V8dHQXxXvBroG"),
             Exercise(name: "Dead Bug", muscleGroup: .core, equipment: .bodyweight, category: .calisthenics, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 5, instructions: "On back, alternate extending opposite arm and leg."),
-            Exercise(name: "Mountain Climbers", muscleGroup: .core, equipment: .bodyweight, category: .hiit, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 10, instructions: "In plank position, drive knees alternately toward chest quickly."),
+            Exercise(name: "Mountain Climbers", muscleGroup: .core, equipment: .bodyweight, category: .hiit, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 10, instructions: "In plank position, drive knees alternately toward chest quickly.", videoURL: "https://v2.exercisedb.io/image/4M9dYHQnNnSigX"),
             Exercise(name: "Ab Wheel Rollout", muscleGroup: .core, equipment: .other, category: .calisthenics, difficulty: .advanced, location: .both, estimatedCaloriesPerMinute: 7, instructions: "Kneel with ab wheel, roll out keeping core tight. Roll back."),
         ])
 
@@ -131,9 +168,9 @@ struct ExerciseData {
 
         // HIIT
         exercises.append(contentsOf: [
-            Exercise(name: "Burpees", muscleGroup: .fullBody, equipment: .bodyweight, category: .hiit, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 14, instructions: "Squat down, kick back to plank, push-up, jump up with hands overhead."),
+            Exercise(name: "Burpees", muscleGroup: .fullBody, equipment: .bodyweight, category: .hiit, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 14, instructions: "Squat down, kick back to plank, push-up, jump up with hands overhead.", videoURL: "https://v2.exercisedb.io/image/7K8dXGPmMnRhfW"),
             Exercise(name: "Box Jumps", muscleGroup: .quadriceps, equipment: .other, category: .hiit, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 12, instructions: "Jump onto box, step or jump down. Land softly."),
-            Exercise(name: "Jumping Jacks", muscleGroup: .fullBody, equipment: .bodyweight, category: .hiit, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 9, instructions: "Jump spreading legs and raising arms. Return to start."),
+            Exercise(name: "Jumping Jacks", muscleGroup: .fullBody, equipment: .bodyweight, category: .hiit, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 9, instructions: "Jump spreading legs and raising arms. Return to start.", videoURL: "https://v2.exercisedb.io/image/2L7dPGKlMnChfV"),
             Exercise(name: "High Knees", muscleGroup: .fullBody, equipment: .bodyweight, category: .hiit, difficulty: .beginner, location: .home, estimatedCaloriesPerMinute: 10, instructions: "Run in place bringing knees up high quickly."),
             Exercise(name: "Squat Jumps", muscleGroup: .quadriceps, equipment: .bodyweight, category: .hiit, difficulty: .intermediate, location: .home, estimatedCaloriesPerMinute: 11, instructions: "Squat down, explode upward. Land softly."),
             Exercise(name: "Battle Ropes", muscleGroup: .fullBody, equipment: .other, category: .hiit, difficulty: .intermediate, location: .gym, estimatedCaloriesPerMinute: 13, instructions: "Create waves with heavy ropes using alternating or double arm movements."),

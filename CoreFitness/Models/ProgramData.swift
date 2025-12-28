@@ -695,6 +695,31 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["None"]
         )
+        beginnerCardio.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Walk & Jog Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Steady Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Walk & Jog Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        beginnerCardio.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Walk & Jog Intervals", description: "Alternate walking and light jogging", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Walk", sets: 1, reps: "5 min", restSeconds: 0, notes: "Easy pace"),
+                ProgramExerciseDefinition(exerciseName: "Walk/Jog Intervals", sets: 8, reps: "1 min jog / 1.5 min walk", restSeconds: 0, notes: "Jog at conversational pace"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Steady Walk", description: "Brisk walking session", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Easy Walk", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Brisk Walk", sets: 1, reps: "20 min", restSeconds: 0, notes: "Walk with purpose, slightly breathless"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long Walk", description: "Extended easy walk", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Continuous Walk", sets: 1, reps: "40 min", restSeconds: 0, notes: "Comfortable pace, enjoy the scenery"),
+                ProgramExerciseDefinition(exerciseName: "Stretching", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(beginnerCardio)
 
         // 2. Zone 2 Aerobic Base
@@ -770,6 +795,37 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["Treadmill or Outdoor Space"]
         )
+        fatBurn.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Fasted LISS", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Moderate Steady State", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Incline Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Moderate Steady State", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long LISS", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        fatBurn.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Fasted LISS", description: "Low intensity steady state before breakfast", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Walk", sets: 1, reps: "5 min", restSeconds: 0, notes: "Easy pace to warm up"),
+                ProgramExerciseDefinition(exerciseName: "Brisk Walk/Light Jog", sets: 1, reps: "30 min", restSeconds: 0, notes: "Keep heart rate at 55-65% max. Fat burning zone"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0, notes: "Gradual slowdown")
+            ]),
+            ProgramWorkoutDefinition(name: "Moderate Steady State", description: "Moderate effort cardio session", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dynamic Warmup", sets: 1, reps: "5 min", restSeconds: 0, notes: "Leg swings, high knees, arm circles"),
+                ProgramExerciseDefinition(exerciseName: "Steady Jog/Bike", sets: 1, reps: "25 min", restSeconds: 0, notes: "65-75% max HR. Challenging but sustainable"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Incline Walk", description: "Treadmill incline for calorie burn", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Flat Walk Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Incline Walk", sets: 1, reps: "30 min", restSeconds: 0, notes: "10-15% incline, 3.0-3.5 mph. Hold onto rails minimally"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Flat Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long LISS", description: "Extended low intensity session", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Easy Cardio", sets: 1, reps: "40 min", restSeconds: 0, notes: "Walk, bike, or elliptical. Keep effort easy, 55-65% max HR"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(fatBurn)
 
         // 4. Stair Climbing Challenge
@@ -784,6 +840,33 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["Stairs or StairMaster"]
         )
+        stairs.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Steady Climb", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Interval Stairs", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Endurance Climb", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        stairs.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Steady Climb", description: "Consistent pace stair climbing", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Walk", sets: 1, reps: "5 min", restSeconds: 0, notes: "Flat walking or easy stairs"),
+                ProgramExerciseDefinition(exerciseName: "Steady Stair Climb", sets: 1, reps: "15 min", restSeconds: 0, notes: "Moderate pace you can maintain. Level 5-7 on StairMaster"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0, notes: "Easy pace, let legs recover")
+            ]),
+            ProgramWorkoutDefinition(name: "Interval Stairs", description: "Hard/easy stair intervals", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0, notes: "Light stair climbing"),
+                ProgramExerciseDefinition(exerciseName: "Hard Intervals", sets: 6, reps: "1 min hard / 1 min easy", restSeconds: 0, notes: "Push hard then recover. Skip steps on hard intervals"),
+                ProgramExerciseDefinition(exerciseName: "Steady Climb", sets: 1, reps: "6 min", restSeconds: 0, notes: "Moderate pace"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Endurance Climb", description: "Extended stair session", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Continuous Climb", sets: 1, reps: "25 min", restSeconds: 0, notes: "Find sustainable rhythm. Focus on form, drive through heels"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0, notes: "Quad and calf stretches")
+            ])
+        ]
         context.insert(stairs)
 
         // 5. Rowing Endurance
@@ -798,6 +881,43 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["Rowing Machine"]
         )
+        rowing.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Steady State Row", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Interval Row", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Pyramid Row", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long Distance Row", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        rowing.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Steady State Row", description: "Build aerobic base with consistent rowing", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Row", sets: 1, reps: "5 min", restSeconds: 0, notes: "Easy strokes, focus on form"),
+                ProgramExerciseDefinition(exerciseName: "Steady Row", sets: 1, reps: "20 min", restSeconds: 0, notes: "20-22 strokes/min. Aim for consistent split time"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Row", sets: 1, reps: "5 min", restSeconds: 0, notes: "Very easy pace")
+            ]),
+            ProgramWorkoutDefinition(name: "Interval Row", description: "High/low intensity rowing intervals", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Hard Row Intervals", sets: 8, reps: "1 min hard / 1 min easy", restSeconds: 0, notes: "26-28 strokes/min on hard efforts"),
+                ProgramExerciseDefinition(exerciseName: "Moderate Row", sets: 1, reps: "8 min", restSeconds: 0, notes: "Recover at conversational pace"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Pyramid Row", description: "Ascending and descending intervals", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "1 min Hard", sets: 1, reps: "1 min", restSeconds: 60, notes: "Build intensity"),
+                ProgramExerciseDefinition(exerciseName: "2 min Hard", sets: 1, reps: "2 min", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "3 min Hard", sets: 1, reps: "3 min", restSeconds: 90, notes: "Peak effort"),
+                ProgramExerciseDefinition(exerciseName: "2 min Hard", sets: 1, reps: "2 min", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "1 min Hard", sets: 1, reps: "1 min", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Easy Row", sets: 1, reps: "8 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long Distance Row", description: "Extended endurance row", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Distance Row", sets: 1, reps: "35 min", restSeconds: 0, notes: "Steady 18-20 strokes/min. Focus on power through legs"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(rowing)
 
         // 6. Jump Rope Conditioning
@@ -812,6 +932,52 @@ struct ProgramData {
             goal: .athleticPerformance,
             equipmentRequired: ["Jump Rope"]
         )
+        jumpRope.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Basics & Rhythm", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Interval Skipping", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Footwork Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Conditioning Circuit", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        jumpRope.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Basics & Rhythm", description: "Foundation jump rope skills", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Light Jog Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Basic Bounce", sets: 5, reps: "30 sec", restSeconds: 30, notes: "Bounce on balls of feet, slight knee bend"),
+                ProgramExerciseDefinition(exerciseName: "Alternate Foot Step", sets: 4, reps: "30 sec", restSeconds: 30, notes: "Like running in place"),
+                ProgramExerciseDefinition(exerciseName: "Basic Bounce", sets: 3, reps: "1 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Stretch", sets: 1, reps: "3 min", restSeconds: 0, notes: "Calves, shoulders, wrists")
+            ]),
+            ProgramWorkoutDefinition(name: "Interval Skipping", description: "Work/rest intervals for conditioning", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Jumps", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Fast Skipping", sets: 8, reps: "30 sec fast / 30 sec rest", restSeconds: 0, notes: "Maximum speed during work"),
+                ProgramExerciseDefinition(exerciseName: "Moderate Continuous", sets: 1, reps: "5 min", restSeconds: 0, notes: "Steady sustainable pace"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Footwork Focus", description: "Learn jump rope variations", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "High Knees", sets: 4, reps: "20 sec", restSeconds: 20, notes: "Drive knees up with each jump"),
+                ProgramExerciseDefinition(exerciseName: "Side to Side", sets: 4, reps: "20 sec", restSeconds: 20, notes: "Small lateral hops"),
+                ProgramExerciseDefinition(exerciseName: "Front to Back", sets: 4, reps: "20 sec", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Single Leg Hops", sets: 4, reps: "15 sec each leg", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Combo Practice", sets: 3, reps: "1 min", restSeconds: 30, notes: "Mix all variations"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Conditioning Circuit", description: "Full conditioning workout", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Rope", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Burpees", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Rope", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 1, reps: "30 sec", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Rope", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Squat Jumps", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Rope", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Push Ups", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Rope Finisher", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(jumpRope)
 
         // 7. Elliptical Endurance
@@ -826,6 +992,38 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["Elliptical Machine"]
         )
+        elliptical.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Steady State", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Resistance Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Incline Challenge", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long Endurance", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        elliptical.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Steady State", description: "Consistent pace cardio", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0, notes: "Low resistance, easy pace"),
+                ProgramExerciseDefinition(exerciseName: "Steady Elliptical", sets: 1, reps: "20 min", restSeconds: 0, notes: "Moderate resistance (level 5-7). 60-70 RPM"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Resistance Intervals", description: "Alternate high and low resistance", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "High Resistance Intervals", sets: 6, reps: "2 min high / 2 min low", restSeconds: 0, notes: "High = level 10+, Low = level 5"),
+                ProgramExerciseDefinition(exerciseName: "Steady Finish", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Incline Challenge", description: "Work with varied incline", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Incline Pyramid", sets: 1, reps: "5 min each", restSeconds: 0, notes: "Incline 5 → 10 → 15 → 10 → 5"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long Endurance", description: "Extended cardio session", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Endurance Elliptical", sets: 1, reps: "35 min", restSeconds: 0, notes: "Moderate effort, find sustainable rhythm. Can watch TV or listen to music"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(elliptical)
 
         // 8. Mixed Cardio Circuit
@@ -840,6 +1038,45 @@ struct ProgramData {
             goal: .general,
             equipmentRequired: ["Various Cardio Equipment"]
         )
+        mixedCardio.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Treadmill Day", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Bike Day", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Row & Ski Erg", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Mix It Up", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        mixedCardio.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Treadmill Day", description: "Running and walking intervals", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Walk Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Run Intervals", sets: 5, reps: "3 min run / 2 min walk", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Incline Walk", sets: 1, reps: "5 min", restSeconds: 0, notes: "10% incline"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Bike Day", description: "Cycling intervals and steady state", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Easy Spin Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "High Cadence Intervals", sets: 6, reps: "1 min fast / 1 min easy", restSeconds: 0, notes: "100+ RPM on fast"),
+                ProgramExerciseDefinition(exerciseName: "Heavy Resistance Climb", sets: 3, reps: "3 min", restSeconds: 60, notes: "High resistance, out of saddle if able"),
+                ProgramExerciseDefinition(exerciseName: "Steady Ride", sets: 1, reps: "8 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Row & Ski Erg", description: "Upper body focused cardio", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Row Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Rowing Intervals", sets: 4, reps: "2 min hard / 1 min easy", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Ski Erg", sets: 1, reps: "10 min", restSeconds: 0, notes: "If no ski erg, do arm bike"),
+                ProgramExerciseDefinition(exerciseName: "Row Finish", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Mix It Up", description: "Rotate through machines", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Choice", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Treadmill", sets: 1, reps: "8 min", restSeconds: 0, notes: "Moderate jog"),
+                ProgramExerciseDefinition(exerciseName: "Bike", sets: 1, reps: "8 min", restSeconds: 0, notes: "Steady cycling"),
+                ProgramExerciseDefinition(exerciseName: "Elliptical", sets: 1, reps: "8 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Rower", sets: 1, reps: "8 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(mixedCardio)
 
         // 9. Heart Health Cardio
@@ -854,6 +1091,34 @@ struct ProgramData {
             goal: .maintenance,
             equipmentRequired: ["None"]
         )
+        heartHealth.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Moderate Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Light Activity", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Moderate Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Weekend Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        heartHealth.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Moderate Walk", description: "Brisk walking for heart health", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Easy Walk Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Brisk Walk", sets: 1, reps: "20 min", restSeconds: 0, notes: "Walk briskly - you should be slightly breathless but able to talk"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Light Activity", description: "Gentle movement session", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Light Walk", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 2, reps: "30 sec each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Marching in Place", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Side Steps", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Gentle Stretching", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Weekend Walk", description: "Longer enjoyable walk", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warm Up Walk", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Continuous Walk", sets: 1, reps: "30 min", restSeconds: 0, notes: "Find a nice route. Moderate pace, enjoy the scenery"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(heartHealth)
 
         // 10. Advanced Cardio Athlete
@@ -868,6 +1133,45 @@ struct ProgramData {
             goal: .athleticPerformance,
             equipmentRequired: ["Various Cardio Equipment"]
         )
+        advancedCardio.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "VO2 Max Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Tempo Session", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Sprint Training", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Cross Training", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long Endurance", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        advancedCardio.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "VO2 Max Intervals", description: "High intensity intervals for maximum oxygen uptake", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "10 min", restSeconds: 0, notes: "Progressive intensity"),
+                ProgramExerciseDefinition(exerciseName: "VO2 Max Intervals", sets: 5, reps: "3 min @ 95% effort / 3 min recovery", restSeconds: 0, notes: "Push to near max effort. Recovery should be active"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Tempo Session", description: "Sustained threshold effort", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Tempo Effort", sets: 2, reps: "15 min @ 80-85%", restSeconds: 180, notes: "Comfortably hard - can speak in short sentences"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "10 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Sprint Training", description: "Short explosive efforts", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Extended Warmup", sets: 1, reps: "15 min", restSeconds: 0, notes: "Include dynamic stretches"),
+                ProgramExerciseDefinition(exerciseName: "Sprint Intervals", sets: 10, reps: "30 sec all-out / 90 sec recovery", restSeconds: 0, notes: "Maximum effort sprints"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Jog", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Cross Training", description: "Multi-modality conditioning", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Row Hard", sets: 1, reps: "5 min", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Bike Sprints", sets: 5, reps: "1 min hard / 1 min easy", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Assault Bike/Ski Erg", sets: 1, reps: "10 min", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Treadmill Run", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long Endurance", description: "Extended aerobic session", estimatedMinutes: 60, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Steady State Cardio", sets: 1, reps: "50 min", restSeconds: 0, notes: "70-75% effort. Build mental toughness"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(advancedCardio)
 
         // 11. Walking Weight Loss
@@ -882,6 +1186,43 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        walkingProgram.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Power Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Interval Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Incline Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Steady Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Long Walk", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        walkingProgram.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Power Walk", description: "Brisk walking with arm engagement", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Easy Walk Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Power Walk", sets: 1, reps: "30 min", restSeconds: 0, notes: "Walk as fast as you can without running. Pump arms actively"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Interval Walk", description: "Fast and slow walking intervals", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Walk", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Fast/Slow Intervals", sets: 10, reps: "2 min fast / 1 min easy", restSeconds: 0, notes: "Fast = almost jogging, Easy = comfortable stroll"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Incline Walk", description: "Hill or treadmill incline walking", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Flat Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Incline Walk", sets: 1, reps: "25 min", restSeconds: 0, notes: "10-12% incline or find hills. 3.0-3.5 mph"),
+                ProgramExerciseDefinition(exerciseName: "Flat Walk", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Steady Walk", description: "Moderate consistent pace", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Steady Walk", sets: 1, reps: "25 min", restSeconds: 0, notes: "Comfortable brisk pace. Focus on good posture"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Long Walk", description: "Extended walking session", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Continuous Walk", sets: 1, reps: "40 min", restSeconds: 0, notes: "Comfortable pace. Listen to music or podcast"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(walkingProgram)
     }
 
@@ -977,6 +1318,44 @@ struct ProgramData {
             goal: .general,
             equipmentRequired: ["Yoga Mat"]
         )
+        morningFlow.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Sun Salutation Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Energizing Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Sun Salutation Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Gentle Wake Up", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Energizing Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        morningFlow.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Sun Salutation Flow", description: "Classic morning sequence", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Seated Breathing", sets: 1, reps: "1 min", restSeconds: 0, notes: "Set intention for the day"),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow Stretch", sets: 1, reps: "8 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0, notes: "One breath per movement"),
+                ProgramExerciseDefinition(exerciseName: "Standing Side Stretch", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Pose", sets: 1, reps: "5 breaths", restSeconds: 0, notes: "Close eyes, feel grounded")
+            ]),
+            ProgramWorkoutDefinition(name: "Energizing Flow", description: "Wake up the whole body", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow Stretch", sets: 1, reps: "6 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Downward Dog", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge + Twist", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Warrior II Flow", sets: 2, reps: "3 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Triangle Pose", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Wide Leg Forward Fold", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Twist", sets: 1, reps: "5 breaths each side", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Gentle Wake Up", description: "Soft morning practice", estimatedMinutes: 15, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "5 breaths each side", restSeconds: 0, notes: "Stay in bed if you like"),
+                ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Side Stretch", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Cat-Cow", sets: 1, reps: "6 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Neck Rolls", sets: 1, reps: "3 each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "8 breaths", restSeconds: 0, notes: "Hang loose, sway gently")
+            ])
+        ]
         context.insert(morningFlow)
 
         // 3. Power Yoga
@@ -991,6 +1370,58 @@ struct ProgramData {
             goal: .strength,
             equipmentRequired: ["Yoga Mat"]
         )
+        powerYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Power Flow A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Strength Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Power Flow B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Core & Balance", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        powerYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Power Flow A", description: "Dynamic full body flow", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 5, reps: "1 round", restSeconds: 0, notes: "Build heat quickly"),
+                ProgramExerciseDefinition(exerciseName: "Chair Pose Flow", sets: 3, reps: "5 breaths + twist", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Warrior I → Warrior III", sets: 1, reps: "5 breaths each, each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Crescent Lunge Pulses", sets: 1, reps: "10 each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Chaturanga Push-ups", sets: 3, reps: "8 reps", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Crow Pose Attempts", sets: 3, reps: "5-10 sec holds", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Wheel Pose", sets: 3, reps: "5 breaths", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Strength Focus", description: "Hold challenging poses", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 3, reps: "1 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Side Plank", sets: 2, reps: "30 sec each side", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Chair Pose Hold", sets: 3, reps: "45 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Warrior III Hold", sets: 2, reps: "30 sec each side", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Boat Pose", sets: 3, reps: "30 sec", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Dolphin Pose", sets: 3, reps: "30 sec", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Bridge Lifts", sets: 3, reps: "15 reps", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Supine Core Work", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Power Flow B", description: "Advanced flow sequence", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 3, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Extended Side Angle Flow", sets: 2, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Half Moon Pose", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Split", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Handstand Practice", sets: 5, reps: "30 sec attempts", restSeconds: 30, notes: "Use wall if needed"),
+                ProgramExerciseDefinition(exerciseName: "Forearm Stand Practice", sets: 3, reps: "30 sec attempts", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Core & Balance", description: "Core strength and balance work", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Boat Pose Variations", sets: 4, reps: "30 sec", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Plank to Downward Dog", sets: 3, reps: "10 reps", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Tree Pose", sets: 2, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Eagle Pose", sets: 2, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Dancer's Pose", sets: 2, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Crow to Chaturanga", sets: 5, reps: "1 rep", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Headstand Practice", sets: 3, reps: "30 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Cooling Stretches", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(powerYoga)
 
         // 4. Yoga for Athletes
@@ -1005,6 +1436,46 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat", "Yoga Blocks"]
         )
+        athleteYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Hip & Hamstring Release", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Upper Body Mobility", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Recovery Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        athleteYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Hip & Hamstring Release", description: "Target common tight areas for athletes", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "10 breaths each side", restSeconds: 0, notes: "Sink deep into hip flexor stretch"),
+                ProgramExerciseDefinition(exerciseName: "Half Split", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "2 min each side", restSeconds: 0, notes: "Use block under hip if needed"),
+                ProgramExerciseDefinition(exerciseName: "Figure Four Stretch", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "2 min", restSeconds: 0, notes: "Go to your edge, don't force"),
+                ProgramExerciseDefinition(exerciseName: "Supine Hamstring Stretch", sets: 1, reps: "10 breaths each side", restSeconds: 0, notes: "Use strap if needed"),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "10 breaths", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Upper Body Mobility", description: "Shoulders, chest, and back", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Puppy Pose", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Melt chest toward floor"),
+                ProgramExerciseDefinition(exerciseName: "Eagle Arms", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cow Face Arms", sets: 1, reps: "10 breaths each side", restSeconds: 0, notes: "Use strap if hands don't reach"),
+                ProgramExerciseDefinition(exerciseName: "Chest Opener on Block", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sphinx Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Shoulder Stretch at Wall", sets: 1, reps: "1 min each arm", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supported Fish Pose", sets: 1, reps: "2 min", restSeconds: 0, notes: "Block under upper back")
+            ]),
+            ProgramWorkoutDefinition(name: "Recovery Flow", description: "Gentle restorative practice", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "2 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supported Bridge", sets: 1, reps: "2 min", restSeconds: 0, notes: "Block under sacrum"),
+                ProgramExerciseDefinition(exerciseName: "Reclined Butterfly", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Gentle Spinal Twist", sets: 1, reps: "2 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0, notes: "Complete rest and recovery")
+            ])
+        ]
         context.insert(athleteYoga)
 
         // 5. Evening Wind Down
@@ -1019,6 +1490,43 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat"]
         )
+        eveningYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Calming Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Bedtime Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Calming Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Restorative Rest", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Bedtime Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        eveningYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Calming Flow", description: "Gentle movements to release tension", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Seated Breathing", sets: 1, reps: "2 min", restSeconds: 0, notes: "4-count inhale, 6-count exhale"),
+                ProgramExerciseDefinition(exerciseName: "Neck Rolls", sets: 1, reps: "5 each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Side Stretch", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "8 slow rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Bedtime Stretch", description: "Prepare body for sleep", estimatedMinutes: 15, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "1 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Forward Fold (Seated)", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Butterfly Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Figure Four", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "8 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "8 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0, notes: "Can transition to bed")
+            ]),
+            ProgramWorkoutDefinition(name: "Restorative Rest", description: "Deep relaxation practice", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Supported Child's Pose", sets: 1, reps: "3 min", restSeconds: 0, notes: "Pillow under chest"),
+                ProgramExerciseDefinition(exerciseName: "Supported Fish Pose", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Reclined Butterfly", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana with Blanket", sets: 1, reps: "5 min", restSeconds: 0, notes: "Cover yourself, complete rest")
+            ])
+        ]
         context.insert(eveningYoga)
 
         // 6. Vinyasa Flow
@@ -1033,6 +1541,60 @@ struct ProgramData {
             goal: .general,
             equipmentRequired: ["Yoga Mat"]
         )
+        vinyasa.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Flow Fundamentals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Standing Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Hip Opening Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Vinyasa Practice", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        vinyasa.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Flow Fundamentals", description: "Learn the vinyasa transitions", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Centering & Breath", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow Flow", sets: 1, reps: "10 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0, notes: "Focus on breath-movement link"),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 3, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Sequence", sets: 2, reps: "each side", restSeconds: 0, notes: "Warrior I → II → Reverse Warrior"),
+                ProgramExerciseDefinition(exerciseName: "Seated Forward Fold", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bridge Pose", sets: 3, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Standing Flow", description: "Dynamic standing sequences", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation Warmup", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Warrior Flow", sets: 3, reps: "each side", restSeconds: 0, notes: "Warrior I → II → III → Standing Split"),
+                ProgramExerciseDefinition(exerciseName: "Triangle to Half Moon", sets: 2, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Extended Side Angle Flow", sets: 2, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Chair Pose Variations", sets: 3, reps: "5 breaths each", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Eagle Pose Flow", sets: 2, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Hip Opening Flow", description: "Target hips in flowing sequence", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 3, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge Flow", sets: 2, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Lizard Pose", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Pigeon Flow", sets: 1, reps: "12 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Half Split → Full Split Attempt", sets: 1, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "15 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Reclined Butterfly", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Vinyasa Practice", description: "Complete flowing practice", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Centering", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Series", sets: 1, reps: "both sides", restSeconds: 0, notes: "All standing poses linked with vinyasa"),
+                ProgramExerciseDefinition(exerciseName: "Balance Poses", sets: 1, reps: "both sides", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Sequence", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Backbends", sets: 3, reps: "5 breaths", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Inversions (Optional)", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Closing Sequence", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(vinyasa)
 
         // 7. Yin Yoga Deep Stretch
@@ -1047,6 +1609,43 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat", "Yoga Bolster", "Yoga Blocks"]
         )
+        yinYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Lower Body Yin", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Upper Body & Spine", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Body Yin", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        yinYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Lower Body Yin", description: "Deep hip and leg stretches", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Butterfly Pose", sets: 1, reps: "5 min", restSeconds: 0, notes: "Fold forward, relax completely"),
+                ProgramExerciseDefinition(exerciseName: "Dragon Pose (Low Lunge)", sets: 1, reps: "4 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sleeping Swan (Pigeon)", sets: 1, reps: "5 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Square Pose", sets: 1, reps: "4 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Dragonfly (Wide Straddle)", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Upper Body & Spine", description: "Spine and shoulder release", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Melting Heart Pose", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sphinx Pose", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seal Pose", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Twisted Roots", sets: 1, reps: "4 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Caterpillar (Forward Fold)", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Fish Pose (Supported)", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Body Yin", description: "Complete yin sequence", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Dragon Pose", sets: 1, reps: "3 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sphinx Pose", sets: 1, reps: "4 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sleeping Swan", sets: 1, reps: "4 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Caterpillar", sets: 1, reps: "4 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "4 min each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(yinYoga)
 
         // 8. Yoga for Back Pain
@@ -1061,6 +1660,51 @@ struct ProgramData {
             goal: .rehabilitation,
             equipmentRequired: ["Yoga Mat"]
         )
+        backPainYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Gentle Spine Relief", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Core Stability", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Hip & Lower Back", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Posture & Strength", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        backPainYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Gentle Spine Relief", description: "Release back tension gently", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Rock gently side to side"),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 slow rounds", restSeconds: 0, notes: "Move with your breath"),
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sphinx Pose", sets: 1, reps: "8 breaths", restSeconds: 0, notes: "Gentle backbend"),
+                ProgramExerciseDefinition(exerciseName: "Constructive Rest", sets: 1, reps: "3 min", restSeconds: 0, notes: "Feet flat, knees together")
+            ]),
+            ProgramWorkoutDefinition(name: "Core Stability", description: "Build core to support back", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 3, reps: "8 each side", restSeconds: 20, notes: "Keep lower back pressed down"),
+                ProgramExerciseDefinition(exerciseName: "Bird Dog", sets: 3, reps: "8 each side", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Bridge Pose", sets: 3, reps: "8 reps", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Modified Plank (Forearms)", sets: 3, reps: "20 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "8 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "10 breaths", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Hip & Lower Back", description: "Release hip tension affecting back", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Figure Four Stretch", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "8 breaths each side", restSeconds: 0, notes: "Back knee down, gentle hip flexor stretch"),
+                ProgramExerciseDefinition(exerciseName: "Half Pigeon (Modified)", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Constructive Rest", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Posture & Strength", description: "Build postural awareness", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Mountain Pose", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Focus on alignment"),
+                ProgramExerciseDefinition(exerciseName: "Wall Angels", sets: 2, reps: "10 reps", restSeconds: 20),
+                ProgramExerciseDefinition(exerciseName: "Cobra Pose", sets: 3, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Locust Pose", sets: 3, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "6 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Bend knees, let spine hang"),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0)
+            ])
+        ]
         context.insert(backPainYoga)
 
         // 9. Ashtanga Primary Series
@@ -1075,6 +1719,38 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat"]
         )
+        ashtanga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Half Primary", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Full Primary", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Half Primary", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Full Primary", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Half Primary", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true, notes: "Moon day or rest"),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        ashtanga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Half Primary", description: "First half of primary series", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Padangusthasana", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Padahastasana", sets: 1, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Trikonasana", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Parivrtta Trikonasana", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Utthita Parsvakonasana", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Prasarita Padottanasana A-D", sets: 1, reps: "5 breaths each", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Parsvottanasana", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Closing Sequence", sets: 1, reps: "as traditional", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "10 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Primary", description: "Complete primary series", estimatedMinutes: 75, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Sequence", sets: 1, reps: "complete", restSeconds: 0, notes: "All standing poses"),
+                ProgramExerciseDefinition(exerciseName: "Seated Sequence", sets: 1, reps: "complete", restSeconds: 0, notes: "Paschimottanasana through Setu Bandhasana"),
+                ProgramExerciseDefinition(exerciseName: "Finishing Sequence", sets: 1, reps: "complete", restSeconds: 0, notes: "Shoulderstand, headstand, lotus sequence"),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "15 min", restSeconds: 0)
+            ])
+        ]
         context.insert(ashtanga)
 
         // 10. Desk Worker Yoga
@@ -1089,6 +1765,58 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat"]
         )
+        deskYoga.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Neck & Shoulders", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Hip Openers", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Spine & Posture", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Body Release", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        deskYoga.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Neck & Shoulders", description: "Release upper body tension", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Neck Rolls", sets: 1, reps: "5 each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Ear to Shoulder", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Eagle Arms", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Puppy Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cow Face Arms", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Shoulder Stretch", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supported Fish", sets: 1, reps: "2 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Hip Openers", description: "Counteract sitting", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "8 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Lizard Pose", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Half Pigeon", sets: 1, reps: "10 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Figure Four", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "8 breaths each side", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Spine & Posture", description: "Improve alignment", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Mountain Pose", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Focus on posture"),
+                ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "8 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cobra Pose", sets: 3, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Locust Pose", sets: 2, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Spinal Twist (Seated)", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Body Release", description: "Complete desk worker reset", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "1 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Eagle Arms", sets: 1, reps: "5 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "8 rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Downward Dog", sets: 1, reps: "8 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Low Lunge + Twist", sets: 1, reps: "5 breaths each", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Seated Forward Fold", sets: 1, reps: "10 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "8 breaths each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0)
+            ])
+        ]
         context.insert(deskYoga)
 
         // 11. Hot Yoga Preparation
@@ -1103,6 +1831,57 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat", "Towel"]
         )
+        hotYogaPrep.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Heat Building Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Endurance Practice", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Flexibility Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Practice Simulation", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        hotYogaPrep.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Heat Building Flow", description: "Build internal heat", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation B", sets: 8, reps: "1 round", restSeconds: 0, notes: "Build heat quickly"),
+                ProgramExerciseDefinition(exerciseName: "Chair Pose Hold", sets: 3, reps: "30 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Warrior Sequence", sets: 2, reps: "each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Balancing Poses", sets: 1, reps: "30 sec each", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Locust Pose", sets: 3, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bow Pose", sets: 2, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Camel Pose", sets: 2, reps: "5 breaths", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Endurance Practice", description: "Build stamina for long holds", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sun Salutation A", sets: 5, reps: "1 round", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Pose Holds", sets: 1, reps: "1 min each pose", restSeconds: 0, notes: "Warrior I, II, Triangle, Extended Side Angle"),
+                ProgramExerciseDefinition(exerciseName: "Balance Challenge", sets: 1, reps: "30 sec each", restSeconds: 0, notes: "Tree, Eagle, Dancer, Warrior III"),
+                ProgramExerciseDefinition(exerciseName: "Floor Series", sets: 1, reps: "as traditional", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Spine Strengthening", sets: 1, reps: "as traditional", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Flexibility Focus", description: "Deep stretching preparation", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Flow", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Head to Knee Prep", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Bow Prep", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Separate Leg Stretches", sets: 1, reps: "1 min each", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Floor Bow Pose", sets: 2, reps: "30 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Fixed Firm Pose", sets: 1, reps: "1 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Spine Twist", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Practice Simulation", description: "Complete practice run", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Pranayama Breathing", sets: 1, reps: "1 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Half Moon Pose", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Awkward Pose Series", sets: 1, reps: "as traditional", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Eagle Pose", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Head to Knee", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Bow", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Balancing Stick", sets: 1, reps: "10 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Triangle Pose", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Floor Series (Abbreviated)", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Final Savasana", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(hotYogaPrep)
     }
 
@@ -1196,6 +1975,75 @@ struct ProgramData {
             goal: .strength,
             equipmentRequired: ["Pilates Mat"]
         )
+        corePilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Deep Core Activation", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Oblique Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Powerhouse Builder", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Core Integration", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        corePilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Deep Core Activation",
+                description: "Target transverse abdominis and pelvic floor",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Breathing with Core Engagement", sets: 1, reps: "10 breaths", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 3, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Scissors", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Lower Lift", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Criss Cross", sets: 1, reps: "10 each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Oblique Focus",
+                description: "Build rotational core strength",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Side Plank", sets: 2, reps: "30 sec each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bicycle", sets: 1, reps: "20 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Criss Cross", sets: 2, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Spine Twist", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Bend", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Mermaid Stretch", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Russian Twist", sets: 2, reps: "15 each side", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Powerhouse Builder",
+                description: "Build overall core power",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Over", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser Prep", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 3, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Leg Pull Front", sets: 1, reps: "5 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Leg Pull Back", sets: 1, reps: "5 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "30 counts", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Core Integration",
+                description: "Full core workout combining all elements",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "5 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Series of Five", sets: 1, reps: "10 each exercise", restSeconds: 0, notes: "Single, double, scissors, lower, criss cross"),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Open Leg Rocker", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Corkscrew", sets: 1, reps: "3 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser", sets: 1, reps: "3 reps", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(corePilates)
 
         // 3. Reformer Basics
@@ -1210,6 +2058,62 @@ struct ProgramData {
             goal: .general,
             equipmentRequired: ["Pilates Reformer"]
         )
+        reformer.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Footwork & Basics", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Arms & Core", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Full Reformer Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        reformer.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Footwork & Basics",
+                description: "Learn reformer basics and footwork series",
+                estimatedMinutes: 45,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Footwork - Toes", sets: 1, reps: "10 reps", restSeconds: 0, notes: "Medium springs"),
+                    ProgramExerciseDefinition(exerciseName: "Footwork - Arches", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Footwork - Heels", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Footwork - Tendon Stretch", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hundred on Reformer", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Leg Circles", sets: 1, reps: "5 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Stomach Massage - Round", sets: 1, reps: "10 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Arms & Core",
+                description: "Upper body and core on reformer",
+                estimatedMinutes: 45,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "8 each direction", restSeconds: 0, notes: "Light springs"),
+                    ProgramExerciseDefinition(exerciseName: "Chest Expansion", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Bicep Curls", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rowing - From Chest", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rowing - From Hips", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Short Box - Round Back", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Short Box - Flat Back", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Long Stretch", sets: 1, reps: "5 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Reformer Flow",
+                description: "Complete reformer session",
+                estimatedMinutes: 50,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Footwork Series", sets: 1, reps: "8 each position", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Coordination", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Stomach Massage Series", sets: 1, reps: "8 each variation", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Short Spine", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Long Stretch Series", sets: 1, reps: "5 each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Splits", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Running", sets: 1, reps: "20 counts", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(reformer)
 
         // 4. Pilates for Posture
@@ -1224,6 +2128,75 @@ struct ProgramData {
             goal: .rehabilitation,
             equipmentRequired: ["Pilates Mat"]
         )
+        posturePilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Spine Alignment", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Upper Back Strength", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Core for Posture", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Posture Reset", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        posturePilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Spine Alignment",
+                description: "Learn proper spinal alignment",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Angels", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Chin Tucks", sets: 2, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pelvic Tilts", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Down Against Wall", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Posture Check", sets: 1, reps: "1 min hold", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Upper Back Strength",
+                description: "Strengthen upper back muscles",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Prone Arm Lifts", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Swan Prep", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "20 counts", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Dart", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Prone Y-T-W", sets: 2, reps: "8 each position", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener Stretch", sets: 1, reps: "60 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Core for Posture",
+                description: "Core strength to support posture",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Breathing with Core Engagement", sets: 1, reps: "10 breaths", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 2, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bird Dog", sets: 2, reps: "8 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Modified Plank", sets: 2, reps: "30 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Plank Modified", sets: 2, reps: "20 sec each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Glute Bridge", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "60 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Posture Reset",
+                description: "Complete posture-focused session",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Angels", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chin Tucks", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swan Prep", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "20 counts", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Stretch", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Posture Hold", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(posturePilates)
 
         // 5. Advanced Mat Pilates
@@ -1238,6 +2211,83 @@ struct ProgramData {
             goal: .strength,
             equipmentRequired: ["Pilates Mat", "Pilates Ring"]
         )
+        advancedMat.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Advanced Core Series", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Advanced Spine Work", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Ring Challenge", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Advanced Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        advancedMat.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Advanced Core Series",
+                description: "Challenging core exercises",
+                estimatedMinutes: 50,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0, notes: "Legs at 45 degrees"),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Over", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser 1, 2, 3", sets: 1, reps: "3 each variation", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "5 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Corkscrew", sets: 1, reps: "5 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Scissors", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Bicycle", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Jack Knife", sets: 1, reps: "5 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Advanced Spine Work",
+                description: "Advanced spinal mobility and strength",
+                estimatedMinutes: 50,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Spine Twist", sets: 1, reps: "6 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swan Dive", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Kick", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rocking", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Pull", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Bridge", sets: 1, reps: "5 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Twist", sets: 1, reps: "3 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Boomerang", sets: 1, reps: "5 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Ring Challenge",
+                description: "Advanced work with Pilates ring",
+                estimatedMinutes: 50,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Ring Squeezes - Inner Thigh", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Squeezes - Outer Thigh", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Hundred with Ring", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up with Ring", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch with Ring", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch with Ring", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Press with Ring", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles with Ring", sets: 2, reps: "10 each direction", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Advanced Flow",
+                description: "Complete advanced mat sequence",
+                estimatedMinutes: 55,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Over", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "5 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rolling Like a Ball", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Series of Five", sets: 1, reps: "10 each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Open Leg Rocker", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Corkscrew", sets: 1, reps: "3 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Saw", sets: 1, reps: "4 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swan Dive", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser", sets: 1, reps: "3 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seal", sets: 1, reps: "8 reps", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(advancedMat)
 
         // 6. Pilates for Runners
@@ -1252,6 +2302,61 @@ struct ProgramData {
             goal: .athleticPerformance,
             equipmentRequired: ["Pilates Mat", "Resistance Band"]
         )
+        runnersPilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Hip Stability", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Core for Runners", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Runner's Recovery", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        runnersPilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Hip Stability",
+                description: "Build hip strength for better running",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "8 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Leg Series", sets: 1, reps: "10 each movement each side", restSeconds: 0, notes: "Lifts, circles, kicks"),
+                    ProgramExerciseDefinition(exerciseName: "Clamshells with Band", sets: 2, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Bridge", sets: 2, reps: "10 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Fire Hydrants", sets: 2, reps: "12 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hip Circles", sets: 1, reps: "10 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "60 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Core for Runners",
+                description: "Running-specific core work",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 2, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bird Dog", sets: 2, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Scissors", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 2, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Plank with Leg Lift", sets: 2, reps: "30 sec each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "30 counts", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Mountain Climber Slow", sets: 2, reps: "10 each side", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Runner's Recovery",
+                description: "Active recovery and flexibility for runners",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Flexor Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "IT Band Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Figure Four Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hamstring Stretch with Band", sets: 1, reps: "60 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Twist", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Down", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Calf Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(runnersPilates)
 
         // 7. Prenatal Pilates
@@ -1266,6 +2371,60 @@ struct ProgramData {
             goal: .maintenance,
             equipmentRequired: ["Pilates Mat", "Pilates Ball"]
         )
+        prenatalPilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Gentle Core & Pelvic Floor", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Upper Body & Back Care", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Lower Body & Balance", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        prenatalPilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Gentle Core & Pelvic Floor",
+                description: "Safe core work for pregnancy",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Breathing with Pelvic Floor", sets: 1, reps: "10 breaths", restSeconds: 0, notes: "Gentle engagement"),
+                    ProgramExerciseDefinition(exerciseName: "Pelvic Tilts", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Cat-Cow on Ball", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Modified Bird Dog", sets: 2, reps: "8 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Leg Lifts", sets: 2, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Seated Spine Stretch", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Kegels", sets: 3, reps: "10 reps", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Upper Body & Back Care",
+                description: "Strengthen upper body and relieve back tension",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Seated Arm Circles", sets: 1, reps: "10 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Push-ups", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Seated Rowing Motion", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "10 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener on Ball", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "30 sec each direction", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Lower Body & Balance",
+                description: "Strengthen legs and improve balance",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles on Ball", sets: 1, reps: "10 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wide Stance Squats", sets: 2, reps: "10 reps", restSeconds: 30, notes: "Hold onto wall or chair"),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Leg Series", sets: 1, reps: "10 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Balance with Support", sets: 2, reps: "30 sec each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Calf Raises with Support", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Seated Figure Four Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supported Deep Squat", sets: 1, reps: "60 sec hold", restSeconds: 0, notes: "Hold onto stable surface")
+                ]
+            )
+        ]
         context.insert(prenatalPilates)
 
         // 8. Pilates Sculpt
@@ -1280,6 +2439,77 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Pilates Mat", "Light Dumbbells"]
         )
+        pilatesSculpt.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Sculpt Arms & Core", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Sculpt Legs & Glutes", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Full Body Sculpt", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Sculpt & Tone", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        pilatesSculpt.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Sculpt Arms & Core",
+                description: "Tone arms and strengthen core",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles with Weights", sets: 2, reps: "15 each direction", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bicep Curls", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Tricep Kickbacks", sets: 3, reps: "12 each arm", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Chest Fly", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Criss Cross", sets: 2, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Plank with Arm Reach", sets: 2, reps: "10 each arm", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Sculpt Legs & Glutes",
+                description: "Tone and lift lower body",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Plie Squats with Weights", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Leg Series", sets: 1, reps: "15 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Bridge", sets: 3, reps: "12 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Clam Shells", sets: 3, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Donkey Kicks", sets: 3, reps: "15 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Fire Hydrants", sets: 3, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Inner Thigh Lifts", sets: 2, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Standing Leg Pulses", sets: 2, reps: "20 each leg", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Body Sculpt",
+                description: "Total body toning session",
+                estimatedMinutes: 45,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred with Weights", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Press", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Plie Squats", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Row with Weights", sets: 3, reps: "12 each arm", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Plank with Dip", sets: 2, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "30 counts", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Sculpt & Tone",
+                description: "High rep toning focus",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Pulses", sets: 3, reps: "30 sec", restSeconds: 20),
+                    ProgramExerciseDefinition(exerciseName: "Small Arm Circles", sets: 3, reps: "30 sec each direction", restSeconds: 20),
+                    ProgramExerciseDefinition(exerciseName: "Toe Taps", sets: 2, reps: "20 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bicycle", sets: 2, reps: "20 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Leg Pulse Series", sets: 1, reps: "20 each position each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Glute Bridge Pulses", sets: 3, reps: "30 pulses", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 2, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Full Body Stretch", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(pilatesSculpt)
 
         // 9. Wall Pilates
@@ -1294,6 +2524,75 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Wall Space"]
         )
+        wallPilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Wall Core Basics", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Wall Lower Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Wall Upper Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Wall Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        wallPilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Wall Core Basics",
+                description: "Core work using wall support",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Roll Down", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Sit with Core Hold", sets: 3, reps: "30 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Plank", sets: 2, reps: "30 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Push-up", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall Crunch", sets: 2, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Bridge", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Stretch", sets: 1, reps: "60 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Wall Lower Body",
+                description: "Leg work with wall support",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Sit", sets: 3, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Squat Pulses", sets: 3, reps: "20 pulses", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Wall Sit", sets: 2, reps: "20 sec each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Side Leg Lifts", sets: 2, reps: "15 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Calf Raises", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall - Straddle", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Hip Flexor Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Wall Upper Body",
+                description: "Upper body using wall for support",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Angels", sets: 2, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Push-ups", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Tricep Press", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Plank Hold", sets: 3, reps: "30 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Shoulder Stretch", sets: 1, reps: "45 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Chest Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Lat Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Wall Flow",
+                description: "Complete wall Pilates session",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Wall Roll Down", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Angels", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Push-ups", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Sit", sets: 2, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Plank", sets: 2, reps: "30 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Wall Side Leg Lifts", sets: 1, reps: "12 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Bridge", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall - Straddle", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Stretches", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(wallPilates)
 
         // 10. Classical Pilates
@@ -1308,6 +2607,95 @@ struct ProgramData {
             goal: .general,
             equipmentRequired: ["Pilates Mat"]
         )
+        classicalPilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Classical Beginner Sequence", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Classical Intermediate A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Classical Intermediate B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Classical Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        classicalPilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Classical Beginner Sequence",
+                description: "Foundation of the classical mat work",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "5 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rolling Like a Ball", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swan", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Kick", sets: 1, reps: "10 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Kicks", sets: 1, reps: "8 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seal", sets: 1, reps: "8 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Classical Intermediate A",
+                description: "First half of intermediate sequence",
+                estimatedMinutes: 45,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Over", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "5 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rolling Like a Ball", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Series of Five", sets: 1, reps: "10 each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Open Leg Rocker", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Corkscrew", sets: 1, reps: "3 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Saw", sets: 1, reps: "4 each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Classical Intermediate B",
+                description: "Second half of intermediate sequence",
+                estimatedMinutes: 45,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Swan Dive", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Kick", sets: 1, reps: "10 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Kick", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Pull", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Scissors", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Bicycle", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Bridge", sets: 1, reps: "5 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Twist", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Kick Series", sets: 1, reps: "8 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser", sets: 1, reps: "3 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "30 counts", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seal", sets: 1, reps: "8 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Classical Flow",
+                description: "Complete classical mat sequence",
+                estimatedMinutes: 50,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "The Hundred", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Over", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Circles", sets: 1, reps: "5 each direction each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Rolling Like a Ball", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Series of Five", sets: 1, reps: "10 each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Spine Stretch Forward", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Open Leg Rocker", sets: 1, reps: "6 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Corkscrew", sets: 1, reps: "3 each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Saw", sets: 1, reps: "4 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swan Dive", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Pull", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Bridge", sets: 1, reps: "5 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Side Kick Series", sets: 1, reps: "6 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser", sets: 1, reps: "3 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Swimming", sets: 1, reps: "30 counts", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seal", sets: 1, reps: "8 reps", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(classicalPilates)
 
         // 11. Pilates Ring Challenge
@@ -1322,6 +2710,65 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Pilates Mat", "Pilates Ring"]
         )
+        ringPilates.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Ring Upper Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Ring Lower Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Ring Full Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        ringPilates.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Ring Upper Body",
+                description: "Arms, chest, and back with ring",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Ring Chest Press", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Overhead Press", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Bicep Curls", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Tricep Press Behind", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Lat Pull", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Hundred with Ring", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up with Ring", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles with Ring", sets: 2, reps: "10 each direction", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Ring Lower Body",
+                description: "Inner and outer thighs with ring",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Ring Inner Thigh Squeeze - Supine", sets: 3, reps: "20 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Inner Thigh Squeeze - Seated", sets: 3, reps: "20 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Outer Thigh Press", sets: 3, reps: "15 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Bridge with Ring", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Ring Press", sets: 2, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Scissors with Ring", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch with Ring", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Leg Circles with Ring on Ankle", sets: 1, reps: "5 each direction each leg", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Ring Full Body",
+                description: "Complete ring workout",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hundred with Ring on Ankles", sets: 1, reps: "100 pulses", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Roll Up with Ring", sets: 1, reps: "8 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Ring Chest Press", sets: 2, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Inner Thigh", sets: 2, reps: "20 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Single Leg Stretch with Ring", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Double Leg Stretch with Ring", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Bridge with Ring", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Ring Overhead Press", sets: 2, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Ring Series", sets: 1, reps: "10 each movement each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Teaser with Ring", sets: 1, reps: "5 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Stretches", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(ringPilates)
     }
 
@@ -1340,6 +2787,39 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        hiitStarter.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Intro Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Cardio Bursts", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Full Body Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        hiitStarter.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Intro Intervals", description: "Learn the HIIT format with manageable intervals", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup March", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jumping Jacks", sets: 4, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bodyweight Squats", sets: 4, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Modified Push-ups", sets: 4, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Walk", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Cardio Bursts", description: "Short cardio intervals", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "High Knees", sets: 4, reps: "15 sec work / 45 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Butt Kicks", sets: 4, reps: "15 sec work / 45 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Step Jacks", sets: 4, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Body Intervals", description: "Hit all muscle groups", estimatedMinutes: 20, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Squat to Reach", sets: 3, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Push-up to Plank", sets: 3, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Reverse Lunges", sets: 3, reps: "20 sec work / 40 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 3, reps: "15 sec work / 45 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "3 min", restSeconds: 0)
+            ])
+        ]
         context.insert(hiitStarter)
 
         // 2. Tabata Challenge
@@ -1432,6 +2912,50 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["Kettlebell", "Pull-up Bar"]
         )
+        emom.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "EMOM 20", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "EMOM Strength", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "EMOM Cardio", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "EMOM Challenge", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        emom.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "EMOM 20", description: "20 minute EMOM alternating movements", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Odd Minutes: Kettlebell Swings", sets: 10, reps: "15 reps", restSeconds: 0, notes: "Complete at start of minute, rest remaining time"),
+                ProgramExerciseDefinition(exerciseName: "Even Minutes: Burpees", sets: 10, reps: "8 reps", restSeconds: 0, notes: "Complete at start of minute, rest remaining time"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "EMOM Strength", description: "Strength-focused EMOM", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 1: Goblet Squats", sets: 1, reps: "12 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 2: Push-ups", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 3: KB Deadlifts", sets: 1, reps: "12 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 4: Pull-ups or Rows", sets: 1, reps: "8 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Repeat 4 rounds (16 min)", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "EMOM Cardio", description: "Cardio conditioning EMOM", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 1: High Knees", sets: 1, reps: "30 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 2: Mountain Climbers", sets: 1, reps: "20 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 3: Jump Squats", sets: 1, reps: "12 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Repeat 5 rounds (15 min)", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "EMOM Challenge", description: "Extended challenging EMOM", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 1: KB Swings", sets: 1, reps: "20 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 2: Burpees", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 3: Pull-ups", sets: 1, reps: "max reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 4: Box Jumps or Step-ups", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Min 5: Rest", sets: 1, reps: "active recovery", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Repeat 4 rounds (20 min)", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(emom)
 
         // 4. Bodyweight HIIT
@@ -1446,6 +2970,54 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        bodyweightHIIT.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Lower Body Burn", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Upper Body Blast", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Core Crusher", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Total Body Shred", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        bodyweightHIIT.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Lower Body Burn", description: "Legs and glutes on fire", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Squats", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Alternating Lunges", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Sumo Squat Pulses", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Glute Bridges", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Wall Sit", sets: 2, reps: "30 sec hold", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Upper Body Blast", description: "Arms, chest, and shoulders", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Push-up Variations", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Tricep Dips", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Plank Shoulder Taps", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Diamond Push-ups", sets: 3, reps: "20 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 2, reps: "30 sec each direction", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Core Crusher", description: "Abs and obliques workout", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bicycle Crunches", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 3, reps: "30 sec hold / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Russian Twists", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Leg Raises", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Total Body Shred", description: "Hit everything", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Burpees", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jump Lunges", sets: 3, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Squat Jumps", sets: 3, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Plank Jacks", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(bodyweightHIIT)
 
         // 5. Kettlebell HIIT
@@ -1460,6 +3032,40 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["Kettlebell"]
         )
+        kbHIIT.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "KB Swing Intervals", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "KB Complex", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "KB Circuit", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        kbHIIT.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "KB Swing Intervals", description: "Swing focused HIIT", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Swings", sets: 10, reps: "30 sec work / 30 sec rest", restSeconds: 0, notes: "Explosive hip hinge"),
+                ProgramExerciseDefinition(exerciseName: "Goblet Squats", sets: 5, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "KB Complex", description: "Flow through movements", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Complex (Swing→Clean→Press→Squat)", sets: 5, reps: "5 reps each move, each side", restSeconds: 60, notes: "Don't put KB down during complex"),
+                ProgramExerciseDefinition(exerciseName: "KB Snatches", sets: 4, reps: "8 each side", restSeconds: 45),
+                ProgramExerciseDefinition(exerciseName: "Turkish Get-up", sets: 2, reps: "2 each side", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "KB Circuit", description: "Full body KB circuit", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Swings", sets: 1, reps: "20 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Goblet Squats", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Clean & Press", sets: 1, reps: "10 each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Rows", sets: 1, reps: "12 each side", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "KB Deadlifts", sets: 1, reps: "15 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Repeat 4 rounds", sets: 1, reps: "circuit", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(kbHIIT)
 
         // 6. Sprint Intervals
@@ -1474,6 +3080,34 @@ struct ProgramData {
             goal: .athleticPerformance,
             equipmentRequired: ["Track or Treadmill"]
         )
+        sprints.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Short Sprints", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Hill Sprints", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Longer Sprints", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        sprints.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Short Sprints", description: "Explosive short bursts", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dynamic Warmup", sets: 1, reps: "10 min", restSeconds: 0, notes: "Jog, high knees, butt kicks, leg swings"),
+                ProgramExerciseDefinition(exerciseName: "30m Sprints", sets: 8, reps: "100% effort", restSeconds: 60, notes: "Walk back recovery"),
+                ProgramExerciseDefinition(exerciseName: "60m Sprints", sets: 4, reps: "100% effort", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Cool Down Jog", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Hill Sprints", description: "Sprint uphill for power", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup Jog", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Hill Sprints", sets: 10, reps: "10-15 sec sprint up", restSeconds: 0, notes: "Walk down recovery (about 60 sec)"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Longer Sprints", description: "Extended sprint efforts", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "10 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "200m Sprints", sets: 6, reps: "90-95% effort", restSeconds: 120, notes: "Strong pace, not quite all-out"),
+                ProgramExerciseDefinition(exerciseName: "100m Sprint", sets: 2, reps: "100% effort", restSeconds: 90, notes: "Finish strong"),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(sprints)
 
         // 7. Boxing HIIT
@@ -1488,6 +3122,52 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        boxingHIIT.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Punch Combos", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Boxing Cardio", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Power Punches", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Boxing Circuit", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        boxingHIIT.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Punch Combos", description: "Learn and drill punch combinations", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Jump Rope (or Shadow)", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jab-Cross", sets: 6, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jab-Cross-Hook", sets: 6, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Jab-Cross-Hook-Uppercut", sets: 4, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Defensive Slips", sets: 3, reps: "30 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Boxing Cardio", description: "Cardio conditioning with boxing", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Shadow Boxing", sets: 3, reps: "3 min rounds", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "High Knees", sets: 2, reps: "30 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Burpees", sets: 2, reps: "30 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Shadow Boxing", sets: 2, reps: "3 min rounds", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Power Punches", description: "Focus on power shots", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Power Cross", sets: 5, reps: "10 hard punches each side", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Power Hooks", sets: 5, reps: "10 hard punches each side", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Uppercuts", sets: 5, reps: "10 hard punches each side", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Combo Finisher", sets: 3, reps: "2 min rounds", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Boxing Circuit", description: "Full boxing workout", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Jump Rope", sets: 1, reps: "3 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Shadow Boxing", sets: 1, reps: "3 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 1, reps: "20 reps", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Jab-Cross Combos", sets: 1, reps: "2 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 1, reps: "30 sec", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Hook-Uppercut Combos", sets: 1, reps: "2 min", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Burpees", sets: 1, reps: "10 reps", restSeconds: 30),
+                ProgramExerciseDefinition(exerciseName: "Repeat circuit 2x", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(boxingHIIT)
 
         // 8. AMRAP Challenge
@@ -1502,6 +3182,50 @@ struct ProgramData {
             goal: .endurance,
             equipmentRequired: ["Various"]
         )
+        amrap.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "AMRAP 12", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "AMRAP 15", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "AMRAP 10", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "AMRAP 20", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        amrap.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "AMRAP 12", description: "12 minute AMRAP", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "12 min AMRAP:", sets: 1, reps: "max rounds", restSeconds: 0, notes: "Complete as many rounds as possible"),
+                ProgramExerciseDefinition(exerciseName: "- Air Squats", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Push-ups", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Sit-ups", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "AMRAP 15", description: "15 minute AMRAP", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "15 min AMRAP:", sets: 1, reps: "max rounds", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Burpees", sets: 1, reps: "5 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Box Jumps/Step-ups", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- KB Swings", sets: 1, reps: "15 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "AMRAP 10", description: "Fast-paced 10 minute AMRAP", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "10 min AMRAP:", sets: 1, reps: "max rounds", restSeconds: 0, notes: "Move fast!"),
+                ProgramExerciseDefinition(exerciseName: "- Mountain Climbers", sets: 1, reps: "20 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Jumping Lunges", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Plank Hold", sets: 1, reps: "20 sec", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "AMRAP 20", description: "Extended 20 minute AMRAP", estimatedMinutes: 35, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "20 min AMRAP:", sets: 1, reps: "max rounds", restSeconds: 0, notes: "Pace yourself"),
+                ProgramExerciseDefinition(exerciseName: "- Goblet Squats", sets: 1, reps: "12 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Push-ups", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Rows", sets: 1, reps: "10 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Jumping Jacks", sets: 1, reps: "20 reps", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(amrap)
 
         // 9. Low Impact HIIT
@@ -1516,6 +3240,53 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        lowImpactHIIT.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Standing HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Floor HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Mixed Low Impact", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Low Impact Circuit", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        lowImpactHIIT.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Standing HIIT", description: "No jumping standing exercises", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup March", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Speed Squats (no jump)", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Alternating Lunges", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Knee Drives", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Speed Skaters (no jump)", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Floor HIIT", description: "Mat-based low impact", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Mountain Climbers (slow)", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Plank to Downward Dog", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Glute Bridges", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Dead Bugs", sets: 4, reps: "30 sec work / 20 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Mixed Low Impact", description: "Standing and floor combo", estimatedMinutes: 25, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "3 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Squat to Calf Raise", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Reverse Lunges", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bird Dogs", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Standing Side Crunches", sets: 3, reps: "30 sec work / 15 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Low Impact Circuit", description: "Complete low impact workout", estimatedMinutes: 30, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Marching High Knees", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Squats", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Lunges", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Plank", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Glute Bridges", sets: 1, reps: "45 sec", restSeconds: 15),
+                ProgramExerciseDefinition(exerciseName: "Repeat 3 rounds", sets: 1, reps: "circuit", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Cool Down & Stretch", sets: 1, reps: "5 min", restSeconds: 0)
+            ])
+        ]
         context.insert(lowImpactHIIT)
 
         // 10. HIIT and Lift
@@ -1530,6 +3301,58 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Dumbbells", "Barbell"]
         )
+        hiitLift.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Upper + HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Lower + HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Push + HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Pull + HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        hiitLift.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Upper + HIIT", description: "Upper body strength + HIIT finisher", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Bench Press", sets: 4, reps: "8-10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Bent Over Rows", sets: 4, reps: "8-10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Shoulder Press", sets: 3, reps: "10 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Face Pulls", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "HIIT Finisher: 8 min", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Burpees", sets: 4, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Mountain Climbers", sets: 4, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Lower + HIIT", description: "Lower body strength + HIIT finisher", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Squats", sets: 4, reps: "8-10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Romanian Deadlifts", sets: 4, reps: "10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Press", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "HIIT Finisher: 8 min", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Jump Squats (or fast squats)", sets: 4, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Walking Lunges", sets: 4, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Push + HIIT", description: "Push muscles + conditioning", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Incline Dumbbell Press", sets: 4, reps: "10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Flyes", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Lateral Raises", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Tricep Dips", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "HIIT Finisher: 10 min EMOM", sets: 1, reps: "total", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "- Push-ups", sets: 10, reps: "10 reps each minute", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ]),
+            ProgramWorkoutDefinition(name: "Pull + HIIT", description: "Pull muscles + conditioning", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Warmup", sets: 1, reps: "5 min", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Pull-ups or Lat Pulldown", sets: 4, reps: "8-10 reps", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Cable Rows", sets: 4, reps: "10 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Curls", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Hammer Curls", sets: 3, reps: "12 reps", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "HIIT Finisher: KB Swings", sets: 5, reps: "30 sec work / 30 sec rest", restSeconds: 0),
+                ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "3 min", restSeconds: 0)
+            ])
+        ]
         context.insert(hiitLift)
 
         // 11. 30-Day HIIT Challenge
@@ -1544,6 +3367,113 @@ struct ProgramData {
             goal: .fatloss,
             equipmentRequired: ["None"]
         )
+        hiitChallenge.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Cardio Blast", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Core Crusher", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Lower Body Burn", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Upper Body Blitz", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Full Body Fury", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Active Recovery HIIT", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        hiitChallenge.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Cardio Blast",
+                description: "Heart-pumping cardio intervals to torch calories",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up: Jumping Jacks", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "High Knees", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Drive knees to hip height"),
+                    ProgramExerciseDefinition(exerciseName: "Burpees", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Full chest to ground"),
+                    ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Fast pace"),
+                    ProgramExerciseDefinition(exerciseName: "Squat Jumps", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Explosive"),
+                    ProgramExerciseDefinition(exerciseName: "Plank Jacks", sets: 3, reps: "30 sec work", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Tuck Jumps", sets: 3, reps: "20 sec work", restSeconds: 20, notes: "Bring knees to chest"),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Core Crusher",
+                description: "Intense core-focused HIIT workout",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up: Torso Twists", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 3, reps: "45 sec", restSeconds: 15, notes: "Tight core"),
+                    ProgramExerciseDefinition(exerciseName: "Bicycle Crunches", sets: 4, reps: "30 sec", restSeconds: 10, notes: "Slow and controlled"),
+                    ProgramExerciseDefinition(exerciseName: "Russian Twists", sets: 4, reps: "30 sec", restSeconds: 10, notes: "Feet elevated"),
+                    ProgramExerciseDefinition(exerciseName: "Leg Raises", sets: 4, reps: "30 sec", restSeconds: 10, notes: "Lower slowly"),
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 3, reps: "30 sec", restSeconds: 10, notes: "Opposite arm and leg"),
+                    ProgramExerciseDefinition(exerciseName: "Flutter Kicks", sets: 3, reps: "30 sec", restSeconds: 10, notes: "Low back pressed down"),
+                    ProgramExerciseDefinition(exerciseName: "Mountain Climbers", sets: 3, reps: "30 sec", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down Stretch", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Lower Body Burn",
+                description: "Leg-focused HIIT to build strength and endurance",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up: Leg Swings", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Jump Squats", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Deep squat, explosive jump"),
+                    ProgramExerciseDefinition(exerciseName: "Alternating Lunges", sets: 4, reps: "30 sec work", restSeconds: 15, notes: "Knee to ground"),
+                    ProgramExerciseDefinition(exerciseName: "Sumo Squat Pulses", sets: 3, reps: "30 sec work", restSeconds: 15, notes: "Stay low"),
+                    ProgramExerciseDefinition(exerciseName: "Jump Lunges", sets: 4, reps: "30 sec work", restSeconds: 20, notes: "Switch in air"),
+                    ProgramExerciseDefinition(exerciseName: "Wall Sit", sets: 3, reps: "45 sec", restSeconds: 15, notes: "Thighs parallel"),
+                    ProgramExerciseDefinition(exerciseName: "Calf Raises", sets: 3, reps: "30 sec fast", restSeconds: 10),
+                    ProgramExerciseDefinition(exerciseName: "Glute Bridges", sets: 3, reps: "30 sec", restSeconds: 10, notes: "Squeeze at top"),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down Stretch", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Upper Body Blitz",
+                description: "Push and pull HIIT for upper body conditioning",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up: Arm Circles", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 4, reps: "30 sec", restSeconds: 15, notes: "Chest to ground"),
+                    ProgramExerciseDefinition(exerciseName: "Diamond Push-ups", sets: 3, reps: "20 sec", restSeconds: 15, notes: "Tricep focus"),
+                    ProgramExerciseDefinition(exerciseName: "Plank Shoulder Taps", sets: 4, reps: "30 sec", restSeconds: 15, notes: "Minimize hip sway"),
+                    ProgramExerciseDefinition(exerciseName: "Pike Push-ups", sets: 3, reps: "30 sec", restSeconds: 20, notes: "Shoulder focus"),
+                    ProgramExerciseDefinition(exerciseName: "Tricep Dips", sets: 4, reps: "30 sec", restSeconds: 15, notes: "Use chair or bench"),
+                    ProgramExerciseDefinition(exerciseName: "Plank to Push-up", sets: 3, reps: "30 sec", restSeconds: 15, notes: "Alternate leading arm"),
+                    ProgramExerciseDefinition(exerciseName: "Arm Pulses", sets: 2, reps: "30 sec", restSeconds: 10, notes: "Arms extended"),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down Stretch", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Body Fury",
+                description: "Total body HIIT for maximum calorie burn",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up: Light Jog in Place", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Burpees", sets: 4, reps: "30 sec", restSeconds: 15, notes: "Full range"),
+                    ProgramExerciseDefinition(exerciseName: "Jump Squats", sets: 3, reps: "30 sec", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 3, reps: "30 sec", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "High Knees", sets: 3, reps: "30 sec", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Plank Hold", sets: 2, reps: "45 sec", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Skaters", sets: 3, reps: "30 sec", restSeconds: 15, notes: "Side to side"),
+                    ProgramExerciseDefinition(exerciseName: "Commandos", sets: 3, reps: "30 sec", restSeconds: 15, notes: "Plank to push-up"),
+                    ProgramExerciseDefinition(exerciseName: "Sprawls", sets: 3, reps: "30 sec", restSeconds: 15, notes: "Drop and pop up"),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Active Recovery HIIT",
+                description: "Lower intensity intervals to promote recovery while staying active",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Light Jog in Place", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Marching in Place", sets: 3, reps: "1 min", restSeconds: 30, notes: "Moderate pace"),
+                    ProgramExerciseDefinition(exerciseName: "Bodyweight Squats", sets: 3, reps: "15 reps", restSeconds: 30, notes: "Controlled tempo"),
+                    ProgramExerciseDefinition(exerciseName: "Step Touches", sets: 3, reps: "1 min", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Standing Knee Hugs", sets: 2, reps: "1 min", restSeconds: 30, notes: "Alternate legs"),
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 2, reps: "1 min", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Gentle Lunges", sets: 2, reps: "10 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Standing Side Bends", sets: 2, reps: "1 min", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Full Body Stretch", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(hiitChallenge)
     }
 
@@ -1562,6 +3492,100 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["None"]
         )
+        dailyStretch.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Full Body Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Lower Body Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Upper Body Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Full Body Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Hip & Back Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Active Recovery", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: "Restorative Stretch", isRest: false)
+        ]
+        dailyStretch.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Full Body Stretch",
+                description: "Quick full body routine for daily maintenance",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Neck Circles", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow Stretch", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Side Bend", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Quad Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Lower Body Focus",
+                description: "Target legs and hips",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Ankle Circles", sets: 1, reps: "30 sec each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Calf Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Quad Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hamstring Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Figure Four Stretch", sets: 1, reps: "1 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Butterfly Stretch", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Upper Body Focus",
+                description: "Target shoulders, arms, and chest",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Stretch", sets: 1, reps: "30 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Tricep Stretch", sets: 1, reps: "30 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Doorway Stretch", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Upper Back Stretch", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wrist Stretches", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "45 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Hip & Back Focus",
+                description: "Target tight hips and lower back",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "1 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "1 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Active Recovery",
+                description: "Gentle movement with stretching",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Walking in Place", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Leg Swings", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Gentle Lunges", sets: 1, reps: "1 min alternating", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Side Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Ragdoll Forward Fold", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Restorative Stretch",
+                description: "Deep relaxation and gentle stretching",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "2 min", restSeconds: 0, notes: "Belly breathing"),
+                    ProgramExerciseDefinition(exerciseName: "Supported Child's Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Butterfly", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "1 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up the Wall", sets: 1, reps: "3 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(dailyStretch)
 
         // 2. Flexibility Overhaul
@@ -1681,6 +3705,86 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Blocks"]
         )
+        splits.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Front Split Left", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Front Split Right", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Middle Split", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Hip Prep", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Splits Practice", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        splits.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Front Split Left",
+                description: "Focus on left leg front split",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up Hip Circles", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge Left Leg Forward", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Sink hips down"),
+                    ProgramExerciseDefinition(exerciseName: "Half Split Left", sets: 1, reps: "2 min", restSeconds: 0, notes: "Straighten front leg"),
+                    ProgramExerciseDefinition(exerciseName: "Lizard Pose Left", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Hands inside front foot"),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose Left", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hamstring Stretch Left", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Front Split Left with Blocks", sets: 3, reps: "60 sec", restSeconds: 30, notes: "Use blocks for support")
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Front Split Right",
+                description: "Focus on right leg front split",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up Hip Circles", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge Right Leg Forward", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Sink hips down"),
+                    ProgramExerciseDefinition(exerciseName: "Half Split Right", sets: 1, reps: "2 min", restSeconds: 0, notes: "Straighten front leg"),
+                    ProgramExerciseDefinition(exerciseName: "Lizard Pose Right", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Hands inside front foot"),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose Right", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hamstring Stretch Right", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Front Split Right with Blocks", sets: 3, reps: "60 sec", restSeconds: 30, notes: "Use blocks for support")
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Middle Split",
+                description: "Focus on middle split (straddle)",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Warm Up Frog Rocks", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "2 min", restSeconds: 0, notes: "Knees wide, chest down"),
+                    ProgramExerciseDefinition(exerciseName: "Seated Straddle", sets: 1, reps: "2 min", restSeconds: 0, notes: "Fold forward"),
+                    ProgramExerciseDefinition(exerciseName: "Standing Straddle", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Hands on floor"),
+                    ProgramExerciseDefinition(exerciseName: "Wall Straddle", sets: 1, reps: "3 min", restSeconds: 0, notes: "Legs up wall, let gravity help"),
+                    ProgramExerciseDefinition(exerciseName: "Middle Split with Blocks", sets: 3, reps: "60 sec", restSeconds: 30, notes: "Hands on blocks")
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Hip Prep",
+                description: "Deep hip opening to support splits progress",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Stretch Left", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Stretch Right", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Butterfly Stretch", sets: 1, reps: "2 min", restSeconds: 0, notes: "Press knees down"),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Figure Four Each Side", sets: 1, reps: "90 sec each", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Squat Hold", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Splits Practice",
+                description: "Practice all splits with active stretching",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Dynamic Leg Swings", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Active Low Lunge Left", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Active Low Lunge Right", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Front Split Left", sets: 2, reps: "90 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Front Split Right", sets: 2, reps: "90 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Middle Split", sets: 2, reps: "90 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Cool Down Child's Pose", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(splits)
 
         // 4. Hip Opener Program
@@ -1695,6 +3799,70 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["None"]
         )
+        hipOpener.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Hip Flexor Focus", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "External Rotation", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Internal Rotation", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Complete Hip Circuit", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        hipOpener.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Hip Flexor Focus",
+                description: "Target tight hip flexors from sitting",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "1 min each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "90 sec each side", restSeconds: 0, notes: "Push hips forward"),
+                    ProgramExerciseDefinition(exerciseName: "Half Kneeling Hip Flexor Stretch", sets: 1, reps: "90 sec each side", restSeconds: 0, notes: "Squeeze glute"),
+                    ProgramExerciseDefinition(exerciseName: "Couch Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0, notes: "Foot against wall"),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hip Flexor Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "External Rotation",
+                description: "Improve hip external rotation",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "2 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Stretch", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Figure Four", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated External Rotation", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Fire Hydrant Circles", sets: 1, reps: "10 each direction each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Internal Rotation",
+                description: "Improve hip internal rotation",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Internal Rotation", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Half Frog Stretch", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Prone Internal Rotation", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Knee Drop", sets: 1, reps: "60 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Complete Hip Circuit",
+                description: "Full hip mobility routine",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip CARs", sets: 1, reps: "5 each direction each side", restSeconds: 0, notes: "Controlled Articular Rotations"),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Switch", sets: 1, reps: "10 transitions", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Squat Hold", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "90 sec", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(hipOpener)
 
         // 5. Upper Body Mobility
@@ -1709,6 +3877,74 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Foam Roller"]
         )
+        upperMobility.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Shoulder Mobility", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Thoracic Spine", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Chest & Lats", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Complete Upper Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        upperMobility.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Shoulder Mobility",
+                description: "Improve shoulder range of motion",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "1 min each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder CARs", sets: 1, reps: "5 each direction each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Slides", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Cross Body Shoulder Stretch", sets: 1, reps: "60 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Sleeper Stretch", sets: 1, reps: "60 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Doorway Stretch", sets: 1, reps: "60 sec each arm position", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Arm Overhead Stretch", sets: 1, reps: "45 sec each arm", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Thoracic Spine",
+                description: "Improve upper back mobility",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Foam Roll Thoracic Spine", sets: 1, reps: "2 min", restSeconds: 0, notes: "Roll upper/mid back"),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Open Book Stretch", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thoracic Extension Over Roller", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Quadruped Rotation", sets: 1, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose Reach", sets: 1, reps: "60 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Chest & Lats",
+                description: "Open up chest and lengthen lats",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Foam Roll Lats", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Foam Roll Chest", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Doorway Chest Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Floor Angels", sets: 2, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Lat Stretch on Wall", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose Lat Bias", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Prone Y Raises", sets: 2, reps: "10 reps", restSeconds: 30)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Complete Upper Body",
+                description: "Full upper body mobility routine",
+                estimatedMinutes: 25,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Foam Roll Full Upper Back", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder CARs", sets: 1, reps: "3 each direction each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wall Slides", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Doorway Chest Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Lat Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "30 sec each direction", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(upperMobility)
 
         // 6. Post-Workout Stretch
@@ -1723,6 +3959,87 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["None"]
         )
+        postWorkout.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Upper Body Cool Down", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Lower Body Cool Down", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Full Body Cool Down", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Cardio Cool Down", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Active Recovery Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        postWorkout.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Upper Body Cool Down",
+                description: "Stretch after upper body training",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cross Body Shoulder Stretch", sets: 1, reps: "45 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Tricep Stretch", sets: 1, reps: "45 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Doorway Stretch", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Lat Stretch", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Upper Back Stretch", sets: 1, reps: "60 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "45 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Lower Body Cool Down",
+                description: "Stretch after leg training",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Quad Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hamstring Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Flexor Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Glute Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Calf Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "IT Band Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Body Cool Down",
+                description: "Complete cool down after full body workout",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Cardio Cool Down",
+                description: "Stretch after running or cardio",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Walking Cool Down", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Quad Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Calf Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Flexor Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hamstring Stretch", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "IT Band Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Active Recovery Stretch",
+                description: "Light movement and stretching for recovery days",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Gentle Walking", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(postWorkout)
 
         // 7. Active Flexibility
@@ -1737,6 +4054,74 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Resistance Bands"]
         )
+        activeFlexibility.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Active Lower Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Active Upper Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Active Hips & Core", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Active Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        activeFlexibility.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Active Lower Body",
+                description: "Combine active movement with deep stretches",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Leg Swings", sets: 1, reps: "20 each leg each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Active Straight Leg Raises", sets: 3, reps: "10 each leg", restSeconds: 30, notes: "Controlled movement"),
+                    ProgramExerciseDefinition(exerciseName: "Banded Hip Flexor March", sets: 3, reps: "10 each leg", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Deep Squat Hold", sets: 3, reps: "45 sec", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Active Low Lunge", sets: 2, reps: "45 sec each side", restSeconds: 15),
+                    ProgramExerciseDefinition(exerciseName: "Banded Glute Bridges", sets: 3, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "90 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Active Upper Body",
+                description: "Dynamic shoulder and spine mobility",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "1 min each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Banded Pull Aparts", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Banded Shoulder Dislocates", sets: 3, reps: "10 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Active Hang", sets: 3, reps: "20 sec", restSeconds: 30, notes: "From bar or rings"),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow Flow", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle Active", sets: 2, reps: "10 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Stretch", sets: 1, reps: "60 sec each side", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Active Hips & Core",
+                description: "Core strength combined with hip mobility",
+                estimatedMinutes: 30,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip CARs", sets: 1, reps: "5 each direction each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 3, reps: "10 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Active Frog Rocks", sets: 3, reps: "15 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Copenhagen Plank", sets: 2, reps: "20 sec each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Banded Clamshells", sets: 3, reps: "15 each side", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Active Transitions", sets: 2, reps: "10 transitions", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby Rock", sets: 1, reps: "90 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Active Flow",
+                description: "Complete active flexibility session",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Dynamic Warm Up", sets: 1, reps: "3 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip CARs", sets: 1, reps: "3 each direction each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder CARs", sets: 1, reps: "3 each direction each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Active Low Lunge", sets: 2, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Banded Pull Aparts", sets: 2, reps: "12 reps", restSeconds: 30),
+                    ProgramExerciseDefinition(exerciseName: "Deep Squat Flow", sets: 2, reps: "10 reps", restSeconds: 30, notes: "Stand up between each"),
+                    ProgramExerciseDefinition(exerciseName: "World's Greatest Stretch", sets: 1, reps: "5 each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "60 sec each side", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(activeFlexibility)
 
         // 8. Morning Mobility
@@ -1751,6 +4136,74 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["None"]
         )
+        morningMobility.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Wake Up Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Energizing Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Wake Up Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Spine Awakening", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Wake Up Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Energizing Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: "Sunday Reset", isRest: false)
+        ]
+        morningMobility.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Wake Up Flow",
+                description: "Quick full body morning flow",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Bed Stretch", sets: 1, reps: "30 sec", restSeconds: 0, notes: "Full body reach"),
+                    ProgramExerciseDefinition(exerciseName: "Neck Rolls", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Side Bend", sets: 1, reps: "20 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Breath Stretch", sets: 1, reps: "30 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Energizing Stretch",
+                description: "Dynamic stretches to boost energy",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Leg Swings", sets: 1, reps: "15 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Hip Circles", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Torso Twist", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Jumping Jacks", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Knee Hugs", sets: 1, reps: "10 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Quad Pull", sets: 1, reps: "20 sec each leg", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Spine Awakening",
+                description: "Focus on spinal mobility",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Supine Knee Drop", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cobra Stretch", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Twist", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Reach", sets: 1, reps: "30 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Sunday Reset",
+                description: "Gentle start to the day",
+                estimatedMinutes: 12,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Gentle Breathing", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Stretch", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "45 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "45 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Full Body Reach", sets: 1, reps: "30 sec", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(morningMobility)
 
         // 9. Office Stretches
@@ -1765,6 +4218,75 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Chair"]
         )
+        officeStretches.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Desk Stretch Break", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Neck & Shoulder Relief", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Lower Body Desk Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Desk Stretch Break", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Full Desk Reset", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        officeStretches.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Desk Stretch Break",
+                description: "Quick full body stretch at your desk",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Neck Rolls", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Shrugs", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Twist", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wrist Circles", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Figure Four", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Calf Raise", sets: 1, reps: "15 reps", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Neck & Shoulder Relief",
+                description: "Target neck and shoulder tension from desk work",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Ear to Shoulder Stretch", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chin Tucks", sets: 1, reps: "10 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cross Body Shoulder Stretch", sets: 1, reps: "30 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Overhead Tricep Stretch", sets: 1, reps: "30 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Doorway Chest Stretch", sets: 1, reps: "45 sec", restSeconds: 0, notes: "Use door frame"),
+                    ProgramExerciseDefinition(exerciseName: "Upper Back Stretch", sets: 1, reps: "30 sec", restSeconds: 0, notes: "Clasp hands forward")
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Lower Body Desk Stretch",
+                description: "Target tight hips and legs from sitting",
+                estimatedMinutes: 10,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Seated Knee Lifts", sets: 1, reps: "10 each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Figure Four", sets: 1, reps: "45 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hip Flexor Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Quad Stretch", sets: 1, reps: "30 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Calf Raises", sets: 1, reps: "15 reps", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Ankle Circles", sets: 1, reps: "20 sec each direction each foot", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Forward Fold", sets: 1, reps: "45 sec", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Desk Reset",
+                description: "Complete desk stretching routine",
+                estimatedMinutes: 12,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Standing Arm Circles", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "30 sec each direction", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Stretch", sets: 1, reps: "20 sec each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Wrist Stretches", sets: 1, reps: "30 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Twist", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hip Flexor", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Figure Four", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Calf Stretch", sets: 1, reps: "20 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "1 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(officeStretches)
 
         // 10. Full Body Flexibility
@@ -1779,6 +4301,81 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["Yoga Mat", "Yoga Strap"]
         )
+        fullBodyFlex.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Lower Body Deep Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Upper Body & Spine", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Hips & Core", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Full Body Flow", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        fullBodyFlex.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Lower Body Deep Stretch",
+                description: "Comprehensive leg and hip flexibility",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Leg Swings", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Quad Stretch", sets: 1, reps: "90 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Standing Hamstring Stretch", sets: 1, reps: "90 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge with Strap", sets: 1, reps: "90 sec each side", restSeconds: 0, notes: "Pull back foot with strap"),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "2 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Forward Fold with Strap", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Hamstring Stretch with Strap", sets: 1, reps: "90 sec each leg", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Calf Stretch", sets: 1, reps: "60 sec each leg", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Upper Body & Spine",
+                description: "Shoulders, chest, back and spinal mobility",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Arm Circles", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder CARs", sets: 1, reps: "5 each direction each arm", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Stretch with Strap", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Hold strap behind back"),
+                    ProgramExerciseDefinition(exerciseName: "Lat Stretch", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Side Bend with Strap", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Hips & Core",
+                description: "Deep hip opening and core stretching",
+                estimatedMinutes: 35,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Hip CARs", sets: 1, reps: "5 each direction each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "90-90 Stretch", sets: 1, reps: "2 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Frog Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Lizard Pose", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Sphinx Pose", sets: 1, reps: "90 sec", restSeconds: 0, notes: "Core stretch"),
+                    ProgramExerciseDefinition(exerciseName: "Side Lying Quad Stretch", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Butterfly", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Full Body Flow",
+                description: "Complete flexibility session",
+                estimatedMinutes: 40,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Sun Salutation Flow", sets: 3, reps: "1 round", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold with Strap", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Low Lunge", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Pigeon Pose", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Straddle", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Chest Opener with Strap", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "60 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(fullBodyFlex)
 
         // 11. Bedtime Stretches
@@ -1793,6 +4390,73 @@ struct ProgramData {
             goal: .flexibility,
             equipmentRequired: ["None"]
         )
+        bedtimeStretch.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Relaxing Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Tension Release", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Relaxing Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Deep Relaxation", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Tension Release", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Relaxing Stretch", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: "Sunday Night Calm", isRest: false)
+        ]
+        bedtimeStretch.workoutDefinitions = [
+            ProgramWorkoutDefinition(
+                name: "Relaxing Stretch",
+                description: "Gentle full body stretch for sleep",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Seated Neck Stretch", sets: 1, reps: "30 sec each side", restSeconds: 0, notes: "Gentle, no strain"),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Rolls", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Seated Side Bend", sets: 1, reps: "30 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow", sets: 1, reps: "2 min", restSeconds: 0, notes: "Slow, with breath"),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "3 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Tension Release",
+                description: "Release daily stress and tension",
+                estimatedMinutes: 15,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Deep Breathing", sets: 1, reps: "2 min", restSeconds: 0, notes: "4-7-8 breathing"),
+                    ProgramExerciseDefinition(exerciseName: "Neck Stretches", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Shoulder Release", sets: 1, reps: "1 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Forward Fold Seated", sets: 1, reps: "2 min", restSeconds: 0, notes: "Let gravity work"),
+                    ProgramExerciseDefinition(exerciseName: "Reclined Figure Four", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Happy Baby", sets: 1, reps: "2 min", restSeconds: 0, notes: "Rock gently"),
+                    ProgramExerciseDefinition(exerciseName: "Savasana", sets: 1, reps: "2 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Deep Relaxation",
+                description: "Restorative stretching for deep rest",
+                estimatedMinutes: 18,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Body Scan Breathing", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supported Child's Pose", sets: 1, reps: "3 min", restSeconds: 0, notes: "Use pillow"),
+                    ProgramExerciseDefinition(exerciseName: "Supine Butterfly", sets: 1, reps: "3 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Knees to Chest", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Twist", sets: 1, reps: "2 min each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Legs Up Wall", sets: 1, reps: "5 min", restSeconds: 0)
+                ]
+            ),
+            ProgramWorkoutDefinition(
+                name: "Sunday Night Calm",
+                description: "Extra gentle routine to start the week rested",
+                estimatedMinutes: 20,
+                exercises: [
+                    ProgramExerciseDefinition(exerciseName: "Gentle Breathing", sets: 1, reps: "3 min", restSeconds: 0, notes: "Focus on exhale"),
+                    ProgramExerciseDefinition(exerciseName: "Neck Release", sets: 1, reps: "1 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Cat-Cow Very Slow", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Thread the Needle", sets: 1, reps: "90 sec each side", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Child's Pose", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Supine Butterfly", sets: 1, reps: "2 min", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Knees to Chest Rock", sets: 1, reps: "90 sec", restSeconds: 0),
+                    ProgramExerciseDefinition(exerciseName: "Savasana with Body Scan", sets: 1, reps: "5 min", restSeconds: 0)
+                ]
+            )
+        ]
         context.insert(bedtimeStretch)
     }
 

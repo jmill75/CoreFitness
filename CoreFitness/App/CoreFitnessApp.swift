@@ -12,6 +12,10 @@ class NavigationState: ObservableObject {
     @Published var showExercises: Bool = false
     @Published var pendingDeepLink: DeepLinkDestination?
 
+    // Workout invitation handling
+    @Published var pendingInvitationCode: String?
+    @Published var showInvitationResponse: Bool = false
+
     enum DeepLinkDestination {
         case waterIntake
         case dailyCheckIn
@@ -87,6 +91,7 @@ struct CoreFitnessApp: App {
             Workout.self,
             WorkoutExercise.self,
             WorkoutSession.self,
+            WorkoutInvitation.self,
             CompletedSet.self,
             // Program Models
             ProgramTemplate.self,
@@ -179,6 +184,8 @@ struct CoreFitnessApp: App {
                     NotificationManager.shared.configure(with: userProfileManager)
                     // Seed achievements on first launch
                     AchievementDefinitions.seedAchievements(in: context)
+                    // Seed exercises on first launch
+                    ExerciseData.seedExercises(in: context)
                     // Seed workout programs on first launch
                     ProgramData.seedPrograms(in: context)
                 }
@@ -223,6 +230,29 @@ struct CoreFitnessApp: App {
             default:
                 break
             }
+        }
+
+        // Handle workout invitation links
+        // Format: corefitness://invite/CODE
+        if url.host == "invite", let inviteCode = pathComponents.first {
+            handleInvitationDeepLink(code: inviteCode)
+        }
+    }
+
+    /// Handle workout invitation acceptance/decline from deep link
+    private func handleInvitationDeepLink(code: String) {
+        let context = sharedModelContainer.mainContext
+        let invitationService = WorkoutInvitationService()
+        invitationService.setModelContext(context)
+
+        if let invitation = invitationService.findInvitation(byCode: code) {
+            // Store the pending invitation for UI to handle
+            navigationState.pendingInvitationCode = code
+            navigationState.showInvitationResponse = true
+
+            print("Found invitation: \(invitation.workoutName) from \(invitation.senderDisplayName)")
+        } else {
+            print("Invitation not found for code: \(code)")
         }
     }
 }

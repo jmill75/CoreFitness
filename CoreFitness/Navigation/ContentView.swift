@@ -43,6 +43,7 @@ enum Tab: String, CaseIterable {
 struct MainTabView: View {
 
     @Binding var selectedTab: Tab
+    @EnvironmentObject var navigationState: NavigationState
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -79,6 +80,14 @@ struct MainTabView: View {
         .safeAreaInset(edge: .bottom, spacing: -10) {
             Color.clear.frame(height: 0)
         }
+        .sheet(isPresented: $navigationState.showInvitationResponse) {
+            if let inviteCode = navigationState.pendingInvitationCode {
+                InvitationResponseView(inviteCode: inviteCode)
+                    .onDisappear {
+                        navigationState.pendingInvitationCode = nil
+                    }
+            }
+        }
     }
 }
 
@@ -87,4 +96,5 @@ struct MainTabView: View {
         .environmentObject(AuthManager())
         .environmentObject(ThemeManager())
         .environmentObject(HealthKitManager())
+        .environmentObject(NavigationState())
 }

@@ -2388,9 +2388,12 @@ struct ExerciseListCard: View {
 // MARK: - Exercise Detail View
 struct ExerciseDetailView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userProfileManager: UserProfileManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     let exercise: Exercise
+
+    @State private var isVideoPlaying = false
 
     private var difficultyColor: Color {
         switch exercise.safeDifficulty {
@@ -2400,20 +2403,94 @@ struct ExerciseDetailView: View {
         }
     }
 
+    private var exerciseFallbackIcon: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.secondarySystemBackground))
+            Image(systemName: exercise.safeCategory.icon)
+                .font(.system(size: 56))
+                .foregroundStyle(Color(hex: "0ea5e9").opacity(0.6))
+        }
+        .frame(height: 220)
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(hex: "0ea5e9").opacity(0.15))
-                            .frame(width: 100, height: 100)
+                    // Exercise Video/GIF or Icon
+                    if let videoURL = exercise.videoURL,
+                       let url = URL(string: videoURL) {
+                        if userProfileManager.autoPlayExerciseVideos || isVideoPlaying {
+                            // Auto-play or manually triggered playback
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(Color(.secondarySystemBackground))
+                                        ProgressView()
+                                    }
+                                    .frame(height: 220)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxHeight: 220)
+                                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                                case .failure:
+                                    exerciseFallbackIcon
+                                @unknown default:
+                                    exerciseFallbackIcon
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                        } else {
+                            // Tap to play mode - show static placeholder with play button
+                            Button {
+                                withAnimation(.spring(response: 0.3)) {
+                                    isVideoPlaying = true
+                                }
+                                themeManager.lightImpact()
+                            } label: {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(Color(.secondarySystemBackground))
 
-                        Image(systemName: exercise.safeCategory.icon)
-                            .font(.system(size: 44))
-                            .foregroundStyle(Color(hex: "0ea5e9"))
+                                    VStack(spacing: 12) {
+                                        Image(systemName: exercise.safeCategory.icon)
+                                            .font(.system(size: 48))
+                                            .foregroundStyle(Color(hex: "0ea5e9").opacity(0.6))
+
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "play.circle.fill")
+                                                .font(.title2)
+                                            Text("Tap to Play Demo")
+                                                .font(.subheadline)
+                                                .fontWeight(.medium)
+                                        }
+                                        .foregroundStyle(Color(hex: "0ea5e9"))
+                                    }
+                                }
+                                .frame(height: 220)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                        }
+                    } else {
+                        ZStack {
+                            Circle()
+                                .fill(Color(hex: "0ea5e9").opacity(0.15))
+                                .frame(width: 100, height: 100)
+
+                            Image(systemName: exercise.safeCategory.icon)
+                                .font(.system(size: 44))
+                                .foregroundStyle(Color(hex: "0ea5e9"))
+                        }
+                        .padding(.top, 20)
                     }
-                    .padding(.top, 20)
 
                     VStack(spacing: 12) {
                         Text(exercise.name)
@@ -2529,4 +2606,5 @@ struct ExerciseStatCard: View {
         .environmentObject(WorkoutManager())
         .environmentObject(ThemeManager())
         .environmentObject(NavigationState())
+        .environmentObject(UserProfileManager())
 }

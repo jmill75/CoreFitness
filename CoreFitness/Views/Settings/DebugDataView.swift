@@ -433,6 +433,7 @@ struct DebugActionsView: View {
     @State private var successMessage = ""
 
     enum DeleteType: String, CaseIterable {
+        case exercises = "Exercises"
         case sessions = "Sessions"
         case completedSets = "Completed Sets"
         case personalRecords = "Personal Records"
@@ -477,10 +478,31 @@ struct DebugActionsView: View {
                 } label: {
                     Label("Seed Achievements", systemImage: "star.fill")
                 }
+
+                Button {
+                    ExerciseData.seedExercises(in: modelContext)
+                    showSuccess("Exercises seeded")
+                } label: {
+                    Label("Seed Exercises", systemImage: "figure.strengthtraining.traditional")
+                }
+
+                Button {
+                    reseedExercises()
+                } label: {
+                    Label("Reset & Reseed Exercises", systemImage: "arrow.counterclockwise")
+                }
+                .foregroundStyle(.orange)
+
+                Button {
+                    ProgramData.seedPrograms(in: modelContext)
+                    showSuccess("Programs seeded")
+                } label: {
+                    Label("Seed Programs", systemImage: "calendar")
+                }
             } header: {
                 Text("Seed Data")
             } footer: {
-                Text("Generate sample data for testing.")
+                Text("Generate sample data for testing. Use 'Reset & Reseed Exercises' to clear existing exercises and reload from scratch with video URLs.")
             }
 
             // Delete Data Section
@@ -621,9 +643,25 @@ struct DebugActionsView: View {
         showSuccess("Sample PRs generated")
     }
 
+    private func reseedExercises() {
+        do {
+            // Delete all existing exercises
+            try modelContext.delete(model: Exercise.self)
+            try modelContext.save()
+
+            // Reseed with fresh data including video URLs
+            ExerciseData.seedExercises(in: modelContext)
+            showSuccess("Exercises reset and reseeded")
+        } catch {
+            print("Failed to reseed exercises: \(error)")
+        }
+    }
+
     private func performDelete(_ type: DeleteType) {
         do {
             switch type {
+            case .exercises:
+                try modelContext.delete(model: Exercise.self)
             case .sessions:
                 try modelContext.delete(model: WorkoutSession.self)
             case .completedSets:

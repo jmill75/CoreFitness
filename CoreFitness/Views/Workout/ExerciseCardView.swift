@@ -3,6 +3,9 @@ import SwiftUI
 struct ExerciseCardView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userProfileManager: UserProfileManager
+
+    @State private var isVideoPlaying = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -75,19 +78,84 @@ struct ExerciseCardView: View {
             .padding()
             .background(.regularMaterial)
         }
+        .onChange(of: workoutManager.currentExerciseIndex) { _, _ in
+            // Reset video playback state when exercise changes
+            isVideoPlaying = false
+        }
     }
 
     // MARK: - Subviews
 
     private var exerciseInfoCard: some View {
         VStack(spacing: 16) {
+            // Exercise Video/GIF (if available)
+            if let videoURL = workoutManager.currentExercise?.exercise?.videoURL,
+               let url = URL(string: videoURL) {
+                if userProfileManager.autoPlayExerciseVideos || isVideoPlaying {
+                    // Auto-play or manually triggered playback
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color(.secondarySystemBackground))
+                                ProgressView()
+                            }
+                            .frame(height: 200)
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxHeight: 200)
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                        case .failure:
+                            exerciseFallbackIcon
+                        @unknown default:
+                            exerciseFallbackIcon
+                        }
+                    }
+                } else {
+                    // Tap to play mode - show static placeholder with play button
+                    Button {
+                        withAnimation(.spring(response: 0.3)) {
+                            isVideoPlaying = true
+                        }
+                        themeManager.lightImpact()
+                    } label: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.secondarySystemBackground))
+
+                            VStack(spacing: 12) {
+                                Image(systemName: workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(Color.accentOrange.opacity(0.6))
+
+                                HStack(spacing: 8) {
+                                    Image(systemName: "play.circle.fill")
+                                        .font(.title2)
+                                    Text("Tap to Play Demo")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundStyle(Color.brandPrimary)
+                            }
+                        }
+                        .frame(height: 200)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
             // Exercise icon and name
             HStack(spacing: 16) {
-                IconBadge(
-                    workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill",
-                    color: .accentOrange,
-                    size: 56
-                )
+                if workoutManager.currentExercise?.exercise?.videoURL == nil {
+                    IconBadge(
+                        workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill",
+                        color: .accentOrange,
+                        size: 56
+                    )
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
@@ -116,6 +184,19 @@ struct ExerciseCardView: View {
         .padding()
         .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var exerciseFallbackIcon: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+            IconBadge(
+                workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill",
+                color: .accentOrange,
+                size: 80
+            )
+        }
+        .frame(height: 200)
     }
 
     private var setIndicators: some View {
@@ -283,4 +364,5 @@ struct SetIndicator: View {
     ExerciseCardView()
         .environmentObject(WorkoutManager())
         .environmentObject(ThemeManager())
+        .environmentObject(UserProfileManager())
 }

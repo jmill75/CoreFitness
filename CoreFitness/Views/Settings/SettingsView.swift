@@ -5,6 +5,7 @@ struct SettingsView: View {
     // MARK: - Environment
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userProfileManager: UserProfileManager
 
     // MARK: - Bindings
     @Binding var selectedTab: Tab
@@ -91,8 +92,14 @@ struct SettingsView: View {
                     } label: {
                         Label("Units", systemImage: "scalemass.fill")
                     }
+
+                    Toggle(isOn: $userProfileManager.autoPlayExerciseVideos) {
+                        Label("Auto-Play Exercise Videos", systemImage: "play.circle.fill")
+                    }
                 } header: {
                     Text("Workout")
+                } footer: {
+                    Text("When enabled, exercise demonstration videos will play automatically. Disable to tap to play.")
                 }
 
                 // Feedback Section
@@ -1276,4 +1283,5 @@ struct InsightTypeRow: View {
     SettingsView(selectedTab: .constant(.settings))
         .environmentObject(AuthManager())
         .environmentObject(ThemeManager())
+        .environmentObject(UserProfileManager())
 }
