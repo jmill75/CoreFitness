@@ -88,75 +88,11 @@ struct ExerciseCardView: View {
 
     private var exerciseInfoCard: some View {
         VStack(spacing: 16) {
-            // Exercise Video/GIF (if available)
-            if let videoURL = workoutManager.currentExercise?.exercise?.videoURL,
-               let url = URL(string: videoURL) {
-                if userProfileManager.autoPlayExerciseVideos || isVideoPlaying {
-                    // Auto-play or manually triggered playback
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color(.secondarySystemBackground))
-                                ProgressView()
-                            }
-                            .frame(height: 200)
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxHeight: 200)
-                                .clipShape(RoundedRectangle(cornerRadius: 16))
-                        case .failure:
-                            exerciseFallbackIcon
-                        @unknown default:
-                            exerciseFallbackIcon
-                        }
-                    }
-                } else {
-                    // Tap to play mode - show static placeholder with play button
-                    Button {
-                        withAnimation(.spring(response: 0.3)) {
-                            isVideoPlaying = true
-                        }
-                        themeManager.lightImpact()
-                    } label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(.secondarySystemBackground))
+            // Exercise demonstration - static images with tap interaction
+            exerciseDemoView
 
-                            VStack(spacing: 12) {
-                                Image(systemName: workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill")
-                                    .font(.system(size: 48))
-                                    .foregroundStyle(Color.accentOrange.opacity(0.6))
-
-                                HStack(spacing: 8) {
-                                    Image(systemName: "play.circle.fill")
-                                        .font(.title2)
-                                    Text("Tap to Play Demo")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                }
-                                .foregroundStyle(Color.brandPrimary)
-                            }
-                        }
-                        .frame(height: 200)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-
-            // Exercise icon and name
+            // Exercise name and details
             HStack(spacing: 16) {
-                if workoutManager.currentExercise?.exercise?.videoURL == nil {
-                    IconBadge(
-                        workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill",
-                        color: .accentOrange,
-                        size: 56
-                    )
-                }
-
                 VStack(alignment: .leading, spacing: 4) {
                     Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
                         .font(.title2)
@@ -197,6 +133,73 @@ struct ExerciseCardView: View {
             )
         }
         .frame(height: 200)
+    }
+
+    // MARK: - Exercise Demo View (2 Static Images)
+    private var exerciseDemoView: some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isVideoPlaying.toggle()
+            }
+            themeManager.lightImpact()
+        } label: {
+            ZStack {
+                // Background
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        LinearGradient(
+                            colors: isVideoPlaying
+                                ? [Color.accentGreen.opacity(0.15), Color.accentGreen.opacity(0.05)]
+                                : [Color(.secondarySystemBackground), Color(.tertiarySystemBackground)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                // Content - switches between 2 states
+                VStack(spacing: 16) {
+                    // Exercise icon - changes based on state
+                    ZStack {
+                        // State 1: Ready position (larger, muted)
+                        Image(systemName: workoutManager.currentExercise?.exercise?.muscleGroup.icon ?? "dumbbell.fill")
+                            .font(.system(size: isVideoPlaying ? 40 : 56, weight: .medium))
+                            .foregroundStyle(
+                                isVideoPlaying
+                                    ? Color.accentGreen
+                                    : Color.accentOrange.opacity(0.6)
+                            )
+                            .scaleEffect(isVideoPlaying ? 1.1 : 1.0)
+
+                        // Animated ring when "playing"
+                        if isVideoPlaying {
+                            Circle()
+                                .stroke(Color.accentGreen.opacity(0.3), lineWidth: 3)
+                                .frame(width: 80, height: 80)
+                                .scaleEffect(isVideoPlaying ? 1.2 : 0.8)
+                                .opacity(isVideoPlaying ? 0 : 1)
+                                .animation(.easeOut(duration: 1.5).repeatForever(autoreverses: false), value: isVideoPlaying)
+                        }
+                    }
+
+                    // State label
+                    HStack(spacing: 8) {
+                        Image(systemName: isVideoPlaying ? "figure.run" : "figure.stand")
+                            .font(.title3)
+                        Text(isVideoPlaying ? "Exercise in Motion" : "Starting Position")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(isVideoPlaying ? Color.accentGreen : .secondary)
+
+                    // Tap hint
+                    Text("Tap to toggle")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .frame(height: 200)
+        }
+        .buttonStyle(.plain)
     }
 
     private var setIndicators: some View {

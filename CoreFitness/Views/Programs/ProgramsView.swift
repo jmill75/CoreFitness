@@ -2418,79 +2418,71 @@ struct ExerciseDetailView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Exercise Video/GIF or Icon
-                    if let videoURL = exercise.videoURL,
-                       let url = URL(string: videoURL) {
-                        if userProfileManager.autoPlayExerciseVideos || isVideoPlaying {
-                            // Auto-play or manually triggered playback
-                            AsyncImage(url: url) { phase in
-                                switch phase {
-                                case .empty:
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(Color(.secondarySystemBackground))
-                                        ProgressView()
-                                    }
-                                    .frame(height: 220)
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxHeight: 220)
-                                        .clipShape(RoundedRectangle(cornerRadius: 20))
-                                case .failure:
-                                    exerciseFallbackIcon
-                                @unknown default:
-                                    exerciseFallbackIcon
-                                }
-                            }
-                            .padding(.horizontal)
-                            .padding(.top, 20)
-                        } else {
-                            // Tap to play mode - show static placeholder with play button
-                            Button {
-                                withAnimation(.spring(response: 0.3)) {
-                                    isVideoPlaying = true
-                                }
-                                themeManager.lightImpact()
-                            } label: {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(Color(.secondarySystemBackground))
-
-                                    VStack(spacing: 12) {
-                                        Image(systemName: exercise.safeCategory.icon)
-                                            .font(.system(size: 48))
-                                            .foregroundStyle(Color(hex: "0ea5e9").opacity(0.6))
-
-                                        HStack(spacing: 8) {
-                                            Image(systemName: "play.circle.fill")
-                                                .font(.title2)
-                                            Text("Tap to Play Demo")
-                                                .font(.subheadline)
-                                                .fontWeight(.medium)
-                                        }
-                                        .foregroundStyle(Color(hex: "0ea5e9"))
-                                    }
-                                }
-                                .frame(height: 220)
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.horizontal)
-                            .padding(.top, 20)
+                    // Exercise Demo - 2 Static Images
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isVideoPlaying.toggle()
                         }
-                    } else {
+                        themeManager.lightImpact()
+                    } label: {
                         ZStack {
-                            Circle()
-                                .fill(Color(hex: "0ea5e9").opacity(0.15))
-                                .frame(width: 100, height: 100)
+                            // Background
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(
+                                    LinearGradient(
+                                        colors: isVideoPlaying
+                                            ? [Color.accentGreen.opacity(0.15), Color.accentGreen.opacity(0.05)]
+                                            : [Color(.secondarySystemBackground), Color(.tertiarySystemBackground)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
 
-                            Image(systemName: exercise.safeCategory.icon)
-                                .font(.system(size: 44))
-                                .foregroundStyle(Color(hex: "0ea5e9"))
+                            // Content - switches between 2 states
+                            VStack(spacing: 16) {
+                                // Exercise icon - changes based on state
+                                ZStack {
+                                    Image(systemName: exercise.safeCategory.icon)
+                                        .font(.system(size: isVideoPlaying ? 44 : 56, weight: .medium))
+                                        .foregroundStyle(
+                                            isVideoPlaying
+                                                ? Color.accentGreen
+                                                : Color(hex: "0ea5e9").opacity(0.6)
+                                        )
+                                        .scaleEffect(isVideoPlaying ? 1.1 : 1.0)
+
+                                    // Animated ring when "playing"
+                                    if isVideoPlaying {
+                                        Circle()
+                                            .stroke(Color.accentGreen.opacity(0.3), lineWidth: 3)
+                                            .frame(width: 90, height: 90)
+                                            .scaleEffect(isVideoPlaying ? 1.2 : 0.8)
+                                            .opacity(isVideoPlaying ? 0 : 1)
+                                            .animation(.easeOut(duration: 1.5).repeatForever(autoreverses: false), value: isVideoPlaying)
+                                    }
+                                }
+
+                                // State label
+                                HStack(spacing: 8) {
+                                    Image(systemName: isVideoPlaying ? "figure.run" : "figure.stand")
+                                        .font(.title3)
+                                    Text(isVideoPlaying ? "Exercise in Motion" : "Starting Position")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundStyle(isVideoPlaying ? Color.accentGreen : .secondary)
+
+                                // Tap hint
+                                Text("Tap to toggle position")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
                         }
-                        .padding(.top, 20)
+                        .frame(height: 220)
                     }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal)
+                    .padding(.top, 20)
 
                     VStack(spacing: 12) {
                         Text(exercise.name)
