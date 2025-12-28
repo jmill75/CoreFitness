@@ -31,7 +31,7 @@ struct ChallengesView: View {
         guard completedCount > 0 else { return "--" }
         var bestRank = Int.max
         for challenge in completedChallenges {
-            if let rank = challenge.sortedParticipants.firstIndex(where: { $0.oderId == "current_user" }) {
+            if let rank = challenge.sortedParticipants.firstIndex(where: { $0.ownerId == "current_user" }) {
                 bestRank = min(bestRank, rank + 1)
             }
         }
@@ -80,14 +80,16 @@ struct ChallengesView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 20)
 
-                    // Action Buttons
+                    // Action Buttons - Only show Join when active challenge exists
                     HStack(spacing: 12) {
-                        ActionButton(
-                            title: "Create",
-                            icon: "plus",
-                            color: Color(hex: "22c55e")
-                        ) {
-                            showCreateChallenge = true
+                        if activeChallenge == nil {
+                            ActionButton(
+                                title: "Create",
+                                icon: "plus",
+                                color: Color(hex: "22c55e")
+                            ) {
+                                showCreateChallenge = true
+                            }
                         }
 
                         ActionButton(
@@ -116,7 +118,7 @@ struct ChallengesView: View {
                         .padding(.top, 24)
 
                         // Your Stats Section
-                        if let userParticipant = challenge.participants?.first(where: { $0.oderId == "current_user" }) {
+                        if let userParticipant = challenge.participants?.first(where: { $0.ownerId == "current_user" }) {
                             VStack(alignment: .leading, spacing: 12) {
                                 SectionHeader(title: "Challenge Progress", action: nil) {}
 
@@ -192,7 +194,7 @@ struct ChallengesView: View {
         )
 
         let participant = ChallengeParticipant(
-            oderId: "current_user",
+            ownerId: "current_user",
             displayName: "You",
             avatarEmoji: "💪",
             isOwner: true
@@ -377,7 +379,7 @@ private struct ActiveChallengeHero: View {
                 SegmentedProgressIndicator(
                     currentDay: challenge.currentDay,
                     totalDays: challenge.durationDays,
-                    completedDays: challenge.participants?.first(where: { $0.oderId == "current_user" })?.completedDays ?? 0
+                    completedDays: challenge.participants?.first(where: { $0.ownerId == "current_user" })?.completedDays ?? 0
                 )
 
                 // Participants
@@ -488,7 +490,7 @@ private struct CompletedChallengeRow: View {
 
     private var resultColor: Color {
         // Check if user won (finished first)
-        if challenge.sortedParticipants.first?.oderId == "current_user" {
+        if challenge.sortedParticipants.first?.ownerId == "current_user" {
             return Color(hex: "22c55e")
         }
         return .secondary
@@ -501,7 +503,7 @@ private struct CompletedChallengeRow: View {
                     .fill(resultColor.opacity(0.15))
                     .frame(width: 44, height: 44)
 
-                Image(systemName: challenge.sortedParticipants.first?.oderId == "current_user" ? "trophy.fill" : "flag.checkered")
+                Image(systemName: challenge.sortedParticipants.first?.ownerId == "current_user" ? "trophy.fill" : "flag.checkered")
                     .font(.headline)
                     .foregroundStyle(resultColor)
             }
@@ -1315,9 +1317,9 @@ struct CreateChallengeView: View {
                                         .font(.headline)
                                         .fontWeight(.bold)
 
-                                    Text("(Optional)")
+                                    Text("(Required)")
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.orange)
                                 }
 
                                 // Selected contacts display
@@ -1376,11 +1378,12 @@ struct CreateChallengeView: View {
                     .padding(.top)
                 }
                 .background(.ultraThinMaterial)
+                .blur(radius: showConfirmationPopup ? 8 : 0)
+                .animation(.easeInOut(duration: 0.25), value: showConfirmationPopup)
 
                 // Blur overlay and confirmation popup
                 if showConfirmationPopup {
-                    Color.black.opacity(0.4)
-                        .background(.ultraThinMaterial)
+                    Color.black.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -1414,61 +1417,74 @@ struct CreateChallengeView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 if selectedTemplate != nil {
-                    Button {
-                        // Animate button press
-                        withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
-                            buttonScale = 0.95
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                buttonScale = 1.05
-                            }
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                            withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
-                                buttonScale = 1.0
-                            }
-                            // Show confirmation popup
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                                showConfirmationPopup = true
-                            }
+                    VStack(spacing: 8) {
+                        if selectedContacts.isEmpty {
+                            Text("Add at least one friend or family member to create a challenge")
+                                .font(.caption)
+                                .foregroundStyle(.orange)
+                                .multilineTextAlignment(.center)
                         }
 
-                        themeManager.mediumImpact()
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "sparkles")
-                                .font(.headline)
-                            Text("Create Challenge")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                        }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            ZStack {
-                                goalColor(selectedGoal!)
+                        Button {
+                            guard !selectedContacts.isEmpty else { return }
 
-                                // Glow effect
-                                goalColor(selectedGoal!)
-                                    .blur(radius: 20)
-                                    .opacity(buttonGlow)
+                            // Animate button press
+                            withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) {
+                                buttonScale = 0.95
                             }
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: goalColor(selectedGoal!).opacity(0.4), radius: 8, y: 4)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                    buttonScale = 1.05
+                                }
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                withAnimation(.spring(response: 0.2, dampingFraction: 0.7)) {
+                                    buttonScale = 1.0
+                                }
+                                // Show confirmation popup
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    showConfirmationPopup = true
+                                }
+                            }
+
+                            themeManager.mediumImpact()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "sparkles")
+                                    .font(.headline)
+                                Text("Create Challenge")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                ZStack {
+                                    selectedContacts.isEmpty ? Color.gray : goalColor(selectedGoal!)
+
+                                    // Glow effect
+                                    goalColor(selectedGoal!)
+                                        .blur(radius: 20)
+                                        .opacity(selectedContacts.isEmpty ? 0 : buttonGlow)
+                                }
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: (selectedContacts.isEmpty ? Color.gray : goalColor(selectedGoal!)).opacity(0.4), radius: 8, y: 4)
+                        }
+                        .disabled(selectedContacts.isEmpty)
+                        .scaleEffect(buttonScale)
+                        .onAppear {
+                            startButtonGlowAnimation()
+                        }
                     }
-                    .scaleEffect(buttonScale)
                     .padding()
                     .background(.ultraThinMaterial)
-                    .onAppear {
-                        startButtonGlowAnimation()
-                    }
                 }
             }
             .fullScreenCover(isPresented: $showContactPicker) {
                 ContactPickerView(selectedContacts: $selectedContacts)
+                    .background(.ultraThinMaterial)
             }
         }
     }
@@ -1500,7 +1516,7 @@ struct CreateChallengeView: View {
 
         // Add current user as owner
         let ownerParticipant = ChallengeParticipant(
-            oderId: "current_user",
+            ownerId: "current_user",
             displayName: "You",
             avatarEmoji: "💪",
             isOwner: true
@@ -1512,7 +1528,7 @@ struct CreateChallengeView: View {
         let emojis = ["😀", "🎯", "🔥", "⭐️", "🚀", "💫", "🌟", "✨"]
         for (index, contact) in selectedContacts.prefix(5).enumerated() {
             let participant = ChallengeParticipant(
-                oderId: contact.id,
+                ownerId: contact.id,
                 displayName: contact.name,
                 avatarEmoji: emojis[index % emojis.count],
                 isOwner: false
@@ -2090,7 +2106,7 @@ struct JoinChallengeView: View {
            let challenge = challenges.first {
             // Check if already a participant
             let currentUserId = "current_user"
-            if challenge.participants?.contains(where: { $0.oderId == currentUserId }) == true {
+            if challenge.participants?.contains(where: { $0.ownerId == currentUserId }) == true {
                 errorMessage = "You're already in this challenge!"
                 showError = true
                 return
@@ -2105,7 +2121,7 @@ struct JoinChallengeView: View {
 
             // Add participant
             let participant = ChallengeParticipant(
-                oderId: currentUserId,
+                ownerId: currentUserId,
                 displayName: "You",
                 avatarEmoji: ["😀", "🎯", "🔥", "⭐️", "🚀"].randomElement()!,
                 isOwner: false
@@ -2132,9 +2148,14 @@ struct ChallengeDetailView: View {
 
     @State private var showShareSheet = false
     @State private var showLeaveConfirmation = false
+    @State private var showShutdownSheet = false
 
     private var currentUserParticipant: ChallengeParticipant? {
-        challenge.participants?.first { $0.oderId == "current_user" }
+        challenge.participants?.first { $0.ownerId == "current_user" }
+    }
+
+    private var isOwner: Bool {
+        challenge.creatorId == "current_user"
     }
 
     private var goalColor: Color {
@@ -2250,7 +2271,7 @@ struct ChallengeDetailView: View {
                                     rank: index + 1,
                                     participant: participant,
                                     totalDays: challenge.durationDays,
-                                    isCurrentUser: participant.oderId == "current_user"
+                                    isCurrentUser: participant.ownerId == "current_user"
                                 )
                             }
                         }
@@ -2287,6 +2308,71 @@ struct ChallengeDetailView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
+
+                    // Shutdown Option (only for owner)
+                    if isOwner && !challenge.isCompleted && !challenge.isShutdown {
+                        VStack(spacing: 12) {
+                            Text("Challenge Management")
+                                .font(.headline)
+                                .fontWeight(.bold)
+
+                            Button {
+                                showShutdownSheet = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.headline)
+                                    Text("End Challenge Early")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                }
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.red.opacity(0.8))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+
+                            Text("This will notify all participants and end the challenge immediately")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 16)
+                    }
+
+                    // Show if challenge was shutdown
+                    if challenge.isShutdown {
+                        VStack(spacing: 12) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text("Challenge Ended Early")
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                            }
+
+                            if let reason = challenge.shutdownReason, !reason.isEmpty {
+                                Text("\"\(reason)\"")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .italic()
+                                    .multilineTextAlignment(.center)
+                            }
+
+                            if let date = challenge.shutdownDate {
+                                Text("Ended on \(date.formatted(date: .abbreviated, time: .omitted))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.orange.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .padding(.horizontal)
+                    }
                 }
                 .padding(.vertical)
             }
@@ -2297,7 +2383,122 @@ struct ChallengeDetailView: View {
                     DismissButton { dismiss() }
                 }
             }
+            .sheet(isPresented: $showShutdownSheet) {
+                ShutdownChallengeSheet(challenge: challenge) {
+                    dismiss()
+                }
+            }
         }
+    }
+}
+
+// MARK: - Shutdown Challenge Sheet
+struct ShutdownChallengeSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
+    let challenge: Challenge
+    let onShutdown: () -> Void
+
+    @State private var shutdownReason = ""
+    @FocusState private var isReasonFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Warning Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.15))
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.red)
+                }
+
+                // Title and description
+                VStack(spacing: 8) {
+                    Text("End Challenge?")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    Text("This will immediately end the challenge for all \(challenge.participants?.count ?? 0) participants. They will be notified.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                // Reason input
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Reason (shared with participants)")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+
+                    TextField("e.g., Schedule conflict, health issue, etc.", text: $shutdownReason, axis: .vertical)
+                        .textFieldStyle(.plain)
+                        .padding()
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .lineLimit(3...5)
+                        .focused($isReasonFocused)
+                }
+
+                Spacer()
+
+                // Buttons
+                VStack(spacing: 12) {
+                    Button {
+                        shutdownChallenge()
+                    } label: {
+                        Text("End Challenge")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.red)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Cancel")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+            .padding(24)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .onAppear {
+                isReasonFocused = true
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func shutdownChallenge() {
+        challenge.isShutdown = true
+        challenge.isActive = false
+        challenge.shutdownDate = Date()
+        challenge.shutdownReason = shutdownReason.isEmpty ? nil : shutdownReason
+        challenge.shutdownByUserId = "current_user"
+
+        try? modelContext.save()
+        themeManager.notifyWarning()
+
+        dismiss()
+        onShutdown()
     }
 }
 
@@ -2476,7 +2677,7 @@ private struct LeaderboardCard: View {
                             rank: index + 4,
                             participant: participant,
                             totalDays: totalDays,
-                            isCurrentUser: participant.oderId == "current_user"
+                            isCurrentUser: participant.ownerId == "current_user"
                         )
 
                         if index < remaining.count - 1 {
@@ -2593,7 +2794,7 @@ private struct PodiumPlace: View {
     }
 
     private var isCurrentUser: Bool {
-        participant.oderId == "current_user"
+        participant.ownerId == "current_user"
     }
 
     var body: some View {

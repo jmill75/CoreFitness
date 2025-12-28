@@ -43,26 +43,9 @@ class NotificationManager: ObservableObject {
     @Published var isAuthorized = false
     @Published var authorizationStatus: UNAuthorizationStatus = .notDetermined
 
-    // MARK: - App Storage (persisted settings)
-    @AppStorage("dailyCheckInReminderEnabled") var dailyCheckInReminderEnabled = false {
-        didSet {
-            Task {
-                await updateDailyCheckInNotification()
-            }
-        }
-    }
-
-    @AppStorage("dailyCheckInTime") private var checkInTimeRaw = CheckInTime.morning.rawValue
-
-    var dailyCheckInTime: CheckInTime {
-        get { CheckInTime(rawValue: checkInTimeRaw) ?? .morning }
-        set {
-            checkInTimeRaw = newValue.rawValue
-            Task {
-                await updateDailyCheckInNotification()
-            }
-        }
-    }
+    // MARK: - User Profile Manager Reference
+    /// Weak reference to avoid retain cycle - set by app initialization
+    weak var userProfileManager: UserProfileManager?
 
     // MARK: - Notification Identifiers
     private let dailyCheckInIdentifier = "com.corefitness.dailyCheckIn"
@@ -72,6 +55,22 @@ class NotificationManager: ObservableObject {
         Task {
             await checkAuthorizationStatus()
         }
+    }
+
+    /// Configure with UserProfileManager for settings sync
+    func configure(with profileManager: UserProfileManager) {
+        self.userProfileManager = profileManager
+    }
+
+    /// Get check-in time from UserProfileManager or default
+    var dailyCheckInTime: CheckInTime {
+        guard let raw = userProfileManager?.dailyCheckInTimeRaw else { return .morning }
+        return CheckInTime(rawValue: raw) ?? .morning
+    }
+
+    /// Get reminder enabled state from UserProfileManager
+    var dailyCheckInReminderEnabled: Bool {
+        userProfileManager?.dailyCheckInReminderEnabled ?? false
     }
 
     // MARK: - Check Authorization Status

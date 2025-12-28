@@ -416,7 +416,7 @@ struct RecentActivityRow: View {
     NavigationStack {
         ChallengeStatsView(
             challenge: Challenge(name: "30-Day Fitness", creatorId: "user123"),
-            participant: ChallengeParticipant(oderId: "user123", displayName: "You", isOwner: true)
+            participant: ChallengeParticipant(ownerId: "user123", displayName: "You", isOwner: true)
         )
     }
 }

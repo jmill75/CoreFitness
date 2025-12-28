@@ -47,6 +47,12 @@ final class Challenge {
     var isActive: Bool = true
     var createdAt: Date = Date()
 
+    // Shutdown/cancellation fields
+    var isShutdown: Bool = false
+    var shutdownDate: Date?
+    var shutdownReason: String?
+    var shutdownByUserId: String?
+
     // Relationships
     @Relationship(deleteRule: .cascade, inverse: \ChallengeParticipant.challenge)
     var participants: [ChallengeParticipant]?
@@ -118,7 +124,7 @@ final class Challenge {
 @Model
 final class ChallengeParticipant {
     var id: UUID = UUID()
-    var oderId: String = ""
+    var ownerId: String = ""
     var displayName: String = ""
     var avatarEmoji: String = "😀"
     var joinedAt: Date = Date()
@@ -179,13 +185,13 @@ final class ChallengeParticipant {
 
     init(
         id: UUID = UUID(),
-        oderId: String,
+        ownerId: String,
         displayName: String,
         avatarEmoji: String = "😀",
         isOwner: Bool = false
     ) {
         self.id = id
-        self.oderId = oderId
+        self.ownerId = ownerId
         self.displayName = displayName
         self.avatarEmoji = avatarEmoji
         self.joinedAt = Date()
@@ -532,6 +538,50 @@ enum ChallengeLocation: String, Codable, CaseIterable {
     }
 }
 
+// MARK: - Challenge Configuration
+struct ChallengeConfiguration {
+    let dailyRequirements: [String]
+    let weeklyGoals: [String]
+    let metricsToTrack: [ChallengeMetric]
+    let checkInInstructions: String
+    let successCriteria: String
+    let tips: [String]
+}
+
+enum ChallengeMetric: String, Codable {
+    case distance = "Distance"
+    case duration = "Duration"
+    case calories = "Calories"
+    case heartRate = "Heart Rate"
+    case weight = "Weight"
+    case bodyWeight = "Body Weight"
+    case reps = "Reps"
+    case sets = "Sets"
+    case sleepHours = "Sleep Hours"
+    case waterIntake = "Water Intake"
+    case meditation = "Meditation"
+    case steps = "Steps"
+    case photos = "Progress Photos"
+
+    var icon: String {
+        switch self {
+        case .distance: return "figure.run"
+        case .duration: return "clock.fill"
+        case .calories: return "flame.fill"
+        case .heartRate: return "heart.fill"
+        case .weight: return "dumbbell.fill"
+        case .bodyWeight: return "scalemass.fill"
+        case .reps: return "repeat"
+        case .sets: return "number"
+        case .sleepHours: return "moon.fill"
+        case .waterIntake: return "drop.fill"
+        case .meditation: return "brain.head.profile"
+        case .steps: return "figure.walk"
+        case .photos: return "camera.fill"
+        }
+    }
+}
+
 // MARK: - Challenge Templates
 struct ChallengeTemplate: Identifiable {
     let id = UUID()
@@ -542,79 +592,460 @@ struct ChallengeTemplate: Identifiable {
     let location: ChallengeLocation
     let difficulty: Difficulty
     let icon: String
+    let configuration: ChallengeConfiguration
 
     static let templates: [ChallengeTemplate] = [
+        // MARK: - Cardio Challenges
         ChallengeTemplate(
-            name: "30-Day Fitness Challenge",
-            description: "Complete a workout every day for 30 days. Build consistency and transform your habits.",
-            durationDays: 30,
-            goalType: .fitness,
+            name: "7-Day Cardio Kickstart",
+            description: "Jump-start your cardio fitness with daily 20-minute sessions. Perfect for building the exercise habit.",
+            durationDays: 7,
+            goalType: .cardio,
             location: .anywhere,
-            difficulty: .intermediate,
-            icon: "flame.fill"
-        ),
-        ChallengeTemplate(
-            name: "21-Day Core Challenge",
-            description: "Strengthen your core with daily ab workouts. Perfect for beginners.",
-            durationDays: 21,
-            goalType: .strength,
-            location: .home,
             difficulty: .beginner,
-            icon: "figure.core.training"
-        ),
-        ChallengeTemplate(
-            name: "30-Day Yoga Journey",
-            description: "Daily yoga practice to improve flexibility, balance, and mindfulness.",
-            durationDays: 30,
-            goalType: .flexibility,
-            location: .home,
-            difficulty: .beginner,
-            icon: "figure.yoga"
+            icon: "heart.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 20+ minutes of cardio activity",
+                    "Log your distance or time",
+                    "Check in before 8 PM"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 days",
+                    "Total 2+ hours of cardio",
+                    "Track heart rate in at least 3 sessions"
+                ],
+                metricsToTrack: [.duration, .distance, .heartRate, .calories],
+                checkInInstructions: "After your cardio session, log your time, distance (if applicable), and how you felt. Use the timer feature for accurate tracking.",
+                successCriteria: "Complete cardio activity and check in daily. Missing a day breaks your streak!",
+                tips: [
+                    "Start with walking if running is too intense",
+                    "Morning workouts help build consistency",
+                    "Stay hydrated before and after"
+                ]
+            )
         ),
         ChallengeTemplate(
             name: "14-Day HIIT Sprint",
-            description: "Intense high-intensity interval training for maximum calorie burn.",
+            description: "Intense high-intensity intervals. Burn maximum calories and boost metabolism with short, powerful workouts.",
             durationDays: 14,
             goalType: .cardio,
             location: .anywhere,
             difficulty: .advanced,
-            icon: "bolt.fill"
+            icon: "bolt.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 15-30 minute HIIT session",
+                    "Reach target heart rate zone (80%+ max)",
+                    "Log calories burned"
+                ],
+                weeklyGoals: [
+                    "Complete 6 out of 7 days minimum",
+                    "Burn 2000+ calories total",
+                    "Improve recovery time between intervals"
+                ],
+                metricsToTrack: [.duration, .heartRate, .calories],
+                checkInInstructions: "Complete your HIIT workout and log the duration, peak heart rate, and estimated calories. Rate your effort level.",
+                successCriteria: "Push yourself with high-intensity effort. Track your heart rate to ensure you're reaching training zones.",
+                tips: [
+                    "Rest days are important for recovery",
+                    "Warm up properly before intense intervals",
+                    "Listen to your body - scale back if needed"
+                ]
+            )
         ),
         ChallengeTemplate(
             name: "30-Day Running Challenge",
-            description: "Run or jog daily, gradually increasing distance and endurance.",
+            description: "Build endurance and distance over 30 days. Start at your level and progressively increase weekly mileage.",
             durationDays: 30,
-            goalType: .endurance,
+            goalType: .cardio,
             location: .outdoor,
             difficulty: .intermediate,
-            icon: "figure.run"
+            icon: "figure.run",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Run or jog (distance varies by week)",
+                    "Week 1: 1-2 miles, Week 4: 3-4 miles",
+                    "Log distance, time, and pace"
+                ],
+                weeklyGoals: [
+                    "Week 1: 8 miles total",
+                    "Week 2: 12 miles total",
+                    "Week 3: 15 miles total",
+                    "Week 4: 18 miles total"
+                ],
+                metricsToTrack: [.distance, .duration, .heartRate, .steps],
+                checkInInstructions: "After each run, log your distance, time, and average pace. Note how you felt and any observations about your progress.",
+                successCriteria: "Complete the daily mileage and progressively increase your weekly totals. Rest days are built in.",
+                tips: [
+                    "Invest in good running shoes",
+                    "Vary your routes to stay motivated",
+                    "Include one long slow run per week"
+                ]
+            )
+        ),
+
+        // MARK: - Strength Challenges
+        ChallengeTemplate(
+            name: "21-Day Core Challenge",
+            description: "Sculpt and strengthen your core with daily targeted exercises. Build a strong foundation for all movement.",
+            durationDays: 21,
+            goalType: .strength,
+            location: .home,
+            difficulty: .beginner,
+            icon: "figure.core.training",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 10-15 minute core workout",
+                    "Perform at least 4 different exercises",
+                    "Hold planks for cumulative 2+ minutes"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 days each week",
+                    "Increase plank hold time weekly",
+                    "Add exercise variations as you progress"
+                ],
+                metricsToTrack: [.duration, .reps, .sets],
+                checkInInstructions: "Log each core exercise with reps completed. Track your longest plank hold. Note any exercises that felt challenging.",
+                successCriteria: "Complete daily core workout focusing on form over speed. Aim for progressive improvement in hold times.",
+                tips: [
+                    "Focus on form, not speed",
+                    "Breathe steadily during exercises",
+                    "Engage your core throughout the day"
+                ]
+            )
         ),
         ChallengeTemplate(
             name: "21-Day Strength Builder",
-            description: "Progressive strength training to build muscle and power.",
+            description: "Progressive resistance training to build muscle and increase strength. Perfect for gym-goers ready to level up.",
             durationDays: 21,
             goalType: .muscle,
             location: .gym,
             difficulty: .intermediate,
-            icon: "dumbbell.fill"
+            icon: "dumbbell.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete scheduled workout (Push/Pull/Legs split)",
+                    "Track all weights, sets, and reps",
+                    "Rest 1-2 days per week as scheduled"
+                ],
+                weeklyGoals: [
+                    "Complete 5 strength sessions",
+                    "Increase weight on at least 2 exercises weekly",
+                    "Track total volume lifted"
+                ],
+                metricsToTrack: [.weight, .reps, .sets, .duration],
+                checkInInstructions: "Log every exercise with weight, sets, and reps. Mark any personal records. Rate workout intensity 1-10.",
+                successCriteria: "Follow the training split, progressively overload weights, and maintain proper form. Track PRs!",
+                tips: [
+                    "Progressive overload is key",
+                    "Prioritize compound movements",
+                    "Get 7-8 hours of sleep for recovery"
+                ]
+            )
         ),
         ChallengeTemplate(
+            name: "30-Day Full Body Transformation",
+            description: "Comprehensive strength program hitting all muscle groups. Build balanced strength and muscle definition.",
+            durationDays: 30,
+            goalType: .muscle,
+            location: .gym,
+            difficulty: .advanced,
+            icon: "figure.strengthtraining.traditional",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Follow daily workout program",
+                    "5-6 training days per week",
+                    "Log all exercises with full details"
+                ],
+                weeklyGoals: [
+                    "Hit each muscle group 2x per week",
+                    "Increase total weekly volume",
+                    "Set at least 1 new PR per week"
+                ],
+                metricsToTrack: [.weight, .reps, .sets, .duration, .photos],
+                checkInInstructions: "Complete workout logging with weights, reps, and sets. Take weekly progress photos on the same day each week.",
+                successCriteria: "Consistent training with progressive overload. Complete 24+ workouts in 30 days.",
+                tips: [
+                    "Nutrition is 80% of results",
+                    "Take rest days seriously",
+                    "Document your transformation with photos"
+                ]
+            )
+        ),
+
+        // MARK: - Weight Loss Challenges
+        ChallengeTemplate(
+            name: "30-Day Weight Loss Kickoff",
+            description: "Structured approach to healthy weight loss. Combine activity with daily check-ins and accountability.",
+            durationDays: 30,
+            goalType: .weightLoss,
+            location: .anywhere,
+            difficulty: .beginner,
+            icon: "scalemass.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 30+ minutes of activity",
+                    "Log daily weight (morning, before eating)",
+                    "Track water intake (8+ glasses)"
+                ],
+                weeklyGoals: [
+                    "Lose 1-2 lbs per week (healthy rate)",
+                    "Complete 5+ active days",
+                    "Drink 56+ oz water daily average"
+                ],
+                metricsToTrack: [.bodyWeight, .steps, .waterIntake, .calories, .photos],
+                checkInInstructions: "Weigh yourself each morning and log it. Record your activity for the day and water intake. Weekly progress photos recommended.",
+                successCriteria: "Consistent daily check-ins with weight, activity, and hydration. Focus on trends over daily fluctuations.",
+                tips: [
+                    "Weight fluctuates daily - track weekly averages",
+                    "Take progress photos in same lighting",
+                    "Small sustainable changes beat crash diets"
+                ]
+            )
+        ),
+        ChallengeTemplate(
+            name: "60-Day Body Transformation",
+            description: "Comprehensive weight loss journey with structured phases. Sustainable approach for lasting results.",
+            durationDays: 60,
+            goalType: .weightLoss,
+            location: .anywhere,
+            difficulty: .intermediate,
+            icon: "figure.walk.motion",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete daily activity (type varies by phase)",
+                    "Log weight, measurements, and activity",
+                    "Track meals and water intake"
+                ],
+                weeklyGoals: [
+                    "Phase 1 (Days 1-20): Build habits, 10k steps daily",
+                    "Phase 2 (Days 21-40): Add strength training",
+                    "Phase 3 (Days 41-60): Optimize and maintain"
+                ],
+                metricsToTrack: [.bodyWeight, .steps, .duration, .calories, .waterIntake, .photos],
+                checkInInstructions: "Daily check-in with weight, activity completed, and how you're feeling. Take measurements and photos every 2 weeks.",
+                successCriteria: "Follow the phased approach. Aim for 8-15 lbs total loss (depends on starting point). Focus on building lasting habits.",
+                tips: [
+                    "This is a marathon, not a sprint",
+                    "Celebrate non-scale victories",
+                    "Build habits that last beyond 60 days"
+                ]
+            )
+        ),
+
+        // MARK: - Wellness Challenges
+        ChallengeTemplate(
+            name: "7-Day Wellness Reset",
+            description: "Quick mental and physical reset. Focus on sleep, hydration, movement, and mindfulness.",
+            durationDays: 7,
+            goalType: .wellness,
+            location: .anywhere,
+            difficulty: .beginner,
+            icon: "leaf.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "10 minutes of mindfulness/meditation",
+                    "8+ glasses of water",
+                    "7+ hours of sleep",
+                    "20+ minutes of gentle movement"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 days",
+                    "Improve sleep quality score",
+                    "Reduce stress levels"
+                ],
+                metricsToTrack: [.meditation, .waterIntake, .sleepHours, .steps],
+                checkInInstructions: "Log your meditation time, water intake, sleep hours, and movement. Rate your stress and energy levels 1-10.",
+                successCriteria: "Complete all four daily wellness activities. Notice improvements in energy and mood by day 7.",
+                tips: [
+                    "Meditate at the same time each day",
+                    "Keep a water bottle with you",
+                    "Create a bedtime routine"
+                ]
+            )
+        ),
+        ChallengeTemplate(
+            name: "21-Day Mindfulness Journey",
+            description: "Develop a sustainable meditation practice. Build mental resilience and reduce stress through daily mindfulness.",
+            durationDays: 21,
+            goalType: .wellness,
+            location: .home,
+            difficulty: .beginner,
+            icon: "brain.head.profile",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete daily guided meditation",
+                    "Week 1: 5 min, Week 2: 10 min, Week 3: 15 min",
+                    "Journal one gratitude or reflection"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 meditation sessions",
+                    "Try different meditation styles",
+                    "Notice and log stress reduction"
+                ],
+                metricsToTrack: [.meditation, .sleepHours],
+                checkInInstructions: "Log your meditation session and duration. Write a brief reflection or gratitude note. Track your mood and stress levels.",
+                successCriteria: "Build a daily meditation habit. Progress from 5 to 15 minute sessions. Notice improved focus and reduced stress.",
+                tips: [
+                    "Same time, same place builds habit",
+                    "Start smaller if needed - even 2 min counts",
+                    "Use guided meditations to start"
+                ]
+            )
+        ),
+        ChallengeTemplate(
+            name: "30-Day Total Wellness",
+            description: "Holistic approach combining exercise, nutrition awareness, sleep, and mindfulness for complete well-being.",
+            durationDays: 30,
+            goalType: .wellness,
+            location: .anywhere,
+            difficulty: .intermediate,
+            icon: "heart.circle.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "30 min exercise (any type)",
+                    "10 min meditation",
+                    "Log sleep and rate quality",
+                    "Track water and note one healthy meal choice"
+                ],
+                weeklyGoals: [
+                    "5+ workout days",
+                    "7 meditation sessions",
+                    "Average 7+ hours sleep",
+                    "Hit daily water goals 6/7 days"
+                ],
+                metricsToTrack: [.duration, .meditation, .sleepHours, .waterIntake, .steps],
+                checkInInstructions: "Complete daily log of exercise, meditation, sleep, and hydration. Rate overall well-being 1-10. Weekly reflection on progress.",
+                successCriteria: "Consistent engagement across all wellness pillars. Build sustainable habits that improve quality of life.",
+                tips: [
+                    "Balance is key - don't neglect any area",
+                    "Progress over perfection",
+                    "Connect with your challenge partners for support"
+                ]
+            )
+        ),
+
+        // MARK: - Fitness (General) Challenges
+        ChallengeTemplate(
             name: "7-Day Kickstart",
-            description: "A quick week-long challenge to jumpstart your fitness journey.",
+            description: "Quick week to build momentum. Complete any workout daily and establish the exercise habit.",
             durationDays: 7,
             goalType: .fitness,
             location: .home,
             difficulty: .beginner,
-            icon: "star.fill"
+            icon: "star.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 20+ minute workout (any type)",
+                    "Check in with workout details",
+                    "Stay consistent all 7 days"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 days - no misses!",
+                    "Try at least 3 different workout types",
+                    "Build the daily exercise habit"
+                ],
+                metricsToTrack: [.duration, .calories],
+                checkInInstructions: "Log your workout type, duration, and how you felt. Celebrate completing each day!",
+                successCriteria: "Complete some form of exercise every single day for 7 days. Variety is encouraged!",
+                tips: [
+                    "Choose workouts you enjoy",
+                    "Lay out workout clothes the night before",
+                    "7 days is just the beginning!"
+                ]
+            )
         ),
         ChallengeTemplate(
-            name: "30-Day Wellness Reset",
-            description: "Holistic challenge combining exercise, mindfulness, and healthy habits.",
+            name: "30-Day Fitness Challenge",
+            description: "Build lasting fitness habits over 30 days. Complete daily workouts and transform your routine.",
             durationDays: 30,
-            goalType: .wellness,
+            goalType: .fitness,
             location: .anywhere,
+            difficulty: .intermediate,
+            icon: "flame.fill",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete scheduled workout (varies by day)",
+                    "Mix of cardio, strength, and flexibility",
+                    "Rest 1 day per week"
+                ],
+                weeklyGoals: [
+                    "Complete 6 workout days",
+                    "Include 2 cardio, 2 strength, 2 flex/recovery",
+                    "Progressive intensity increase"
+                ],
+                metricsToTrack: [.duration, .calories, .heartRate],
+                checkInInstructions: "Log each workout with type, duration, and intensity. Track how your fitness improves over the 30 days.",
+                successCriteria: "Complete 26+ workouts in 30 days. Notice improvements in endurance, strength, and energy.",
+                tips: [
+                    "Follow a balanced approach",
+                    "Recovery days are just as important",
+                    "Track your progress to stay motivated"
+                ]
+            )
+        ),
+
+        // MARK: - Flexibility Challenges
+        ChallengeTemplate(
+            name: "30-Day Yoga Journey",
+            description: "Daily yoga practice to improve flexibility, balance, and mindfulness. All levels welcome.",
+            durationDays: 30,
+            goalType: .flexibility,
+            location: .home,
             difficulty: .beginner,
-            icon: "leaf.fill"
+            icon: "figure.yoga",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete 15-30 minute yoga session",
+                    "Follow along with guided practice",
+                    "Focus on breath and form"
+                ],
+                weeklyGoals: [
+                    "Complete all 7 days",
+                    "Try different yoga styles",
+                    "Notice flexibility improvements"
+                ],
+                metricsToTrack: [.duration, .meditation],
+                checkInInstructions: "Log your yoga session duration and style (vinyasa, yin, power, etc.). Note any poses that felt easier than before.",
+                successCriteria: "Consistent daily practice. Notice improved flexibility, balance, and mental clarity by day 30.",
+                tips: [
+                    "Listen to your body",
+                    "Modifications are always okay",
+                    "Breath is as important as poses"
+                ]
+            )
+        ),
+
+        // MARK: - Endurance Challenges
+        ChallengeTemplate(
+            name: "30-Day Endurance Builder",
+            description: "Systematically increase your cardiovascular endurance through progressive training.",
+            durationDays: 30,
+            goalType: .endurance,
+            location: .outdoor,
+            difficulty: .intermediate,
+            icon: "figure.run",
+            configuration: ChallengeConfiguration(
+                dailyRequirements: [
+                    "Complete endurance session (running, cycling, swimming)",
+                    "Duration increases weekly",
+                    "Week 1: 20min, Week 4: 45min+"
+                ],
+                weeklyGoals: [
+                    "5 endurance sessions per week",
+                    "Increase weekly duration by 15%",
+                    "Improve heart rate recovery"
+                ],
+                metricsToTrack: [.duration, .distance, .heartRate, .calories],
+                checkInInstructions: "Log activity type, duration, distance, and average heart rate. Track your recovery heart rate improvement.",
+                successCriteria: "Progressive improvement in endurance capacity. Complete longer sessions with better recovery by end of challenge.",
+                tips: [
+                    "Increase duration gradually",
+                    "Zone 2 training builds base fitness",
+                    "Recovery is when adaptation happens"
+                ]
+            )
         )
     ]
 }

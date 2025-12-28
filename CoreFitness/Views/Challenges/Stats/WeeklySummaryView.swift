@@ -341,7 +341,7 @@ struct WeekCard: View {
 #Preview {
     NavigationStack {
         WeeklySummaryView(
-            participant: ChallengeParticipant(oderId: "user123", displayName: "You", isOwner: true),
+            participant: ChallengeParticipant(ownerId: "user123", displayName: "You", isOwner: true),
             challenge: Challenge(name: "30-Day Fitness", creatorId: "user123")
         )
     }

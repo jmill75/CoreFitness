@@ -696,6 +696,8 @@ final class UserProfile {
     var lastCheckInSoreness: Double = 2
     var lastCheckInStress: Double = 2
     var lastCheckInSleep: Double = 3
+    var lastCheckInEnergy: Double = 3
+    var checkInStreak: Int = 0
 
     // Sync Tracking
     var lastModified: Date = Date()

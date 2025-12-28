@@ -219,118 +219,78 @@ struct WorkoutCompleteView: View {
         let screenWidth = UIScreen.main.bounds.width
         let screenHeight = UIScreen.main.bounds.height
 
-        // Launch multiple waves of fireworks
-        for wave in 0..<8 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(wave) * 0.4) {
-                // Launch 2-3 fireworks per wave from different positions
+        // Simplified firework approach - create all particles upfront with animation states
+        Task { @MainActor in
+            for wave in 0..<6 {
+                try? await Task.sleep(nanoseconds: UInt64(wave) * 400_000_000)
+
                 let fireworkCount = Int.random(in: 2...3)
                 for _ in 0..<fireworkCount {
-                    let startX = CGFloat.random(in: screenWidth * 0.15...screenWidth * 0.85)
-                    let startY = screenHeight
+                    let peakX = CGFloat.random(in: screenWidth * 0.15...screenWidth * 0.85)
                     let peakY = CGFloat.random(in: screenHeight * 0.15...screenHeight * 0.4)
-
-                    launchSingleFirework(from: CGPoint(x: startX, y: startY), to: CGPoint(x: startX, y: peakY))
+                    createExplosion(at: CGPoint(x: peakX, y: peakY))
                 }
-            }
-        }
 
-        // Continue with more waves
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
-            for wave in 0..<5 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(wave) * 0.5) {
-                    let startX = CGFloat.random(in: screenWidth * 0.1...screenWidth * 0.9)
-                    let startY = screenHeight
-                    let peakY = CGFloat.random(in: screenHeight * 0.1...screenHeight * 0.35)
-
-                    launchSingleFirework(from: CGPoint(x: startX, y: startY), to: CGPoint(x: startX, y: peakY))
-                }
+                themeManager.heavyImpact()
             }
         }
     }
 
-    private func launchSingleFirework(from start: CGPoint, to peak: CGPoint) {
+    private func createExplosion(at center: CGPoint) {
         let colors: [Color] = [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink, .white]
         let fireworkColor = colors.randomElement() ?? .yellow
         let secondaryColor = colors.randomElement() ?? .orange
 
-        var firework = WorkoutFirework(id: UUID(), particles: [])
+        let fireworkId = UUID()
+        var particles: [WorkoutFireworkParticle] = []
 
-        // Create trail particles during ascent
-        let trailCount = 8
-        for i in 0..<trailCount {
-            let progress = Double(i) / Double(trailCount)
-            let x = start.x
-            let y = start.y - (start.y - peak.y) * progress
-
-            let trailParticle = WorkoutFireworkParticle(
+        // Create all explosion particles at center
+        let particleCount = Int.random(in: 30...45)
+        for _ in 0..<particleCount {
+            let particle = WorkoutFireworkParticle(
                 id: UUID(),
-                position: CGPoint(x: x, y: y),
-                color: .white.opacity(0.6),
-                size: CGFloat.random(in: 2...4),
-                opacity: 1.0 - progress * 0.5
+                position: center,
+                color: Bool.random() ? fireworkColor : secondaryColor,
+                size: CGFloat.random(in: 3...8),
+                opacity: 1.0
             )
-            firework.particles.append(trailParticle)
+            particles.append(particle)
         }
 
-        fireworks.append(firework)
-        let fireworkIndex = fireworks.count - 1
+        let newFirework = WorkoutFirework(id: fireworkId, particles: particles)
+        fireworks.append(newFirework)
 
-        // Ascent animation
-        let ascentDuration = 0.5
+        // Find firework and animate particles outward
+        guard let fireworkIndex = fireworks.firstIndex(where: { $0.id == fireworkId }) else { return }
 
-        // Explosion at peak
-        DispatchQueue.main.asyncAfter(deadline: .now() + ascentDuration) {
-            guard fireworkIndex < fireworks.count else { return }
+        // Animate each particle to its final position
+        for i in 0..<particles.count {
+            let angle = Double.random(in: 0...2 * .pi)
+            let distance = CGFloat.random(in: 40...100)
+            let endX = center.x + cos(angle) * distance
+            let endY = center.y + sin(angle) * distance + 30
 
-            // Clear trail particles
-            fireworks[fireworkIndex].particles.removeAll()
-
-            // Play haptic for explosion
-            themeManager.heavyImpact()
-
-            // Create explosion particles
-            let particleCount = Int.random(in: 40...60)
-            for _ in 0..<particleCount {
-                let angle = Double.random(in: 0...2 * .pi)
-                let distance = CGFloat.random(in: 30...120)
-                let endX = peak.x + cos(angle) * distance
-                let endY = peak.y + sin(angle) * distance
-
-                let particle = WorkoutFireworkParticle(
-                    id: UUID(),
-                    position: peak,
-                    color: Bool.random() ? fireworkColor : secondaryColor,
-                    size: CGFloat.random(in: 3...10),
-                    opacity: 1.0
-                )
-
-                fireworks[fireworkIndex].particles.append(particle)
-                let particleIndex = fireworks[fireworkIndex].particles.count - 1
-
-                // Animate particle outward
-                withAnimation(.easeOut(duration: 0.8)) {
-                    if fireworkIndex < fireworks.count && particleIndex < fireworks[fireworkIndex].particles.count {
-                        fireworks[fireworkIndex].particles[particleIndex].position = CGPoint(x: endX, y: endY + 30)
-                    }
-                }
-
-                // Fade out with gravity
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.easeIn(duration: 0.5)) {
-                        if fireworkIndex < fireworks.count && particleIndex < fireworks[fireworkIndex].particles.count {
-                            fireworks[fireworkIndex].particles[particleIndex].opacity = 0
-                            fireworks[fireworkIndex].particles[particleIndex].position.y += 40
-                        }
-                    }
+            withAnimation(.easeOut(duration: 0.6)) {
+                if fireworkIndex < fireworks.count && i < fireworks[fireworkIndex].particles.count {
+                    fireworks[fireworkIndex].particles[i].position = CGPoint(x: endX, y: endY)
                 }
             }
+        }
 
-            // Cleanup firework
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                if let idx = fireworks.firstIndex(where: { $0.id == firework.id }) {
-                    fireworks.remove(at: idx)
+        // Fade out all particles
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            guard let idx = fireworks.firstIndex(where: { $0.id == fireworkId }) else { return }
+
+            withAnimation(.easeIn(duration: 0.4)) {
+                for i in 0..<fireworks[idx].particles.count {
+                    fireworks[idx].particles[i].opacity = 0
                 }
             }
+        }
+
+        // Remove firework
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            fireworks.removeAll { $0.id == fireworkId }
         }
     }
 
@@ -339,99 +299,64 @@ struct WorkoutCompleteView: View {
         let screenHeight = UIScreen.main.bounds.height
         let colors: [Color] = [.red, .orange, .yellow, .green, .cyan, .blue, .purple, .pink]
 
-        // Create lots of confetti
-        for i in 0..<100 {
-            let delay = Double(i) * 0.03
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-
-                let newPiece = WorkoutConfetti(
-                    id: UUID(),
-                    position: CGPoint(x: CGFloat.random(in: 0...screenWidth), y: -20),
-                    color: colors.randomElement() ?? .yellow,
-                    width: CGFloat.random(in: 6...12),
-                    height: CGFloat.random(in: 12...20),
-                    rotation: Double.random(in: 0...360),
-                    opacity: 1.0
-                )
-
-                confetti.append(newPiece)
-                let index = confetti.count - 1
-                let pieceId = newPiece.id
-                let startX = newPiece.position.x
-
-                // Animate falling with rotation
-                let fallDuration = Double.random(in: 2.5...4.0)
-                let endY = screenHeight + 50
-                let drift = CGFloat.random(in: -100...100)
-                let rotationAdd = Double.random(in: 360...720)
-
-                withAnimation(.easeIn(duration: fallDuration)) {
-                    if index < confetti.count {
-                        confetti[index].position = CGPoint(x: startX + drift, y: endY)
-                        confetti[index].rotation += rotationAdd
-                    }
-                }
-
-                // Fade out near bottom
-                try? await Task.sleep(nanoseconds: UInt64(fallDuration * 0.7 * 1_000_000_000))
-                withAnimation(.easeIn(duration: fallDuration * 0.3)) {
-                    if index < confetti.count {
-                        confetti[index].opacity = 0
-                    }
-                }
-
-                // Remove
-                try? await Task.sleep(nanoseconds: UInt64((fallDuration * 0.3 + 0.5) * 1_000_000_000))
-                if let idx = confetti.firstIndex(where: { $0.id == pieceId }) {
-                    confetti.remove(at: idx)
-                }
-            }
-        }
-
-        // Second wave of confetti
+        // Create confetti in batches with stable IDs
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            // First wave
+            for batch in 0..<5 {
+                try? await Task.sleep(nanoseconds: UInt64(batch) * 100_000_000)
+                await createConfettiBatch(count: 20, screenWidth: screenWidth, screenHeight: screenHeight, colors: colors)
+            }
 
-            for i in 0..<60 {
-                let delay = Double(i) * 0.04
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            // Second wave after delay
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+            for batch in 0..<3 {
+                try? await Task.sleep(nanoseconds: UInt64(batch) * 150_000_000)
+                await createConfettiBatch(count: 15, screenWidth: screenWidth, screenHeight: screenHeight, colors: colors)
+            }
+        }
+    }
 
-                    let newPiece = WorkoutConfetti(
-                        id: UUID(),
-                        position: CGPoint(x: CGFloat.random(in: 0...screenWidth), y: -20),
-                        color: colors.randomElement() ?? .yellow,
-                        width: CGFloat.random(in: 6...12),
-                        height: CGFloat.random(in: 12...20),
-                        rotation: Double.random(in: 0...360),
-                        opacity: 1.0
-                    )
+    @MainActor
+    private func createConfettiBatch(count: Int, screenWidth: CGFloat, screenHeight: CGFloat, colors: [Color]) async {
+        var newPieces: [WorkoutConfetti] = []
 
-                    confetti.append(newPiece)
-                    let index = confetti.count - 1
-                    let pieceId = newPiece.id
-                    let startX = newPiece.position.x
+        for _ in 0..<count {
+            let piece = WorkoutConfetti(
+                id: UUID(),
+                position: CGPoint(x: CGFloat.random(in: 0...screenWidth), y: -20),
+                color: colors.randomElement() ?? .yellow,
+                width: CGFloat.random(in: 6...12),
+                height: CGFloat.random(in: 12...20),
+                rotation: Double.random(in: 0...360),
+                opacity: 1.0
+            )
+            newPieces.append(piece)
+        }
 
-                    let fallDuration = Double.random(in: 2.5...4.0)
-                    let endY = screenHeight + 50
-                    let drift = CGFloat.random(in: -100...100)
-                    let rotationAdd = Double.random(in: 360...720)
+        confetti.append(contentsOf: newPieces)
 
-                    withAnimation(.easeIn(duration: fallDuration)) {
-                        if index < confetti.count {
-                            confetti[index].position = CGPoint(x: startX + drift, y: endY)
-                            confetti[index].rotation += rotationAdd
-                        }
-                    }
+        // Animate all pieces in this batch
+        for piece in newPieces {
+            guard let index = confetti.firstIndex(where: { $0.id == piece.id }) else { continue }
 
-                    try? await Task.sleep(nanoseconds: UInt64((fallDuration + 0.5) * 1_000_000_000))
-                    if let idx = confetti.firstIndex(where: { $0.id == pieceId }) {
-                        confetti.remove(at: idx)
-                    }
+            let fallDuration = Double.random(in: 2.0...3.5)
+            let endY = screenHeight + 50
+            let drift = CGFloat.random(in: -80...80)
+            let rotationAdd = Double.random(in: 360...720)
+
+            withAnimation(.easeIn(duration: fallDuration)) {
+                if index < confetti.count {
+                    confetti[index].position = CGPoint(x: piece.position.x + drift, y: endY)
+                    confetti[index].rotation += rotationAdd
+                    confetti[index].opacity = 0
                 }
             }
         }
+
+        // Cleanup after animation completes
+        let pieceIds = Set(newPieces.map { $0.id })
+        try? await Task.sleep(nanoseconds: 4_000_000_000)
+        confetti.removeAll { pieceIds.contains($0.id) }
     }
 
     private var totalSetsCompleted: Int {

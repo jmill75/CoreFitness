@@ -436,6 +436,101 @@ class HealthKitManager: ObservableObject {
         }
     }
 
+    // MARK: - Get Hourly Water Intake for Today
+    func getHourlyWaterIntakeForToday() async -> [Double] {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return Array(repeating: 0, count: 24)
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfDay = calendar.startOfDay(for: now)
+
+        var interval = DateComponents()
+        interval.hour = 1
+
+        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: waterType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum,
+                anchorDate: startOfDay,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, _ in
+                var hourlyData = Array(repeating: 0.0, count: 24)
+
+                results?.enumerateStatistics(from: startOfDay, to: now) { statistics, _ in
+                    if let liters = statistics.sumQuantity()?.doubleValue(for: HKUnit.liter()) {
+                        let fluidOunces = liters * 33.814
+                        let hour = calendar.component(.hour, from: statistics.startDate)
+                        if hour >= 0 && hour < 24 {
+                            hourlyData[hour] = fluidOunces
+                        }
+                    }
+                }
+
+                continuation.resume(returning: hourlyData)
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
+    // MARK: - Get Monthly Water Intake History
+    func getMonthlyWaterIntakeHistory(months: Int) async -> [Double] {
+        guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
+            return Array(repeating: 0, count: months)
+        }
+
+        let calendar = Calendar.current
+        let now = Date()
+        let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+        let startDate = calendar.date(byAdding: .month, value: -(months - 1), to: startOfCurrentMonth)!
+
+        var interval = DateComponents()
+        interval.month = 1
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: now, options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsCollectionQuery(
+                quantityType: waterType,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum,
+                anchorDate: startDate,
+                intervalComponents: interval
+            )
+
+            query.initialResultsHandler = { _, results, _ in
+                var monthlyData: [Double] = []
+
+                results?.enumerateStatistics(from: startDate, to: now) { statistics, _ in
+                    if let liters = statistics.sumQuantity()?.doubleValue(for: HKUnit.liter()) {
+                        let fluidOunces = liters * 33.814
+                        // Average per day for the month
+                        let daysInMonth = calendar.range(of: .day, in: .month, for: statistics.startDate)?.count ?? 30
+                        monthlyData.append(fluidOunces / Double(daysInMonth))
+                    } else {
+                        monthlyData.append(0)
+                    }
+                }
+
+                // Ensure we have exactly the right number of months
+                while monthlyData.count < months {
+                    monthlyData.insert(0, at: 0)
+                }
+
+                continuation.resume(returning: Array(monthlyData.suffix(months)))
+            }
+
+            healthStore.execute(query)
+        }
+    }
+
     // MARK: - Calculate Overall Score
     func calculateOverallScore() -> Int {
         var score = 50 // Base score

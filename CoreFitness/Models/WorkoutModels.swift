@@ -99,6 +99,10 @@ final class Workout {
     var isQuickWorkout: Bool = false
     var personalRecordsCount: Int = 0
 
+    // Source program tracking - links workout to the program it came from
+    var sourceProgramId: UUID?
+    var sourceProgramName: String?
+
     // Computed property for difficulty enum
     var difficulty: Difficulty {
         get { Difficulty(rawValue: difficultyRaw) ?? .intermediate }
@@ -210,6 +214,7 @@ final class WorkoutSession {
 
     // Relationships
     var workout: Workout?
+    var userProgram: UserProgram?
 
     @Relationship(deleteRule: .cascade, inverse: \CompletedSet.session)
     var completedSets: [CompletedSet]?

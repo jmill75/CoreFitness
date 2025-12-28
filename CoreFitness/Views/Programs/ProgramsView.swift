@@ -24,6 +24,7 @@ struct ProgramsView: View {
     @State private var showExerciseLibrary = false
     @State private var showChallenges = false
     @State private var showSavedPrograms = false
+    @State private var showProgramBrowser = false
     @State private var animationStage = 0
 
     // Get active challenge
@@ -31,9 +32,9 @@ struct ProgramsView: View {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
 
-    // Get current workout
+    // Get current workout (active one from program or most recent)
     private var currentWorkout: Workout? {
-        workouts.first
+        workouts.first { $0.isActive } ?? workouts.first
     }
 
     var body: some View {
@@ -80,21 +81,43 @@ struct ProgramsView: View {
                         .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
                     }
 
+                    // MARK: - Browse Programs Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        LibrarySectionHeader(title: "Browse Programs")
+                        BrowseProgramsCard {
+                            showProgramBrowser = true
+                        }
+                    }
+                    .opacity(animationStage >= 5 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 10))
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
+
+                    // MARK: - Challenges Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        LibrarySectionHeader(title: "Challenges")
+                        ChallengesSectionCard(
+                            challengeCount: challenges.count,
+                            onTap: { showChallenges = true }
+                        )
+                    }
+                    .opacity(animationStage >= 6 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 6 ? 0 : 10))
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
+
                     // MARK: - Library Section
                     VStack(spacing: 12) {
                         LibrarySectionHeader(title: "Library")
-                            .opacity(animationStage >= 5 ? 1 : 0)
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.2), value: animationStage)
+                            .opacity(animationStage >= 7 ? 1 : 0)
+                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.3), value: animationStage)
 
                         LibraryGrid(
                             workoutCount: workouts.count,
                             onMyPrograms: { showSavedPrograms = true },
-                            onExercises: { showExerciseLibrary = true },
-                            onChallenges: { showChallenges = true }
+                            onExercises: { showExerciseLibrary = true }
                         )
-                        .opacity(animationStage >= 5 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 10))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
+                        .opacity(animationStage >= 7 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 7 ? 0 : 10))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.35), value: animationStage)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -107,9 +130,9 @@ struct ProgramsView: View {
                 .onAppear {
                     proxy.scrollTo("top", anchor: .top)
                     if reduceMotion {
-                        animationStage = 5
+                        animationStage = 7
                     } else {
-                        for stage in 1...5 {
+                        for stage in 1...7 {
                             DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
                                 animationStage = stage
                             }
@@ -141,6 +164,9 @@ struct ProgramsView: View {
             }
             .fullScreenCover(isPresented: $showSavedPrograms) {
                 SavedProgramsDetailView()
+            }
+            .fullScreenCover(isPresented: $showProgramBrowser) {
+                ProgramBrowserView()
             }
             .onChange(of: navigationState.showChallenges) { _, newValue in
                 if newValue {
@@ -272,11 +298,10 @@ private struct QuickCreateButton: View {
     }
 }
 
-// MARK: - Active Workout Hero Card
+// MARK: - Active Workout Hero Card (Matches HomeView ActiveWorkoutCard)
 private struct ActiveWorkoutHeroCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
-    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     let workout: Workout
 
@@ -292,70 +317,69 @@ private struct ActiveWorkoutHeroCard: View {
             themeManager.mediumImpact()
             showWorkoutExecution = true
         } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                // Top section with icon and status
-                HStack(alignment: .top) {
-                    // Left: Icon and info
+            HStack(spacing: 16) {
+                // Workout icon
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    // Status badge
+                    Text("READY TO START")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(0.5)
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    // Title
+                    Text(workout.name)
+                        .font(.title3)
+                        .fontWeight(.bold)
+
+                    // Stats row
                     HStack(spacing: 14) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: 56, height: 56)
+                        Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
+                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.85))
 
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundStyle(.white)
-                        }
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.25))
+                                .frame(height: 6)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("CURRENT WORKOUT")
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .tracking(0.5)
-                                .foregroundStyle(.white.opacity(0.7))
-
-                            Text(workout.name)
-                                .font(.title3)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white)
+                                .frame(width: 0, height: 6)
                         }
                     }
+                    .frame(height: 6)
 
-                    Spacer()
-
-                    // Right: Play button
-                    ZStack {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 44, height: 44)
-
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(gradientStart)
-                    }
                 }
-                .padding(20)
 
-                // Bottom stats bar
-                HStack(spacing: 0) {
-                    WorkoutStatPill(icon: "dumbbell.fill", value: "\(workout.exerciseCount)", label: "Exercises")
+                Spacer()
 
-                    Divider()
-                        .frame(height: 24)
-                        .background(Color.white.opacity(0.2))
-
-                    WorkoutStatPill(icon: "clock.fill", value: "\(workout.estimatedDuration)", label: "Minutes")
-
-                    Divider()
-                        .frame(height: 24)
-                        .background(Color.white.opacity(0.2))
-
-                    WorkoutStatPill(icon: "chart.bar.fill", value: workout.difficulty.shortName, label: "Level")
+                // Play/Go button
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(Color.black.opacity(0.15))
             }
+            .foregroundStyle(.white)
+            .padding(20)
+            .frame(minHeight: 140)
             .background(
                 LinearGradient(
                     colors: [gradientStart, gradientEnd],
@@ -363,29 +387,23 @@ private struct ActiveWorkoutHeroCard: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: gradientStart.opacity(0.35), radius: 12, y: 6)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
         .buttonStyle(.plain)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            withAnimation(reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6)) {
-                isPressed = pressing
-            }
+            isPressed = pressing
         }, perform: {})
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             WorkoutExecutionView(workout: workout)
                 .environmentObject(workoutManager)
                 .environmentObject(themeManager)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(workout.name). \(workout.exerciseCount) exercises, \(workout.estimatedDuration) minutes")
-        .accessibilityHint("Double tap to start workout")
-        .accessibilityAddTraits(.isButton)
     }
 }
 
-// MARK: - Workout Stat Pill
+// MARK: - Workout Stat Pill (Legacy - kept for compatibility)
 private struct WorkoutStatPill: View {
     let icon: String
     let value: String
@@ -548,6 +566,175 @@ private struct LibrarySectionHeader: View {
     }
 }
 
+// MARK: - Browse Programs Card
+private struct BrowseProgramsCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    // Gradient colors
+    private let gradientStart = Color(hex: "6366f1")
+    private let gradientEnd = Color(hex: "8b5cf6")
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "square.grid.2x2.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("DISCOVER")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(0.5)
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    Text("100+ Workout Programs")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+
+                    Text("Strength, Cardio, Yoga & more")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+
+                Spacer()
+
+                // Arrow
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .padding(20)
+            .background(
+                LinearGradient(
+                    colors: [gradientStart, gradientEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: gradientStart.opacity(0.35), radius: 12, y: 6)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
+        .accessibilityLabel("Browse over 100 workout programs")
+        .accessibilityHint("Double tap to browse programs")
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+// MARK: - Challenges Section Card
+private struct ChallengesSectionCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    let challengeCount: Int
+    let onTap: () -> Void
+
+    @State private var isPressed = false
+
+    // Green gradient
+    private let gradientStart = Color(hex: "22c55e")
+    private let gradientEnd = Color(hex: "16a34a")
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            onTap()
+        } label: {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("COMPETE")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(0.5)
+                        .foregroundStyle(.white.opacity(0.7))
+
+                    Text("Fitness Challenges")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+
+                    Text("\(challengeCount) challenges available")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+
+                Spacer()
+
+                // Arrow
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .padding(20)
+            .background(
+                LinearGradient(
+                    colors: [gradientStart, gradientEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(color: gradientStart.opacity(0.35), radius: 12, y: 6)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            withAnimation(reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6)) {
+                isPressed = pressing
+            }
+        }, perform: {})
+        .accessibilityLabel("View fitness challenges")
+        .accessibilityHint("Double tap to browse challenges")
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
 // MARK: - Library Grid
 private struct LibraryGrid: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -556,11 +743,10 @@ private struct LibraryGrid: View {
     let workoutCount: Int
     let onMyPrograms: () -> Void
     let onExercises: () -> Void
-    let onChallenges: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
-            // Top row - My Programs (full width)
+            // My Programs (full width)
             LibraryCard(
                 icon: "folder.fill",
                 title: "My Programs",
@@ -569,22 +755,14 @@ private struct LibraryGrid: View {
                 action: onMyPrograms
             )
 
-            // Bottom row - Exercises and Challenges
-            HStack(spacing: 12) {
-                LibraryCardCompact(
-                    icon: "dumbbell.fill",
-                    title: "Exercises",
-                    gradient: [Color(hex: "0ea5e9"), Color(hex: "38bdf8")],
-                    action: onExercises
-                )
-
-                LibraryCardCompact(
-                    icon: "trophy.fill",
-                    title: "Challenges",
-                    gradient: [Color(hex: "22c55e"), Color(hex: "16a34a")],
-                    action: onChallenges
-                )
-            }
+            // Exercises (full width)
+            LibraryCard(
+                icon: "dumbbell.fill",
+                title: "Exercises",
+                subtitle: "Browse & discover",
+                gradient: [Color(hex: "0ea5e9"), Color(hex: "38bdf8")],
+                action: onExercises
+            )
         }
     }
 }
@@ -850,122 +1028,108 @@ private struct ProgramFilterChip: View {
     }
 }
 
-// MARK: - Saved Workout Card
+// MARK: - Saved Workout Card (Exact copy from HomeView ActiveWorkoutCard)
 struct SavedWorkoutCard: View {
-    @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var workoutManager: WorkoutManager
-    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @EnvironmentObject var themeManager: ThemeManager
 
     let workout: Workout
 
-    @State private var isPressed = false
     @State private var showWorkoutExecution = false
+    @State private var isPressed = false
 
-    private var creationTypeColor: Color {
-        switch workout.safeCreationType {
-        case .userCreated: return Color(hex: "2d6a4f")
-        case .aiGenerated: return Color(hex: "6366f1")
-        case .imported: return Color(hex: "0ea5e9")
-        case .preset: return Color(hex: "22c55e")
-        }
-    }
-
-    private var difficultyColor: Color {
-        switch workout.difficulty {
-        case .beginner: return .accentGreen
-        case .intermediate: return .accentOrange
-        case .advanced: return .accentRed
-        }
-    }
+    // Pine green gradient
+    private let gradientStart = Color(hex: "2d6a4f")
+    private let gradientEnd = Color(hex: "1b4332")
 
     var body: some View {
         Button {
             themeManager.mediumImpact()
             showWorkoutExecution = true
         } label: {
-            HStack(spacing: 14) {
-                // Icon
+            HStack(spacing: 16) {
+                // Workout icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(
-                            LinearGradient(
-                                colors: [creationTypeColor, creationTypeColor.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 52, height: 52)
-
-                    Image(systemName: workout.safeCreationType.icon)
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 56, height: 56)
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .font(.system(size: 24, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
-                // Info
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 8) {
-                        Text(workout.name)
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Status badge
+                    Text("READY TO START")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(0.5)
+                        .foregroundStyle(.white.opacity(0.7))
 
-                        if workout.isActive {
-                            Text("ACTIVE")
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.accentGreen)
-                                .clipShape(Capsule())
+                    // Title
+                    Text(workout.name)
+                        .font(.title3)
+                        .fontWeight(.bold)
+
+                    // Stats row
+                    HStack(spacing: 14) {
+                        Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
+                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.85))
+
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white.opacity(0.25))
+                                .frame(height: 6)
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.white)
+                                .frame(width: 0, height: 6)
                         }
                     }
+                    .frame(height: 6)
 
-                    HStack(spacing: 10) {
-                        Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
-                        Label("\(workout.estimatedDuration)m", systemImage: "clock")
-                        Text(workout.difficulty.rawValue)
-                            .foregroundStyle(difficultyColor)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                // Play button
+                // Play/Go button
                 ZStack {
                     Circle()
-                        .fill(creationTypeColor.opacity(0.15))
-                        .frame(width: 40, height: 40)
-
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(creationTypeColor)
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
             }
-            .padding(14)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .foregroundStyle(.white)
+            .padding(20)
+            .frame(minHeight: 140)
+            .background(
+                LinearGradient(
+                    colors: [gradientStart, gradientEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
         .buttonStyle(.plain)
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            withAnimation(reduceMotion ? .none : .spring(response: 0.3, dampingFraction: 0.6)) {
-                isPressed = pressing
-            }
+            isPressed = pressing
         }, perform: {})
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             WorkoutExecutionView(workout: workout)
                 .environmentObject(workoutManager)
                 .environmentObject(themeManager)
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(workout.name). \(workout.exerciseCount) exercises, \(workout.estimatedDuration) minutes")
-        .accessibilityHint("Double tap to start workout")
-        .accessibilityAddTraits(.isButton)
     }
 }
 
@@ -1092,8 +1256,14 @@ struct AIWorkoutCreationView: View {
 
 struct ImportWorkoutView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
+
     @State private var showFilePicker = false
     @State private var importedFileName: String?
+    @State private var isProcessing = false
+    @State private var importSuccess = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -1104,44 +1274,57 @@ struct ImportWorkoutView: View {
                             .fill(Color(hex: "0ea5e9").opacity(0.15))
                             .frame(width: 100, height: 100)
 
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 44))
-                            .foregroundStyle(Color(hex: "0ea5e9"))
+                        if isProcessing {
+                            ProgressView()
+                                .scaleEffect(1.5)
+                        } else if importSuccess {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 44, weight: .bold))
+                                .foregroundStyle(.green)
+                        } else {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 44))
+                                .foregroundStyle(Color(hex: "0ea5e9"))
+                        }
                     }
                     .padding(.top, 32)
 
-                    Text("Import Workout")
+                    Text(importSuccess ? "Import Successful!" : "Import Workout")
                         .font(.title2)
                         .fontWeight(.bold)
 
-                    Text("Import your workout routines from various file formats.")
+                    Text(importSuccess ?
+                         "Your workout has been added to My Programs." :
+                         "Import your workout routines from various file formats.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
 
-                    VStack(spacing: 12) {
-                        ImportOptionCard(
-                            icon: "doc.text.fill",
-                            title: "PDF Document",
-                            subtitle: "Import from PDF files",
-                            color: .accentRed
-                        ) {
-                            showFilePicker = true
-                        }
+                    if !importSuccess {
+                        VStack(spacing: 12) {
+                            ImportOptionCard(
+                                icon: "doc.text.fill",
+                                title: "PDF Document",
+                                subtitle: "Import from PDF files",
+                                color: .accentRed
+                            ) {
+                                showFilePicker = true
+                            }
 
-                        ImportOptionCard(
-                            icon: "tablecells.fill",
-                            title: "CSV Spreadsheet",
-                            subtitle: "Import from CSV files",
-                            color: .accentGreen
-                        ) {
-                            showFilePicker = true
+                            ImportOptionCard(
+                                icon: "tablecells.fill",
+                                title: "CSV Spreadsheet",
+                                subtitle: "Import from CSV files",
+                                color: .accentGreen
+                            ) {
+                                showFilePicker = true
+                            }
                         }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
 
-                    if let fileName = importedFileName {
+                    if let fileName = importedFileName, importSuccess {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
@@ -1152,6 +1335,36 @@ struct ImportWorkoutView: View {
                         .padding()
                         .background(Color.green.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                    }
+
+                    if let error = errorMessage {
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding(.horizontal)
+                    }
+
+                    if importSuccess {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Text("Done")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(Color(hex: "2d6a4f"))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
                         .padding(.horizontal)
                     }
 
@@ -1174,13 +1387,147 @@ struct ImportWorkoutView: View {
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        importedFileName = url.lastPathComponent
+                        importWorkout(from: url)
                     }
                 case .failure(let error):
-                    print("Import error: \(error.localizedDescription)")
+                    errorMessage = "Import error: \(error.localizedDescription)"
                 }
             }
         }
+    }
+
+    private func importWorkout(from url: URL) {
+        isProcessing = true
+        errorMessage = nil
+
+        // Get security-scoped access
+        guard url.startAccessingSecurityScopedResource() else {
+            errorMessage = "Unable to access file"
+            isProcessing = false
+            return
+        }
+
+        defer { url.stopAccessingSecurityScopedResource() }
+
+        let fileName = url.deletingPathExtension().lastPathComponent
+        importedFileName = url.lastPathComponent
+
+        // Create a workout from the imported file
+        let workout = Workout(
+            name: fileName,
+            description: "Imported from \(url.lastPathComponent)",
+            estimatedDuration: 45,
+            difficulty: .intermediate,
+            creationType: .imported
+        )
+
+        // Parse file content based on type
+        do {
+            let fileExtension = url.pathExtension.lowercased()
+
+            if fileExtension == "csv" {
+                try parseCSV(from: url, into: workout)
+            } else if fileExtension == "pdf" {
+                // For PDF, we'll create a placeholder - full PDF parsing would require PDFKit
+                workout.workoutDescription = "Imported PDF workout. Add exercises manually."
+            } else {
+                // Plain text
+                try parseTextFile(from: url, into: workout)
+            }
+
+            modelContext.insert(workout)
+            try modelContext.save()
+
+            themeManager.notifySuccess()
+            withAnimation {
+                isProcessing = false
+                importSuccess = true
+            }
+        } catch {
+            errorMessage = "Failed to parse file: \(error.localizedDescription)"
+            isProcessing = false
+        }
+    }
+
+    private func parseCSV(from url: URL, into workout: Workout) throws {
+        let content = try String(contentsOf: url, encoding: .utf8)
+        let lines = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
+
+        // Skip header row if present
+        let dataLines = lines.count > 1 && lines[0].lowercased().contains("exercise") ? Array(lines.dropFirst()) : lines
+
+        for (index, line) in dataLines.enumerated() {
+            let columns = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+
+            if columns.isEmpty { continue }
+
+            let exerciseName = columns[0]
+            let sets = columns.count > 1 ? Int(columns[1]) ?? 3 : 3
+            let reps = columns.count > 2 ? Int(columns[2]) ?? 10 : 10
+            let weight = columns.count > 3 ? Double(columns[3]) : nil
+
+            let workoutExercise = WorkoutExercise(
+                order: index,
+                targetSets: sets,
+                targetReps: reps,
+                targetWeight: weight,
+                restDuration: 60
+            )
+
+            // Create exercise if needed
+            let exercise = Exercise(
+                name: exerciseName,
+                muscleGroup: .fullBody,
+                category: .strength,
+                difficulty: .intermediate
+            )
+            modelContext.insert(exercise)
+            workoutExercise.exercise = exercise
+            workoutExercise.workout = workout
+            modelContext.insert(workoutExercise)
+        }
+    }
+
+    private func parseTextFile(from url: URL, into workout: Workout) throws {
+        let content = try String(contentsOf: url, encoding: .utf8)
+        let lines = content.components(separatedBy: .newlines).filter { !$0.isEmpty }
+
+        for (index, line) in lines.enumerated() {
+            // Try to parse lines like "Bench Press 3x10" or "Squats - 4 sets of 8"
+            let exerciseName = extractExerciseName(from: line)
+
+            if !exerciseName.isEmpty {
+                let workoutExercise = WorkoutExercise(
+                    order: index,
+                    targetSets: 3,
+                    targetReps: 10,
+                    targetWeight: nil,
+                    restDuration: 60
+                )
+
+                let exercise = Exercise(
+                    name: exerciseName,
+                    muscleGroup: .fullBody,
+                    category: .strength,
+                    difficulty: .intermediate
+                )
+                modelContext.insert(exercise)
+                workoutExercise.exercise = exercise
+                workoutExercise.workout = workout
+                modelContext.insert(workoutExercise)
+            }
+        }
+    }
+
+    private func extractExerciseName(from line: String) -> String {
+        // Remove common patterns like "1.", "- ", numbers, etc.
+        var name = line
+        // Remove leading numbers and punctuation
+        name = name.replacingOccurrences(of: "^[0-9]+[.\\)\\-\\s]*", with: "", options: .regularExpression)
+        // Remove set/rep patterns like "3x10", "4 sets", etc.
+        name = name.replacingOccurrences(of: "\\s*[0-9]+\\s*[xX]\\s*[0-9]+.*", with: "", options: .regularExpression)
+        name = name.replacingOccurrences(of: "\\s*-?\\s*[0-9]+\\s*sets?.*", with: "", options: .regularExpression)
+        return name.trimmingCharacters(in: .whitespaces)
     }
 }
 
@@ -1961,32 +2308,6 @@ private struct ActiveFilterChip: View {
     }
 }
 
-// MARK: - Filter Chip
-struct FilterChip: View {
-    let title: String
-    let icon: String
-    let isSelected: Bool
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(isSelected ? color.opacity(0.2) : Color(.secondarySystemGroupedBackground))
-            .foregroundStyle(isSelected ? color : .primary)
-            .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
-    }
-}
 
 // MARK: - Exercise List Card
 struct ExerciseListCard: View {

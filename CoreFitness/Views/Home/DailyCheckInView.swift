@@ -5,6 +5,7 @@ struct DailyCheckInView: View {
 
     // MARK: - Environment
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userProfileManager: UserProfileManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
@@ -19,15 +20,6 @@ struct DailyCheckInView: View {
     @State private var showSuccess = false
     @State private var direction: TransitionDirection = .forward
 
-    // Streak tracking
-    @AppStorage("checkInStreak") private var streak: Int = 0
-    @AppStorage("lastCheckInDate") private var lastCheckInDateString: String = ""
-
-    // Previous check-in data for "already checked in" state
-    @AppStorage("lastCheckInMood") private var savedMood: Int = 3
-    @AppStorage("lastCheckInEnergy") private var savedEnergy: Int = 3
-    @AppStorage("lastCheckInSoreness") private var savedSoreness: Int = 2
-
     private let totalSteps = 4
 
     private var todayString: String {
@@ -37,7 +29,7 @@ struct DailyCheckInView: View {
     }
 
     private var hasCheckedInToday: Bool {
-        lastCheckInDateString == todayString
+        userProfileManager.lastCheckInDateString == todayString
     }
 
     private var timeGreeting: String {
@@ -95,16 +87,16 @@ struct DailyCheckInView: View {
             if hasCheckedInToday && !showSuccess {
                 // Already checked in view
                 AlreadyCheckedInView(
-                    mood: savedMood,
-                    energy: savedEnergy,
-                    soreness: savedSoreness,
-                    streak: streak,
+                    mood: Int(userProfileManager.lastCheckInMood),
+                    energy: Int(userProfileManager.lastCheckInEnergy),
+                    soreness: Int(userProfileManager.lastCheckInSoreness),
+                    streak: userProfileManager.checkInStreak,
                     onDismiss: { dismiss() }
                 )
                 .transition(.opacity)
             } else if showSuccess {
                 // Success celebration
-                CheckInSuccessView(streak: streak) {
+                CheckInSuccessView(streak: userProfileManager.checkInStreak) {
                     dismiss()
                 }
                 .transition(.asymmetric(
@@ -187,7 +179,7 @@ struct DailyCheckInView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(.orange)
-                    Text("\(streak)")
+                    Text("\(userProfileManager.checkInStreak)")
                         .fontWeight(.bold)
                     Text("day streak")
                         .foregroundStyle(.secondary)
@@ -323,17 +315,17 @@ struct DailyCheckInView: View {
             return formatter.string(from: yesterday)
         }()
 
-        if lastCheckInDateString == yesterdayString {
-            streak += 1
-        } else if lastCheckInDateString != todayString {
-            streak = 1
+        if userProfileManager.lastCheckInDateString == yesterdayString {
+            userProfileManager.checkInStreak += 1
+        } else if userProfileManager.lastCheckInDateString != todayString {
+            userProfileManager.checkInStreak = 1
         }
 
-        // Save to AppStorage
-        lastCheckInDateString = todayString
-        savedMood = mood
-        savedEnergy = energy
-        savedSoreness = soreness
+        // Save to UserProfileManager (synced via iCloud)
+        userProfileManager.lastCheckInDateString = todayString
+        userProfileManager.lastCheckInMood = Double(mood)
+        userProfileManager.lastCheckInEnergy = Double(energy)
+        userProfileManager.lastCheckInSoreness = Double(soreness)
 
         // Save MoodEntry to SwiftData
         let moodEntry = MoodEntry(
@@ -470,224 +462,505 @@ struct CheckInStepView<Content: View>: View {
     }
 }
 
-// MARK: - Mood Selector
+// MARK: - Mood Selector (Premium Design)
 struct MoodSelector: View {
     @Binding var selected: Int
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.colorScheme) private var colorScheme
 
-    private let moods: [(emoji: String, label: String, color: Color)] = [
-        ("😫", "Rough", Color(hex: "ef4444")),
-        ("😕", "Meh", Color(hex: "f97316")),
-        ("😐", "Okay", Color(hex: "eab308")),
-        ("😊", "Good", Color(hex: "22c55e")),
-        ("🤩", "Amazing", Color(hex: "10b981"))
+    private let moods: [(emoji: String, label: String, color: Color, gradient: [Color])] = [
+        ("😫", "Rough", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")]),
+        ("😕", "Meh", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("😐", "Okay", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
+        ("😊", "Good", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("🤩", "Amazing", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")])
     ]
 
     var body: some View {
-        HStack(spacing: 12) {
-            ForEach(1...5, id: \.self) { index in
-                MoodButton(
-                    emoji: moods[index - 1].emoji,
-                    label: moods[index - 1].label,
-                    color: moods[index - 1].color,
-                    isSelected: selected == index
-                ) {
-                    themeManager.lightImpact()
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        selected = index
+        VStack(spacing: 24) {
+            // Selected mood display - large and prominent
+            ZStack {
+                // Outer glow ring
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                moods[selected - 1].color.opacity(0.4),
+                                moods[selected - 1].color.opacity(0.1),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 50,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 20)
+
+                // Inner circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                colorScheme == .dark ? Color(hex: "1a1a1a") : Color(hex: "f5f5f5"),
+                                colorScheme == .dark ? Color(hex: "0d0d0d") : Color(hex: "e5e5e5")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                    .shadow(color: moods[selected - 1].color.opacity(0.3), radius: 20, x: 0, y: 0)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: moods[selected - 1].gradient,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 3
+                            )
+                    )
+
+                // Emoji
+                Text(moods[selected - 1].emoji)
+                    .font(.system(size: 72))
+                    .shadow(color: moods[selected - 1].color.opacity(0.5), radius: 10, x: 0, y: 0)
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
+
+            // Label
+            Text(moods[selected - 1].label)
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundStyle(moods[selected - 1].color)
+                .animation(.easeInOut(duration: 0.2), value: selected)
+
+            // Mood selector pills
+            HStack(spacing: 8) {
+                ForEach(1...5, id: \.self) { index in
+                    MoodPill(
+                        emoji: moods[index - 1].emoji,
+                        color: moods[index - 1].color,
+                        gradient: moods[index - 1].gradient,
+                        isSelected: selected == index,
+                        colorScheme: colorScheme
+                    ) {
+                        themeManager.mediumImpact()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                            selected = index
+                        }
                     }
                 }
             }
+            .padding(.horizontal, 4)
         }
     }
 }
 
-struct MoodButton: View {
+// MARK: - Mood Pill Button
+struct MoodPill: View {
     let emoji: String
-    let label: String
     let color: Color
+    let gradient: [Color]
     let isSelected: Bool
+    let colorScheme: ColorScheme
     let action: () -> Void
+
+    @State private var isPressed = false
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Text(emoji)
-                    .font(.system(size: isSelected ? 44 : 36))
+            ZStack {
+                // Background
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        isSelected
+                            ? LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(
+                                colors: colorScheme == .dark
+                                    ? [Color(hex: "1f1f1f"), Color(hex: "171717")]
+                                    : [Color(hex: "f0f0f0"), Color(hex: "e5e5e5")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: isSelected
+                                        ? [Color.clear, Color.clear]
+                                        : (colorScheme == .dark
+                                            ? [Color.white.opacity(0.1), Color.white.opacity(0.05)]
+                                            : [Color.white.opacity(0.8), Color.white.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(
+                        color: isSelected ? color.opacity(0.4) : .clear,
+                        radius: isSelected ? 8 : 0,
+                        x: 0,
+                        y: isSelected ? 4 : 0
+                    )
 
-                Text(label)
-                    .font(.caption)
-                    .fontWeight(isSelected ? .semibold : .regular)
-                    .foregroundStyle(isSelected ? color : .secondary)
+                // Emoji
+                Text(emoji)
+                    .font(.system(size: isSelected ? 32 : 28))
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? color.opacity(0.15) : Color(.systemGray6))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(isSelected ? color : .clear, lineWidth: 2)
-            )
-            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .frame(height: 64)
+            .scaleEffect(isPressed ? 0.92 : (isSelected ? 1.08 : 1.0))
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isPressed)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(MoodPillButtonStyle(isPressed: $isPressed))
     }
 }
 
-// MARK: - Energy Selector
+// Custom button style for press feedback
+struct MoodPillButtonStyle: ButtonStyle {
+    @Binding var isPressed: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .onChange(of: configuration.isPressed) { _, newValue in
+                isPressed = newValue
+            }
+    }
+}
+
+// MARK: - Energy Selector (Premium Design)
 struct EnergySelector: View {
     @Binding var selected: Int
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.colorScheme) private var colorScheme
 
-    private let levels: [(icon: String, label: String, color: Color)] = [
-        ("battery.0", "Drained", Color(hex: "ef4444")),
-        ("battery.25", "Low", Color(hex: "f97316")),
-        ("battery.50", "Okay", Color(hex: "eab308")),
-        ("battery.75", "Good", Color(hex: "22c55e")),
-        ("battery.100.bolt", "Charged", Color(hex: "10b981"))
+    private let levels: [(icon: String, label: String, color: Color, gradient: [Color])] = [
+        ("battery.0", "Drained", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")]),
+        ("battery.25", "Low", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("battery.50", "Okay", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
+        ("battery.75", "Good", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("battery.100.bolt", "Charged", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")])
     ]
 
     var body: some View {
-        VStack(spacing: 16) {
-            // Visual battery indicator
+        VStack(spacing: 24) {
+            // Central hero display
             ZStack {
-                // Battery outline
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray3), lineWidth: 3)
-                    .frame(width: 200, height: 80)
+                // Outer glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                levels[selected - 1].color.opacity(0.4),
+                                levels[selected - 1].color.opacity(0.1),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 50,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 20)
 
-                // Battery fill
-                HStack(spacing: 0) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(levels[selected - 1].color.gradient)
-                        .frame(width: CGFloat(selected) * 36, height: 64)
-                        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
+                // Inner circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                colorScheme == .dark ? Color(hex: "1a1a1a") : Color(hex: "f5f5f5"),
+                                colorScheme == .dark ? Color(hex: "0d0d0d") : Color(hex: "e5e5e5")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                    .shadow(color: levels[selected - 1].color.opacity(0.3), radius: 20, x: 0, y: 0)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: levels[selected - 1].gradient,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 3
+                            )
+                    )
 
-                    Spacer()
-                }
-                .frame(width: 184)
-
-                // Battery cap
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(.systemGray3))
-                    .frame(width: 8, height: 30)
-                    .offset(x: 104)
+                // Battery icon
+                Image(systemName: levels[selected - 1].icon)
+                    .font(.system(size: 56, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: levels[selected - 1].gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .shadow(color: levels[selected - 1].color.opacity(0.5), radius: 10, x: 0, y: 0)
             }
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
 
+            // Label
             Text(levels[selected - 1].label)
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
                 .foregroundStyle(levels[selected - 1].color)
+                .animation(.easeInOut(duration: 0.2), value: selected)
 
-            // Selection buttons
-            HStack(spacing: 12) {
+            // Energy level pills
+            HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { index in
-                    Button {
-                        themeManager.lightImpact()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    EnergyPill(
+                        icon: levels[index - 1].icon,
+                        color: levels[index - 1].color,
+                        gradient: levels[index - 1].gradient,
+                        isSelected: selected == index,
+                        colorScheme: colorScheme
+                    ) {
+                        themeManager.mediumImpact()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                             selected = index
                         }
-                    } label: {
-                        VStack(spacing: 6) {
-                            Image(systemName: levels[index - 1].icon)
-                                .font(.title2)
-
-                            Text("\(index)")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                        }
-                        .foregroundStyle(selected == index ? levels[index - 1].color : .secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(selected == index ? levels[index - 1].color.opacity(0.15) : Color(.systemGray6))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(selected == index ? levels[index - 1].color : .clear, lineWidth: 2)
-                        )
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 4)
         }
     }
 }
 
-// MARK: - Soreness Selector
+// MARK: - Energy Pill Button
+struct EnergyPill: View {
+    let icon: String
+    let color: Color
+    let gradient: [Color]
+    let isSelected: Bool
+    let colorScheme: ColorScheme
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        isSelected
+                            ? LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(
+                                colors: colorScheme == .dark
+                                    ? [Color(hex: "1f1f1f"), Color(hex: "171717")]
+                                    : [Color(hex: "f0f0f0"), Color(hex: "e5e5e5")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: isSelected
+                                        ? [Color.clear, Color.clear]
+                                        : (colorScheme == .dark
+                                            ? [Color.white.opacity(0.1), Color.white.opacity(0.05)]
+                                            : [Color.white.opacity(0.8), Color.white.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(
+                        color: isSelected ? color.opacity(0.4) : .clear,
+                        radius: isSelected ? 8 : 0,
+                        x: 0,
+                        y: isSelected ? 4 : 0
+                    )
+
+                Image(systemName: icon)
+                    .font(.system(size: isSelected ? 24 : 20, weight: .medium))
+                    .foregroundStyle(isSelected ? .white : color)
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+            .scaleEffect(isPressed ? 0.92 : (isSelected ? 1.08 : 1.0))
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isPressed)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(MoodPillButtonStyle(isPressed: $isPressed))
+    }
+}
+
+// MARK: - Soreness Selector (Premium Design)
 struct SorenessSelector: View {
     @Binding var selected: Int
     @EnvironmentObject var themeManager: ThemeManager
+    @Environment(\.colorScheme) private var colorScheme
 
-    private let levels: [(emoji: String, label: String, description: String, color: Color)] = [
-        ("💪", "None", "Fresh and ready", Color(hex: "10b981")),
-        ("👍", "Mild", "Slight tightness", Color(hex: "22c55e")),
-        ("😐", "Moderate", "Noticeable but manageable", Color(hex: "eab308")),
-        ("😣", "Sore", "Needs attention", Color(hex: "f97316")),
-        ("🤕", "Very Sore", "Recovery mode", Color(hex: "ef4444"))
+    private let levels: [(emoji: String, label: String, description: String, color: Color, gradient: [Color])] = [
+        ("💪", "None", "Fresh and ready", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")]),
+        ("👍", "Mild", "Slight tightness", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("😐", "Moderate", "Manageable", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
+        ("😣", "Sore", "Needs attention", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("🤕", "Very Sore", "Recovery mode", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")])
     ]
 
     var body: some View {
-        VStack(spacing: 20) {
-            // Body illustration with soreness indicator
+        VStack(spacing: 24) {
+            // Central hero display
             ZStack {
-                Image(systemName: "figure.stand")
-                    .font(.system(size: 100, weight: .light))
-                    .foregroundStyle(levels[selected - 1].color.opacity(0.3))
+                // Outer glow
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                levels[selected - 1].color.opacity(0.4),
+                                levels[selected - 1].color.opacity(0.1),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 50,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 20)
 
-                // Pulse effect for higher soreness
-                if selected >= 3 {
-                    Circle()
-                        .fill(levels[selected - 1].color.opacity(0.2))
-                        .frame(width: 60 + CGFloat(selected - 2) * 20)
-                        .blur(radius: 10)
-                }
-            }
-            .frame(height: 120)
+                // Inner circle
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                colorScheme == .dark ? Color(hex: "1a1a1a") : Color(hex: "f5f5f5"),
+                                colorScheme == .dark ? Color(hex: "0d0d0d") : Color(hex: "e5e5e5")
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                    .shadow(color: levels[selected - 1].color.opacity(0.3), radius: 20, x: 0, y: 0)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: levels[selected - 1].gradient,
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 3
+                            )
+                    )
 
-            // Current selection display
-            VStack(spacing: 4) {
+                // Emoji
                 Text(levels[selected - 1].emoji)
-                    .font(.system(size: 40))
+                    .font(.system(size: 72))
+                    .shadow(color: levels[selected - 1].color.opacity(0.5), radius: 10, x: 0, y: 0)
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
+
+            // Labels
+            VStack(spacing: 4) {
                 Text(levels[selected - 1].label)
-                    .font(.title3)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
                     .foregroundStyle(levels[selected - 1].color)
+
                 Text(levels[selected - 1].description)
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+            .animation(.easeInOut(duration: 0.2), value: selected)
 
-            // Soreness scale
+            // Soreness level pills
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { index in
-                    Button {
-                        themeManager.lightImpact()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    SorenessPill(
+                        emoji: levels[index - 1].emoji,
+                        color: levels[index - 1].color,
+                        gradient: levels[index - 1].gradient,
+                        isSelected: selected == index,
+                        colorScheme: colorScheme
+                    ) {
+                        themeManager.mediumImpact()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
                             selected = index
                         }
-                    } label: {
-                        Text(levels[index - 1].emoji)
-                            .font(.system(size: selected == index ? 36 : 28))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(selected == index ? levels[index - 1].color.opacity(0.15) : Color(.systemGray6))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .strokeBorder(selected == index ? levels[index - 1].color : .clear, lineWidth: 2)
-                            )
-                            .scaleEffect(selected == index ? 1.05 : 1.0)
                     }
-                    .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, 4)
         }
+    }
+}
+
+// MARK: - Soreness Pill Button
+struct SorenessPill: View {
+    let emoji: String
+    let color: Color
+    let gradient: [Color]
+    let isSelected: Bool
+    let colorScheme: ColorScheme
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        isSelected
+                            ? LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                            : LinearGradient(
+                                colors: colorScheme == .dark
+                                    ? [Color(hex: "1f1f1f"), Color(hex: "171717")]
+                                    : [Color(hex: "f0f0f0"), Color(hex: "e5e5e5")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: isSelected
+                                        ? [Color.clear, Color.clear]
+                                        : (colorScheme == .dark
+                                            ? [Color.white.opacity(0.1), Color.white.opacity(0.05)]
+                                            : [Color.white.opacity(0.8), Color.white.opacity(0.3)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+                    .shadow(
+                        color: isSelected ? color.opacity(0.4) : .clear,
+                        radius: isSelected ? 8 : 0,
+                        x: 0,
+                        y: isSelected ? 4 : 0
+                    )
+
+                Text(emoji)
+                    .font(.system(size: isSelected ? 32 : 28))
+                    .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+            .scaleEffect(isPressed ? 0.92 : (isSelected ? 1.08 : 1.0))
+            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: isPressed)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(MoodPillButtonStyle(isPressed: $isPressed))
     }
 }
 
@@ -697,6 +970,7 @@ enum TodayFocus: String, CaseIterable {
     case cardio = "Cardio"
     case recovery = "Recovery"
     case flexibility = "Flexibility"
+    case rest = "Rest"
 
     var icon: String {
         switch self {
@@ -704,6 +978,7 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return "figure.run"
         case .recovery: return "bed.double.fill"
         case .flexibility: return "figure.yoga"
+        case .rest: return "moon.zzz.fill"
         }
     }
 
@@ -713,6 +988,7 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return Color(hex: "10b981")
         case .recovery: return Color(hex: "6366f1")
         case .flexibility: return Color(hex: "ec4899")
+        case .rest: return Color(hex: "8b5cf6")
         }
     }
 
@@ -722,6 +998,7 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return "Heart health & endurance"
         case .recovery: return "Rest & rejuvenate"
         case .flexibility: return "Stretch & mobility"
+        case .rest: return "Take the day off"
         }
     }
 }
@@ -1086,4 +1363,5 @@ struct ConfettiView: View {
 #Preview {
     DailyCheckInView()
         .environmentObject(ThemeManager())
+        .environmentObject(UserProfileManager())
 }

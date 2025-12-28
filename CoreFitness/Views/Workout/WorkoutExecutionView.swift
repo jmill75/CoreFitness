@@ -11,6 +11,15 @@ struct WorkoutExecutionView: View {
     // Prevent countdown from showing when dismissing
     @State private var isDismissing = false
 
+    // Check if any popup is active
+    private var isAnyPopupActive: Bool {
+        workoutManager.showExitConfirmation ||
+        workoutManager.showPRCelebration ||
+        workoutManager.showSetCompleteFeedback ||
+        workoutManager.showExerciseCompleteFeedback ||
+        workoutManager.showNextExerciseTransition
+    }
+
     var body: some View {
         ZStack {
             // Black background like Apple Fitness
@@ -51,8 +60,79 @@ struct WorkoutExecutionView: View {
                     EmptyView()
                 }
             }
+            .blur(radius: isAnyPopupActive ? 10 : 0)
+            .animation(.easeInOut(duration: 0.2), value: isAnyPopupActive)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: workoutManager.currentPhase)
+
+            // All popups in a single overlay group
+            if isAnyPopupActive {
+                // Dimmed background
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
+
+            // Exit Confirmation
+            if workoutManager.showExitConfirmation {
+                ExitConfirmationView(
+                    onSaveExit: {
+                        isDismissing = true
+                        workoutManager.showExitConfirmation = false
+                        workoutManager.completeWorkout()
+                    },
+                    onDiscard: {
+                        isDismissing = true
+                        workoutManager.showExitConfirmation = false
+                        workoutManager.cancelWorkout()
+                        dismiss()
+                    },
+                    onContinue: {
+                        workoutManager.showExitConfirmation = false
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
+
+            // PR Celebration
+            if workoutManager.showPRCelebration {
+                PRCelebrationView(
+                    exerciseName: workoutManager.prExerciseName,
+                    weight: workoutManager.prWeight,
+                    onDismiss: {
+                        workoutManager.showPRCelebration = false
+                    }
+                )
+                .transition(.opacity.combined(with: .scale))
+            }
+
+            // Set Complete Feedback
+            if workoutManager.showSetCompleteFeedback {
+                SetCompleteFeedbackView(setNumber: workoutManager.completedSetNumber)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            }
+
+            // Exercise Complete Feedback
+            if workoutManager.showExerciseCompleteFeedback {
+                ExerciseCompleteFeedbackView(exerciseName: workoutManager.completedExerciseName)
+                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
+            }
+
+            // Next Exercise Transition
+            if workoutManager.showNextExerciseTransition {
+                NextExerciseTransitionView(
+                    exerciseName: workoutManager.nextExerciseName,
+                    exerciseNumber: workoutManager.nextExerciseNumber,
+                    totalExercises: workoutManager.totalExerciseCount
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.9)))
+            }
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isAnyPopupActive)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: workoutManager.showExitConfirmation)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: workoutManager.showPRCelebration)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: workoutManager.showSetCompleteFeedback)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showExerciseCompleteFeedback)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showNextExerciseTransition)
         .onAppear {
             // Start workout when view appears
             if !isDismissing && workoutManager.currentPhase == .idle {
@@ -77,66 +157,6 @@ struct WorkoutExecutionView: View {
                     dismiss()
                 }
         }
-        .overlay {
-            if workoutManager.showExitConfirmation {
-                ExitConfirmationView(
-                    onSaveExit: {
-                        isDismissing = true
-                        workoutManager.showExitConfirmation = false
-                        workoutManager.completeWorkout()
-                    },
-                    onDiscard: {
-                        isDismissing = true
-                        workoutManager.showExitConfirmation = false
-                        workoutManager.cancelWorkout()
-                        dismiss()
-                    },
-                    onContinue: {
-                        workoutManager.showExitConfirmation = false
-                    }
-                )
-                .transition(.opacity)
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: workoutManager.showExitConfirmation)
-        .overlay {
-            if workoutManager.showPRCelebration {
-                PRCelebrationView(
-                    exerciseName: workoutManager.prExerciseName,
-                    weight: workoutManager.prWeight,
-                    onDismiss: {
-                        workoutManager.showPRCelebration = false
-                    }
-                )
-                .transition(.opacity.combined(with: .scale))
-            }
-        }
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: workoutManager.showPRCelebration)
-        .overlay {
-            if workoutManager.showSetCompleteFeedback {
-                SetCompleteFeedbackView(setNumber: workoutManager.completedSetNumber)
-                    .transition(.opacity.combined(with: .scale(scale: 1.2)))
-            }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: workoutManager.showSetCompleteFeedback)
-        .overlay {
-            if workoutManager.showExerciseCompleteFeedback {
-                ExerciseCompleteFeedbackView(exerciseName: workoutManager.completedExerciseName)
-                    .transition(.opacity.combined(with: .scale(scale: 0.8)))
-            }
-        }
-        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showExerciseCompleteFeedback)
-        .overlay {
-            if workoutManager.showNextExerciseTransition {
-                NextExerciseTransitionView(
-                    exerciseName: workoutManager.nextExerciseName,
-                    exerciseNumber: workoutManager.nextExerciseNumber,
-                    totalExercises: workoutManager.totalExerciseCount
-                )
-                .transition(.opacity.combined(with: .scale(scale: 0.9)))
-            }
-        }
-        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: workoutManager.showNextExerciseTransition)
     }
 }
 
@@ -148,15 +168,8 @@ struct SetCompleteFeedbackView: View {
     @State private var glowPulse: CGFloat = 1.0
 
     var body: some View {
-        ZStack {
-            // Blurred background
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-
-            // Extra tint for contrast
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
+        VStack(spacing: 24) {
+            Spacer()
 
             // Success ring
             ZStack {
@@ -189,20 +202,16 @@ struct SetCompleteFeedbackView: View {
             }
 
             // Set text
-            VStack {
-                Spacer()
+            Text("SET \(setNumber) COMPLETE")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .opacity(showCheckmark ? 1 : 0)
+                .offset(y: showCheckmark ? 0 : 20)
+                .shadow(color: .black.opacity(0.3), radius: 4)
 
-                Text("SET \(setNumber) COMPLETE")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .opacity(showCheckmark ? 1 : 0)
-                    .offset(y: showCheckmark ? 0 : 20)
-                    .shadow(color: .black.opacity(0.3), radius: 4)
-
-                Spacer()
-                    .frame(height: 100)
-            }
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                 ringScale = 1.0
@@ -226,10 +235,6 @@ struct ExerciseCompleteFeedbackView: View {
 
     var body: some View {
         ZStack {
-            // Dark overlay
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-
             // Celebration particles
             ForEach(particles) { particle in
                 Circle()
@@ -292,6 +297,7 @@ struct ExerciseCompleteFeedbackView: View {
                     .offset(y: showContent ? 0 : 20)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             // Animate content in
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
@@ -378,36 +384,33 @@ struct NextExerciseTransitionView: View {
     @State private var arrowOffset: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            // Dark overlay
-            Color.black.opacity(0.85)
-                .ignoresSafeArea()
+        VStack(spacing: 24) {
+            Spacer()
 
-            VStack(spacing: 24) {
-                // "Up Next" label
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.title2)
-                        .offset(x: arrowOffset)
-                    Text("UP NEXT")
-                        .font(.subheadline)
-                        .fontWeight(.bold)
-                        .tracking(2)
-                }
-                .foregroundStyle(.cyan)
+            // "Up Next" label
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.title2)
+                    .offset(x: arrowOffset)
+                Text("UP NEXT")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .tracking(2)
+            }
+            .foregroundStyle(.cyan)
+            .opacity(showContent ? 1 : 0)
+            .offset(y: showContent ? 0 : -20)
+
+            // Exercise name
+            Text(exerciseName)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .scaleEffect(showContent ? 1 : 0.8)
                 .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : -20)
 
-                // Exercise name
-                Text(exerciseName)
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .scaleEffect(showContent ? 1 : 0.8)
-                    .opacity(showContent ? 1 : 0)
-
-                // Progress indicator
-                HStack(spacing: 6) {
+            // Progress indicator
+            HStack(spacing: 6) {
                     Text("Exercise")
                         .foregroundStyle(.white.opacity(0.6))
                     Text("\(exerciseNumber)")
@@ -423,20 +426,22 @@ struct NextExerciseTransitionView: View {
                 .opacity(showContent ? 1 : 0)
                 .offset(y: showContent ? 0 : 20)
 
-                // Progress dots
-                HStack(spacing: 8) {
-                    ForEach(0..<totalExercises, id: \.self) { index in
-                        Circle()
-                            .fill(index < exerciseNumber ? Color.cyan : Color.white.opacity(0.3))
-                            .frame(width: index == exerciseNumber - 1 ? 10 : 6,
-                                   height: index == exerciseNumber - 1 ? 10 : 6)
-                            .scaleEffect(showContent ? 1 : 0)
-                            .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showContent)
-                    }
+            // Progress dots
+            HStack(spacing: 8) {
+                ForEach(0..<totalExercises, id: \.self) { index in
+                    Circle()
+                        .fill(index < exerciseNumber ? Color.cyan : Color.white.opacity(0.3))
+                        .frame(width: index == exerciseNumber - 1 ? 10 : 6,
+                               height: index == exerciseNumber - 1 ? 10 : 6)
+                        .scaleEffect(showContent ? 1 : 0)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.05), value: showContent)
                 }
-                .padding(.top, 8)
             }
+            .padding(.top, 8)
+
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             // Animate content in
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
@@ -463,17 +468,12 @@ struct PRCelebrationView: View {
 
     var body: some View {
         ZStack {
-            // Blurred background
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
+            // Tap to dismiss area
+            Color.clear
+                .contentShape(Rectangle())
                 .onTapGesture {
                     onDismiss()
                 }
-
-            // Extra dark tint for contrast
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
 
             // Firework particles
             ForEach(particles) { particle in
@@ -564,6 +564,7 @@ struct PRCelebrationView: View {
                 .padding(.top, 16)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             // Play celebration sound
             playCelebrationSound()
@@ -772,40 +773,49 @@ struct UnifiedWorkoutView: View {
     @State private var showMusicSheet = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Compact header
-            headerBar
+        ZStack {
+            VStack(spacing: 0) {
+                // Compact header
+                headerBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+
+                // Exercise name - prominent display
+                exerciseNameDisplay
+                    .padding(.top, 24)
+                    .padding(.horizontal, 16)
+
+                Spacer(minLength: 0)
+
+                // Main content - large touch targets
+                VStack(spacing: 20) {
+                    // Set indicator
+                    setIndicator
+
+                    // Large input controls
+                    inputControls
+                }
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 20)
 
-            // Main content - large touch targets
-            VStack(spacing: 20) {
-                // Set indicator
-                setIndicator
+                // Large save button
+                saveButton
+                    .padding(.horizontal, 16)
 
-                // Large input controls
-                inputControls
+                Spacer(minLength: 16)
+
+                // Music control bar at bottom
+                WorkoutMusicBar(showMusicSheet: $showMusicSheet)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 40)
+
+                // Skip exercise at very bottom
+                skipExerciseButton
+                    .padding(.bottom, 16)
             }
-            .padding(.horizontal, 16)
-
-            Spacer(minLength: 20)
-
-            // Large save button
-            saveButton
-                .padding(.horizontal, 16)
-
-            Spacer(minLength: 16)
-
-            // Music control bar at bottom
-            WorkoutMusicBar(showMusicSheet: $showMusicSheet)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 40)
-
-            // Skip exercise at very bottom
-            skipExerciseButton
-                .padding(.bottom, 16)
+            .blur(radius: showMusicSheet ? 10 : 0)
+            .animation(.easeInOut(duration: 0.2), value: showMusicSheet)
         }
         .onAppear {
             loadCurrentValues()
@@ -820,6 +830,7 @@ struct UnifiedWorkoutView: View {
             MusicControlSheet()
                 .presentationDetents([.height(580)])
                 .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled)
         }
     }
 
@@ -841,14 +852,6 @@ struct UnifiedWorkoutView: View {
                     .foregroundStyle(.white)
                     .monospacedDigit()
             }
-
-            Spacer()
-
-            // Exercise name
-            Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
-                .font(.headline)
-                .foregroundStyle(.gray)
-                .lineLimit(1)
 
             Spacer()
 
@@ -878,6 +881,25 @@ struct UnifiedWorkoutView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Exercise Name Display
+    private var exerciseNameDisplay: some View {
+        VStack(spacing: 4) {
+            Text(workoutManager.currentExercise?.exercise?.name ?? "Exercise")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+
+            // Exercise progress indicator
+            if workoutManager.totalExercises > 0 {
+                Text("Exercise \(workoutManager.currentExerciseIndex + 1) of \(workoutManager.totalExercises)")
+                    .font(.subheadline)
+                    .foregroundStyle(.gray)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Set Indicator
@@ -1052,98 +1074,115 @@ struct RestingView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     let remaining: Int
 
+    @State private var showMusicSheet = false
+
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        ZStack {
+            VStack(spacing: 0) {
+                Spacer()
 
-            VStack(spacing: 24) {
-                // Rest icon
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                VStack(spacing: 24) {
+                    // Rest icon
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.2))
+                            .frame(width: 100, height: 100)
 
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.orange)
-                }
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(.orange)
+                    }
 
-                Text("REST")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.orange)
-                    .tracking(2)
-
-                Text(formatTime(remaining))
-                    .font(.system(size: 80, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .monospacedDigit()
-
-                // Next up info
-                VStack(spacing: 8) {
-                    Text("NEXT SET")
+                    Text("REST")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.gray)
-                        .tracking(1)
+                        .foregroundStyle(.orange)
+                        .tracking(2)
 
-                    Text("Set \(workoutManager.currentSetNumber) of \(workoutManager.currentExercise?.targetSets ?? 0)")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                    Text(formatTime(remaining))
+                        .font(.system(size: 80, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
+                        .monospacedDigit()
 
-                    Text(workoutManager.currentExercise?.exercise?.name ?? "")
-                        .font(.subheadline)
-                        .foregroundStyle(.gray)
-                }
-                .padding(.top, 16)
-            }
+                    // Next up info
+                    VStack(spacing: 8) {
+                        Text("NEXT SET")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.gray)
+                            .tracking(1)
 
-            Spacer()
-
-            // Rest controls
-            VStack(spacing: 16) {
-                HStack(spacing: 16) {
-                    Button {
-                        workoutManager.skipRest()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "forward.fill")
-                            Text("Skip Rest")
-                        }
-                        .font(.headline)
-                        .foregroundStyle(.black)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(Color.green)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-
-                    Button {
-                        workoutManager.extendRest(by: 30)
-                    } label: {
-                        Text("+30s")
-                            .font(.headline)
-                            .fontWeight(.bold)
+                        Text("Set \(workoutManager.currentSetNumber) of \(workoutManager.currentExercise?.targetSets ?? 0)")
+                            .font(.title3)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
-                            .frame(width: 80, height: 56)
-                            .background(Color.gray.opacity(0.3))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+
+                        Text(workoutManager.currentExercise?.exercise?.name ?? "")
+                            .font(.subheadline)
+                            .foregroundStyle(.gray)
                     }
+                    .padding(.top, 16)
                 }
 
-                // End workout
-                Button {
-                    workoutManager.showExitConfirmation = true
-                } label: {
-                    Text("End Workout")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.red)
+                Spacer()
+
+                // Rest controls
+                VStack(spacing: 16) {
+                    HStack(spacing: 16) {
+                        Button {
+                            workoutManager.skipRest()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "forward.fill")
+                                Text("Skip Rest")
+                            }
+                            .font(.headline)
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(Color.green)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+
+                        Button {
+                            workoutManager.extendRest(by: 30)
+                        } label: {
+                            Text("+30s")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .frame(width: 80, height: 56)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+                    }
+
+                    // End workout
+                    Button {
+                        workoutManager.showExitConfirmation = true
+                    } label: {
+                        Text("End Workout")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.red)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
+
+                // Music bar at bottom
+                WorkoutMusicBar(showMusicSheet: $showMusicSheet)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 40)
+            .blur(radius: showMusicSheet ? 10 : 0)
+            .animation(.easeInOut(duration: 0.2), value: showMusicSheet)
+        }
+        .sheet(isPresented: $showMusicSheet) {
+            MusicControlSheet()
+                .presentationDetents([.height(580)])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled)
         }
     }
 
@@ -1192,64 +1231,80 @@ struct CompletedSetCard: View {
 // MARK: - Fitness Style Paused View
 struct FitnessStylePausedView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
+    @State private var showMusicSheet = false
 
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
+        ZStack {
+            VStack(spacing: 32) {
+                Spacer()
 
-            // Paused icon
-            ZStack {
-                Circle()
-                    .fill(Color.yellow.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                // Paused icon
+                ZStack {
+                    Circle()
+                        .fill(Color.yellow.opacity(0.2))
+                        .frame(width: 120, height: 120)
 
-                Image(systemName: "pause.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.yellow)
-            }
-
-            Text("Workout Paused")
-                .font(.system(size: 32, weight: .bold))
-                .foregroundStyle(.white)
-
-            Text(workoutManager.formattedElapsedTime)
-                .font(.system(size: 48, weight: .semibold, design: .rounded))
-                .foregroundStyle(.yellow)
-                .monospacedDigit()
-
-            Spacer()
-
-            // Resume button
-            Button {
-                workoutManager.resumeWorkout()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "play.fill")
-                        .font(.title2)
-                    Text("Resume Workout")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.yellow)
                 }
-                .foregroundStyle(.black)
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
-                .background(Color.green)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-            }
-            .padding(.horizontal, 24)
 
-            // End workout button
-            Button {
-                workoutManager.showExitConfirmation = true
-            } label: {
-                Text("End Workout")
-                    .font(.headline)
-                    .foregroundStyle(.red)
+                Text("Workout Paused")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundStyle(.white)
+
+                Text(workoutManager.formattedElapsedTime)
+                    .font(.system(size: 48, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.yellow)
+                    .monospacedDigit()
+
+                Spacer()
+
+                // Resume button
+                Button {
+                    workoutManager.resumeWorkout()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "play.fill")
+                            .font(.title2)
+                        Text("Resume Workout")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 60)
+                    .background(Color.green)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(.horizontal, 24)
+
+                // End workout button
+                Button {
+                    workoutManager.showExitConfirmation = true
+                } label: {
+                    Text("End Workout")
+                        .font(.headline)
+                        .foregroundStyle(.red)
+                }
+                .padding(.bottom, 16)
+
+                // Music bar at bottom
+                WorkoutMusicBar(showMusicSheet: $showMusicSheet)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
             }
-            .padding(.bottom, 40)
+            .blur(radius: showMusicSheet ? 10 : 0)
+            .animation(.easeInOut(duration: 0.2), value: showMusicSheet)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
+        .sheet(isPresented: $showMusicSheet) {
+            MusicControlSheet()
+                .presentationDetents([.height(580)])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled)
+        }
     }
 }
 
@@ -1262,36 +1317,36 @@ struct WorkoutMusicBar: View {
         Button {
             showMusicSheet = true
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: 14) {
                 // Artwork or icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: 10)
                         .fill(musicService.selectedProvider.color.opacity(0.3))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 56, height: 56)
 
                     if let track = musicService.currentTrack, let artwork = track.artwork {
                         artwork
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     } else {
                         Image(systemName: "music.note")
-                            .font(.system(size: 14))
+                            .font(.system(size: 22))
                             .foregroundStyle(musicService.selectedProvider.color)
                     }
                 }
 
                 // Track info
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(musicService.currentTrack?.title ?? "Not Playing")
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
                     Text(musicService.currentTrack?.artist ?? "Tap to open music")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.gray)
                         .lineLimit(1)
                 }
@@ -1299,14 +1354,14 @@ struct WorkoutMusicBar: View {
                 Spacer()
 
                 // Playback controls
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
                     Button {
                         musicService.skipToPrevious()
                     } label: {
                         Image(systemName: "backward.fill")
-                            .font(.caption)
+                            .font(.body)
                             .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
 
@@ -1318,10 +1373,10 @@ struct WorkoutMusicBar: View {
                         }
                     } label: {
                         Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.body)
+                            .font(.title3)
                             .foregroundStyle(.white)
-                            .frame(width: 36, height: 36)
-                            .background(musicService.selectedProvider.color.opacity(0.3))
+                            .frame(width: 52, height: 52)
+                            .background(musicService.selectedProvider.color.opacity(0.4))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -1330,9 +1385,9 @@ struct WorkoutMusicBar: View {
                         musicService.skipToNext()
                     } label: {
                         Image(systemName: "forward.fill")
-                            .font(.caption)
+                            .font(.body)
                             .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
                 }
@@ -1342,16 +1397,16 @@ struct WorkoutMusicBar: View {
                     musicService.openMusicApp()
                 } label: {
                     Image(systemName: "arrow.up.right.square")
-                        .font(.caption)
+                        .font(.body)
                         .foregroundStyle(musicService.selectedProvider.color)
-                        .frame(width: 28, height: 28)
+                        .frame(width: 40, height: 40)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(Color.gray.opacity(0.2))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(Color.gray.opacity(0.25))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
     }

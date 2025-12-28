@@ -114,6 +114,12 @@ class UserProfileManager: ObservableObject {
     @Published var lastCheckInSleep: Double = 3 {
         didSet { updateProfile { $0.lastCheckInSleep = lastCheckInSleep } }
     }
+    @Published var lastCheckInEnergy: Double = 3 {
+        didSet { updateProfile { $0.lastCheckInEnergy = lastCheckInEnergy } }
+    }
+    @Published var checkInStreak: Int = 0 {
+        didSet { updateProfile { $0.checkInStreak = checkInStreak } }
+    }
 
     // MARK: - Initialization
 
@@ -175,6 +181,8 @@ class UserProfileManager: ObservableObject {
         lastCheckInSoreness = profile.lastCheckInSoreness
         lastCheckInStress = profile.lastCheckInStress
         lastCheckInSleep = profile.lastCheckInSleep
+        lastCheckInEnergy = profile.lastCheckInEnergy
+        checkInStreak = profile.checkInStreak
     }
 
     // MARK: - Profile Updates

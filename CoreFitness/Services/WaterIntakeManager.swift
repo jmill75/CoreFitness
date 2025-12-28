@@ -300,6 +300,46 @@ class WaterIntakeManager: ObservableObject {
         return result
     }
 
+    /// Get last 7 days of water intake data
+    func getLast7DaysDataAsync() async -> [Double] {
+        guard let manager = healthKitManager else {
+            return Array(repeating: 0, count: 7)
+        }
+
+        let history = await manager.getWaterIntakeHistory(days: 7)
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        var result: [Double] = []
+        for dayOffset in (0..<7).reversed() {
+            if let date = calendar.date(byAdding: .day, value: -dayOffset, to: today) {
+                let dayStart = calendar.startOfDay(for: date)
+                result.append(history[dayStart] ?? 0)
+            }
+        }
+        return result
+    }
+
+    /// Get hourly water intake data for today
+    func getHourlyDataForTodayAsync() async -> [Double] {
+        guard let manager = healthKitManager else {
+            return Array(repeating: 0, count: 24)
+        }
+
+        let hourlyData = await manager.getHourlyWaterIntakeForToday()
+        return hourlyData
+    }
+
+    /// Get monthly water intake totals for last 12 months
+    func getLast12MonthsDataAsync() async -> [Double] {
+        guard let manager = healthKitManager else {
+            return Array(repeating: 0, count: 12)
+        }
+
+        let monthlyData = await manager.getMonthlyWaterIntakeHistory(months: 12)
+        return monthlyData
+    }
+
     func getStatsForLast30Days() async -> (total: Double, average: Double, maxValue: Double, goalsMetCount: Int) {
         let dailyData = await getLast30DaysDataAsync()
         let total = dailyData.reduce(0, +)

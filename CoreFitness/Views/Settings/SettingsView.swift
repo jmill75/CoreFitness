@@ -142,6 +142,19 @@ struct SettingsView: View {
                     Text("Features")
                 }
 
+                // AI Section
+                Section {
+                    NavigationLink {
+                        AISettingsView()
+                    } label: {
+                        Label("AI Insights", systemImage: "sparkles")
+                    }
+                } header: {
+                    Text("AI")
+                } footer: {
+                    Text("Get personalized advice and motivation based on your health data and activity patterns.")
+                }
+
                 // Integrations Section
                 Section {
                     NavigationLink {
@@ -431,34 +444,48 @@ struct RestTimerSettingsView: View {
 
 struct NotificationSettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userProfileManager: UserProfileManager
     @StateObject private var notificationManager = NotificationManager.shared
     @State private var showPermissionAlert = false
+
+    private var dailyCheckInTime: CheckInTime {
+        CheckInTime(rawValue: userProfileManager.dailyCheckInTimeRaw) ?? .morning
+    }
 
     var body: some View {
         List {
             // Daily Check-In Section
             Section {
-                Toggle(isOn: $notificationManager.dailyCheckInReminderEnabled) {
+                Toggle(isOn: $userProfileManager.dailyCheckInReminderEnabled) {
                     Label("Daily Check-In Reminder", systemImage: "bell.badge.fill")
                 }
-                .onChange(of: notificationManager.dailyCheckInReminderEnabled) { _, newValue in
+                .onChange(of: userProfileManager.dailyCheckInReminderEnabled) { _, newValue in
                     if newValue && !notificationManager.isAuthorized {
                         Task {
                             let granted = await notificationManager.requestAuthorization()
                             if !granted {
-                                notificationManager.dailyCheckInReminderEnabled = false
+                                userProfileManager.dailyCheckInReminderEnabled = false
                                 showPermissionAlert = true
                             }
                         }
+                    }
+                    // Update notification scheduling
+                    Task {
+                        await notificationManager.updateDailyCheckInNotification()
                     }
                     // Haptic feedback
                     themeManager.lightImpact()
                 }
 
-                if notificationManager.dailyCheckInReminderEnabled {
+                if userProfileManager.dailyCheckInReminderEnabled {
                     Picker("Reminder Time", selection: Binding(
-                        get: { notificationManager.dailyCheckInTime },
-                        set: { notificationManager.dailyCheckInTime = $0 }
+                        get: { dailyCheckInTime },
+                        set: { newTime in
+                            userProfileManager.dailyCheckInTimeRaw = newTime.rawValue
+                            Task {
+                                await notificationManager.updateDailyCheckInNotification()
+                            }
+                        }
                     )) {
                         ForEach(CheckInTime.allCases, id: \.self) { time in
                             Label {
@@ -492,6 +519,18 @@ struct NotificationSettingsView: View {
                 Toggle("Achievement Alerts", isOn: .constant(true))
             } header: {
                 Text("Workout")
+            }
+
+            // Challenges Section
+            Section {
+                Toggle("Challenge Updates", isOn: .constant(true))
+                Toggle("Challenge Reminders", isOn: .constant(true))
+                Toggle("Leaderboard Changes", isOn: .constant(true))
+                Toggle("Buddy Invitations", isOn: .constant(true))
+            } header: {
+                Text("Challenges")
+            } footer: {
+                Text("Stay updated on challenge progress, leaderboard changes, and invitations from workout buddies.")
             }
 
             // Notification Status
@@ -561,9 +600,7 @@ struct HealthKitSettingsView: View {
 struct WatchSettingsView: View {
 
     @EnvironmentObject var watchConnectivityManager: WatchConnectivityManager
-    @AppStorage("watchMirrorWorkouts") private var mirrorWorkouts = true
-    @AppStorage("watchShowHeartRate") private var showHeartRate = true
-    @AppStorage("watchHapticAlerts") private var hapticAlerts = true
+    @EnvironmentObject var userProfileManager: UserProfileManager
 
     private var statusColor: Color {
         if watchConnectivityManager.isReachable {
@@ -611,13 +648,13 @@ struct WatchSettingsView: View {
 
             // Watch Options Section
             Section {
-                Toggle("Mirror Workouts", isOn: $mirrorWorkouts)
+                Toggle("Mirror Workouts", isOn: $userProfileManager.watchMirrorWorkouts)
                     .tint(Color.brandPrimary)
 
-                Toggle("Show Heart Rate", isOn: $showHeartRate)
+                Toggle("Show Heart Rate", isOn: $userProfileManager.watchShowHeartRate)
                     .tint(Color.brandPrimary)
 
-                Toggle("Haptic Alerts", isOn: $hapticAlerts)
+                Toggle("Haptic Alerts", isOn: $userProfileManager.watchHapticAlerts)
                     .tint(Color.brandPrimary)
             } header: {
                 Text("Watch Options")
@@ -761,16 +798,13 @@ struct SubscriptionFeatureRow: View {
 // MARK: - Water Intake Settings View
 struct WaterIntakeSettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @AppStorage("waterIntakeEnabled") private var waterIntakeEnabled = true
-    @AppStorage("waterGoalOz") private var waterGoalOz: Double = 64
-    @AppStorage("waterReminderEnabled") private var waterReminderEnabled = false
-    @AppStorage("waterReminderInterval") private var waterReminderInterval: Double = 2
+    @EnvironmentObject var userProfileManager: UserProfileManager
 
     var body: some View {
         List {
             // Enable/Disable Section
             Section {
-                Toggle(isOn: $waterIntakeEnabled) {
+                Toggle(isOn: $userProfileManager.waterIntakeEnabled) {
                     Label("Track Water Intake", systemImage: "drop.fill")
                 }
                 .tint(Color.accentBlue)
@@ -778,7 +812,7 @@ struct WaterIntakeSettingsView: View {
                 Text("When enabled, water intake tracking will appear in the Health tab and home screen.")
             }
 
-            if waterIntakeEnabled {
+            if userProfileManager.waterIntakeEnabled {
                 // Goal Section
                 Section {
                     VStack(alignment: .leading, spacing: 16) {
@@ -786,13 +820,13 @@ struct WaterIntakeSettingsView: View {
                             Text("Daily Goal")
                                 .font(.subheadline)
                             Spacer()
-                            Text("\(Int(waterGoalOz)) oz")
+                            Text("\(Int(userProfileManager.waterGoalOz)) oz")
                                 .font(.headline)
                                 .fontWeight(.bold)
                                 .foregroundStyle(Color.accentBlue)
                         }
 
-                        Slider(value: $waterGoalOz, in: 32...128, step: 8) {
+                        Slider(value: $userProfileManager.waterGoalOz, in: 32...128, step: 8) {
                             Text("Goal")
                         }
                         .tint(Color.accentBlue)
@@ -802,17 +836,17 @@ struct WaterIntakeSettingsView: View {
                             ForEach([48, 64, 80, 96], id: \.self) { oz in
                                 Button {
                                     withAnimation {
-                                        waterGoalOz = Double(oz)
+                                        userProfileManager.waterGoalOz = Double(oz)
                                     }
                                     themeManager.lightImpact()
                                 } label: {
                                     Text("\(oz)oz")
                                         .font(.caption)
                                         .fontWeight(.semibold)
-                                        .foregroundStyle(waterGoalOz == Double(oz) ? .white : .primary)
+                                        .foregroundStyle(userProfileManager.waterGoalOz == Double(oz) ? .white : .primary)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 6)
-                                        .background(waterGoalOz == Double(oz) ? Color.accentBlue : Color(.systemGray5))
+                                        .background(userProfileManager.waterGoalOz == Double(oz) ? Color.accentBlue : Color(.systemGray5))
                                         .clipShape(Capsule())
                                 }
                                 .buttonStyle(.plain)
@@ -828,13 +862,13 @@ struct WaterIntakeSettingsView: View {
 
                 // Reminders Section
                 Section {
-                    Toggle(isOn: $waterReminderEnabled) {
+                    Toggle(isOn: $userProfileManager.waterReminderEnabled) {
                         Label("Hydration Reminders", systemImage: "bell.fill")
                     }
                     .tint(Color.accentBlue)
 
-                    if waterReminderEnabled {
-                        Picker(selection: $waterReminderInterval) {
+                    if userProfileManager.waterReminderEnabled {
+                        Picker(selection: $userProfileManager.waterReminderInterval) {
                             Text("Every hour").tag(1.0)
                             Text("Every 2 hours").tag(2.0)
                             Text("Every 3 hours").tag(3.0)
@@ -898,10 +932,7 @@ struct ContainerSizeRow: View {
 // MARK: - Music Settings View
 struct MusicSettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
-    @AppStorage("musicEnabled") private var musicEnabled = true
-    @AppStorage("musicProvider") private var musicProvider: String = "Apple Music"
-    @AppStorage("showMusicDuringWorkout") private var showMusicDuringWorkout = true
-    @AppStorage("autoPlayOnWorkoutStart") private var autoPlayOnWorkoutStart = false
+    @EnvironmentObject var userProfileManager: UserProfileManager
 
     @StateObject private var musicService = MusicService.shared
 
@@ -909,7 +940,7 @@ struct MusicSettingsView: View {
         List {
             // Enable/Disable Section
             Section {
-                Toggle(isOn: $musicEnabled) {
+                Toggle(isOn: $userProfileManager.musicEnabled) {
                     Label("Music Integration", systemImage: "music.note")
                 }
                 .tint(Color.brandPrimary)
@@ -917,12 +948,12 @@ struct MusicSettingsView: View {
                 Text("Enable music controls during workouts and access to workout playlists.")
             }
 
-            if musicEnabled {
+            if userProfileManager.musicEnabled {
                 // Provider Selection
                 Section {
                     ForEach(MusicService.MusicProvider.allCases) { provider in
                         Button {
-                            musicProvider = provider.rawValue
+                            userProfileManager.musicProvider = provider.rawValue
                             musicService.selectedProvider = provider
                             themeManager.lightImpact()
                         } label: {
@@ -951,7 +982,7 @@ struct MusicSettingsView: View {
 
                                 Spacer()
 
-                                if musicProvider == provider.rawValue {
+                                if userProfileManager.musicProvider == provider.rawValue {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundStyle(provider.color)
                                 }
@@ -967,12 +998,12 @@ struct MusicSettingsView: View {
 
                 // Workout options
                 Section {
-                    Toggle(isOn: $showMusicDuringWorkout) {
+                    Toggle(isOn: $userProfileManager.showMusicDuringWorkout) {
                         Label("Show During Workout", systemImage: "speaker.wave.2.fill")
                     }
                     .tint(Color.brandPrimary)
 
-                    Toggle(isOn: $autoPlayOnWorkoutStart) {
+                    Toggle(isOn: $userProfileManager.autoPlayOnWorkoutStart) {
                         Label("Auto-Play on Start", systemImage: "play.fill")
                     }
                     .tint(Color.brandPrimary)
@@ -989,7 +1020,7 @@ struct MusicSettingsView: View {
                     } label: {
                         HStack {
                             Spacer()
-                            Label("Open \(musicProvider)", systemImage: "arrow.up.forward.app")
+                            Label("Open \(userProfileManager.musicProvider)", systemImage: "arrow.up.forward.app")
                                 .fontWeight(.semibold)
                             Spacer()
                         }
@@ -1001,7 +1032,7 @@ struct MusicSettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             // Sync provider selection
-            if let provider = MusicService.MusicProvider.allCases.first(where: { $0.rawValue == musicProvider }) {
+            if let provider = MusicService.MusicProvider.allCases.first(where: { $0.rawValue == userProfileManager.musicProvider }) {
                 musicService.selectedProvider = provider
             }
         }
@@ -1122,6 +1153,122 @@ struct QuickActionsSettingsView: View {
         }
         themeManager.mediumImpact()
         showResetSuccess = true
+    }
+}
+
+// MARK: - AI Settings View
+struct AISettingsView: View {
+    @StateObject private var aiService = AIInsightsService.shared
+    @EnvironmentObject var themeManager: ThemeManager
+
+    var body: some View {
+        List {
+            // Enable/Disable Section
+            Section {
+                Toggle(isOn: Binding(
+                    get: { aiService.aiEnabled },
+                    set: { aiService.setAIEnabled($0) }
+                )) {
+                    Label("AI Insights", systemImage: "sparkles")
+                }
+                .tint(.purple)
+            } footer: {
+                Text("When enabled, you'll receive personalized advice and reminders based on your health data and activity patterns.")
+            }
+
+            if aiService.aiEnabled {
+                // Insight Types Section
+                Section {
+                    InsightTypeRow(
+                        icon: "heart.text.square",
+                        title: "Health Advice",
+                        description: "Get alerts when your recovery or health metrics need attention",
+                        color: .red
+                    )
+
+                    InsightTypeRow(
+                        icon: "face.smiling",
+                        title: "Mood Support",
+                        description: "Receive encouragement when you're feeling down",
+                        color: .pink
+                    )
+
+                    InsightTypeRow(
+                        icon: "flag.fill",
+                        title: "Challenge Motivation",
+                        description: "Witty reminders to stay on track with challenges",
+                        color: .orange
+                    )
+
+                    InsightTypeRow(
+                        icon: "drop.fill",
+                        title: "Hydration Reminders",
+                        description: "Gentle nudges to meet your water intake goals",
+                        color: .cyan
+                    )
+
+                    InsightTypeRow(
+                        icon: "figure.run",
+                        title: "Activity Nudges",
+                        description: "Suggestions to stay active and explore app features",
+                        color: .green
+                    )
+                } header: {
+                    Text("What AI Insights Include")
+                }
+
+                // Privacy Section
+                Section {
+                    HStack(spacing: 12) {
+                        Image(systemName: "lock.shield.fill")
+                            .font(.title3)
+                            .foregroundStyle(.green)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Your Data Stays Private")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            Text("AI insights are generated locally on your device. Your health data is never sent to external servers.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Privacy")
+                }
+            }
+        }
+        .navigationTitle("AI Insights")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct InsightTypeRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

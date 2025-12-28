@@ -29,7 +29,7 @@ struct HomeView: View {
     // Get current user's participant for a challenge
     private func currentUserParticipant(for challenge: Challenge) -> ChallengeParticipant? {
         guard let userId = authManager.currentUser?.id else { return nil }
-        return challenge.participants?.first { $0.oderId == userId }
+        return challenge.participants?.first { $0.ownerId == userId }
     }
 
     @State private var animationStage = 0
@@ -41,7 +41,7 @@ struct HomeView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             // Welcome Header
-                            WelcomeHeader(userName: authManager.currentUser?.displayName ?? "Champion")
+                            WelcomeHeader(userName: "Jeff")
                                 .id("top")
                                 .opacity(animationStage >= 1 ? 1 : 0)
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
@@ -89,6 +89,16 @@ struct HomeView: View {
                             .opacity(animationStage >= 5 ? 1 : 0)
                             .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
                             .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
+
+                            // AI Insights Section
+                            AIInsightsSection(
+                                selectedTab: $selectedTab,
+                                onCheckIn: { showDailyCheckIn = true },
+                                onWaterIntake: { showWaterIntake = true }
+                            )
+                            .opacity(animationStage >= 5 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
+                            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
                         }
                         .padding()
                         .padding(.bottom, 80)
@@ -117,9 +127,11 @@ struct HomeView: View {
                 }
                 .fullScreenCover(isPresented: $showDailyCheckIn) {
                     DailyCheckInView()
+                        .background(.ultraThinMaterial)
                 }
                 .fullScreenCover(isPresented: $showWaterIntake) {
                     QuickWaterIntakeView()
+                        .background(.ultraThinMaterial)
                 }
                 .task {
                     // Refresh health data when view appears
@@ -276,14 +288,139 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+// MARK: - AI Insights Section
+struct AIInsightsSection: View {
+    @StateObject private var aiService = AIInsightsService.shared
+    @EnvironmentObject var themeManager: ThemeManager
+    @Binding var selectedTab: Tab
+
+    let onCheckIn: () -> Void
+    let onWaterIntake: () -> Void
+
+    var body: some View {
+        if aiService.aiEnabled && !aiService.insights.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(.purple)
+                    Text("AI Insights")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                    Spacer()
+                }
+
+                ForEach(aiService.insights) { insight in
+                    AIInsightCard(
+                        insight: insight,
+                        onAction: {
+                            handleInsightAction(insight)
+                        },
+                        onDismiss: {
+                            withAnimation {
+                                aiService.insights.removeAll { $0.id == insight.id }
+                            }
+                        }
+                    )
+                }
+            }
+            .padding(.top, 8)
+            .task {
+                await aiService.generateInsights()
+            }
+        }
+    }
+
+    private func handleInsightAction(_ insight: AIInsight) {
+        themeManager.mediumImpact()
+
+        switch insight.type {
+        case .checkInReminder:
+            onCheckIn()
+        case .hydrationReminder:
+            onWaterIntake()
+        case .healthAdvice:
+            selectedTab = .health
+        case .challengeMotivation:
+            selectedTab = .programs // Challenges are accessible from Programs
+        case .engagementNudge, .workoutSuggestion:
+            selectedTab = .programs
+        case .moodSupport:
+            onCheckIn()
+        case .celebratory:
+            selectedTab = .progress
+        }
+    }
+}
+
+// MARK: - AI Insight Card
+struct AIInsightCard: View {
+    let insight: AIInsight
+    let onAction: () -> Void
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(insight.color.opacity(0.15))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: insight.icon)
+                    .font(.system(size: 18))
+                    .foregroundStyle(insight.color)
+            }
+
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(insight.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                Text(insight.message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+
+            Spacer()
+
+            // Actions
+            VStack(spacing: 8) {
+                if let actionLabel = insight.actionLabel {
+                    Button(action: onAction) {
+                        Text(actionLabel)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(insight.color)
+                            .clipShape(Capsule())
+                    }
+                }
+
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding()
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
 // MARK: - Quick Options Grid (Customizable)
 struct QuickOptionsGrid: View {
     @EnvironmentObject var navigationState: NavigationState
+    @EnvironmentObject var userProfileManager: UserProfileManager
     let onCheckIn: () -> Void
     let onWaterIntake: () -> Void
     @Binding var selectedTab: Tab
 
-    @AppStorage("quickActions") private var quickActionsData: Data = Data()
     @State private var showEditSheet = false
 
     static let defaultActions: [QuickActionType] = [.checkIn, .water, .exercises, .progress, .health, .programs, .challenges, .settings]
@@ -296,7 +433,7 @@ struct QuickOptionsGrid: View {
     ]
 
     private var selectedActions: [QuickActionType] {
-        if let decoded = try? JSONDecoder().decode([QuickActionType].self, from: quickActionsData),
+        if let decoded = try? JSONDecoder().decode([QuickActionType].self, from: userProfileManager.quickActionsData),
            !decoded.isEmpty {
             return decoded
         }
@@ -365,7 +502,7 @@ struct QuickOptionsGrid: View {
                 selectedActions: selectedActions,
                 onSave: { newActions in
                     if let encoded = try? JSONEncoder().encode(newActions) {
-                        quickActionsData = encoded
+                        userProfileManager.quickActionsData = encoded
                     }
                 }
             )
@@ -382,7 +519,9 @@ struct QuickOptionsGrid: View {
             onWaterIntake()
         case .exercises:
             selectedTab = .programs
-            navigationState.showExercises = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                navigationState.showExercises = true
+            }
         case .programs:
             selectedTab = .programs
         case .progress:
@@ -391,7 +530,9 @@ struct QuickOptionsGrid: View {
             selectedTab = .health
         case .challenges:
             selectedTab = .programs
-            navigationState.showChallenges = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                navigationState.showChallenges = true
+            }
         case .settings:
             selectedTab = .settings
         }
@@ -1007,8 +1148,9 @@ struct ActiveWorkoutCard: View {
         workoutManager.currentSession
     }
 
+    // Current workout is the active one (from program) or the most recent
     private var currentWorkout: Workout? {
-        activeSession?.workout ?? workouts.first
+        activeSession?.workout ?? workouts.first { $0.isActive } ?? workouts.first
     }
 
     private var isInProgress: Bool {
@@ -1331,9 +1473,9 @@ struct TodayWorkoutCard: View {
     @State private var showStartConfirmation = false
     @State private var selectedWorkout: Workout?
 
-    // Get most recent workout
+    // Get current workout (active one from program or most recent)
     private var currentWorkout: Workout? {
-        workouts.first
+        workouts.first { $0.isActive } ?? workouts.first
     }
 
     var body: some View {
@@ -1652,6 +1794,9 @@ struct QuickWaterIntakeView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .padding(.horizontal)
 
+                    // Trend Graph
+                    WaterTrendGraphSection()
+
                     // Hydration tips
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
@@ -1886,6 +2031,321 @@ struct TodayWaterStatBox: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value) \(unit)")
+    }
+}
+
+// MARK: - Water Trend Graph Section
+struct WaterTrendGraphSection: View {
+    @EnvironmentObject var waterManager: WaterIntakeManager
+    @State private var selectedPeriod: WaterTrendPeriod = .week
+    @State private var trendData: [Double] = []
+    @State private var isLoading = true
+
+    private let chartHeight: CGFloat = 160
+
+    enum WaterTrendPeriod: String, CaseIterable {
+        case day = "Day"
+        case week = "Week"
+        case month = "Month"
+        case year = "Year"
+
+        var shortLabel: String {
+            switch self {
+            case .day: return "1D"
+            case .week: return "1W"
+            case .month: return "1M"
+            case .year: return "1Y"
+            }
+        }
+
+        var dataPoints: Int {
+            switch self {
+            case .day: return 24      // Hourly
+            case .week: return 7      // Daily
+            case .month: return 30    // Daily
+            case .year: return 12     // Monthly
+            }
+        }
+
+        var chartTitle: String {
+            switch self {
+            case .day: return "Today"
+            case .week: return "Last 7 Days"
+            case .month: return "Last 30 Days"
+            case .year: return "Last 12 Months"
+            }
+        }
+    }
+
+    private var averageValue: Double {
+        guard !trendData.isEmpty else { return 0 }
+        let nonZero = trendData.filter { $0 > 0 }
+        guard !nonZero.isEmpty else { return 0 }
+        return nonZero.reduce(0, +) / Double(nonZero.count)
+    }
+
+    private var goalOz: Double {
+        waterManager.goalOunces
+    }
+
+    private var daysMetGoal: Int {
+        trendData.filter { $0 >= goalOz }.count
+    }
+
+    private var hasData: Bool {
+        trendData.contains { $0 > 0 }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header with period selector
+            HStack {
+                Text("Hydration Trend")
+                    .font(.headline)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                // Time period picker - compact single row
+                HStack(spacing: 2) {
+                    ForEach(WaterTrendPeriod.allCases, id: \.self) { period in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedPeriod = period
+                            }
+                            loadData()
+                        } label: {
+                            Text(period.shortLabel)
+                                .font(.system(size: 11, weight: selectedPeriod == period ? .bold : .medium))
+                                .foregroundStyle(selectedPeriod == period ? .white : .secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(
+                                    selectedPeriod == period ?
+                                    Color.accentBlue :
+                                    Color.clear
+                                )
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+                .padding(2)
+                .background(Color(.tertiarySystemGroupedBackground))
+                .clipShape(Capsule())
+            }
+
+            // Summary stats
+            if hasData {
+                HStack(spacing: 16) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.caption)
+                            .foregroundStyle(Color.accentBlue)
+                        Text(String(format: "%.0f oz avg", averageValue))
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+
+                    if selectedPeriod != .day {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundStyle(Color.accentGreen)
+                            Text("\(daysMetGoal) goals met")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                        }
+                    }
+
+                    Spacer()
+                }
+                .foregroundStyle(.secondary)
+            }
+
+            // Chart
+            if isLoading {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .frame(height: chartHeight)
+            } else if hasData {
+                // Bar chart
+                HStack(alignment: .top, spacing: 8) {
+                    // Y-axis labels
+                    VStack(alignment: .trailing) {
+                        Text("\(Int(goalOz * 1.2))oz")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(goalOz))oz")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(Int(goalOz * 0.5))oz")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("0")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(width: 32, height: chartHeight)
+
+                    // Chart area
+                    ZStack(alignment: .bottom) {
+                        // Grid lines
+                        VStack(spacing: 0) {
+                            ForEach(0..<3, id: \.self) { _ in
+                                Divider()
+                                    .background(Color.gray.opacity(0.2))
+                                Spacer()
+                            }
+                            Divider()
+                                .background(Color.gray.opacity(0.2))
+                        }
+                        .frame(height: chartHeight)
+
+                        // Goal line
+                        Rectangle()
+                            .fill(Color.accentGreen.opacity(0.6))
+                            .frame(height: 2)
+                            .offset(y: -chartHeight * (goalOz / (goalOz * 1.2)))
+
+                        // Bars
+                        HStack(alignment: .bottom, spacing: selectedPeriod == .year ? 4 : 2) {
+                            ForEach(0..<trendData.count, id: \.self) { index in
+                                let value = trendData[index]
+                                let maxValue = goalOz * 1.2
+                                let height = min((value / maxValue) * chartHeight, chartHeight)
+                                let metGoal = value >= goalOz
+
+                                RoundedRectangle(cornerRadius: selectedPeriod == .day ? 1 : 3)
+                                    .fill(
+                                        metGoal ?
+                                        LinearGradient(colors: [Color.accentGreen, Color.accentGreen.opacity(0.7)], startPoint: .top, endPoint: .bottom) :
+                                        (value > 0 ? LinearGradient(colors: [Color.accentBlue, Color.accentBlue.opacity(0.5)], startPoint: .top, endPoint: .bottom) :
+                                        LinearGradient(colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.1)], startPoint: .top, endPoint: .bottom))
+                                    )
+                                    .frame(height: max(height, 4))
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .frame(height: chartHeight)
+                    }
+                }
+
+                // X-axis labels
+                HStack {
+                    Spacer().frame(width: 40)
+                    HStack {
+                        Text(xAxisStartLabel)
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(xAxisEndLabel)
+                            .font(.system(size: 9))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Legend
+                HStack(spacing: 16) {
+                    HStack(spacing: 4) {
+                        Rectangle()
+                            .fill(Color.accentGreen.opacity(0.6))
+                            .frame(width: 16, height: 2)
+                        Text("Goal: \(Int(goalOz))oz")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.accentGreen)
+                            .frame(width: 8, height: 8)
+                        Text("Goal met")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.accentBlue)
+                            .frame(width: 8, height: 8)
+                        Text("Below goal")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+                }
+            } else {
+                // Empty state
+                VStack(spacing: 12) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.title)
+                        .foregroundStyle(.tertiary)
+                    Text("No data for this period")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(height: chartHeight)
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding()
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(.horizontal)
+        .onAppear {
+            loadData()
+        }
+        .onChange(of: selectedPeriod) { _, _ in
+            loadData()
+        }
+    }
+
+    private var xAxisStartLabel: String {
+        switch selectedPeriod {
+        case .day: return "12am"
+        case .week: return "7d ago"
+        case .month: return "30d ago"
+        case .year: return "12m ago"
+        }
+    }
+
+    private var xAxisEndLabel: String {
+        switch selectedPeriod {
+        case .day: return "Now"
+        case .week: return "Today"
+        case .month: return "Today"
+        case .year: return "Now"
+        }
+    }
+
+    private func loadData() {
+        isLoading = true
+
+        Task {
+            let data: [Double]
+            switch selectedPeriod {
+            case .day:
+                data = await waterManager.getHourlyDataForTodayAsync()
+            case .week:
+                data = await waterManager.getLast7DaysDataAsync()
+            case .month:
+                data = await waterManager.getLast30DaysDataAsync()
+            case .year:
+                data = await waterManager.getLast12MonthsDataAsync()
+            }
+
+            await MainActor.run {
+                trendData = data
+                isLoading = false
+            }
+        }
     }
 }
 

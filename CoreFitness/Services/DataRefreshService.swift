@@ -9,6 +9,8 @@ extension Notification.Name {
     static let workoutCompleted = Notification.Name("workoutCompleted")
     static let healthDataUpdated = Notification.Name("healthDataUpdated")
     static let challengeDataUpdated = Notification.Name("challengeDataUpdated")
+    static let personalRecordAchieved = Notification.Name("personalRecordAchieved")
+    static let achievementUnlocked = Notification.Name("achievementUnlocked")
 }
 
 // MARK: - Data Refresh Service

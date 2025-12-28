@@ -14,6 +14,11 @@ struct ProgressTabView: View {
                         ProgressHeader()
                             .id("top")
 
+                        // Active Program Progress
+                        ActiveProgramProgressSection()
+                            .padding(.top, 24)
+                            .padding(.horizontal)
+
                         // Featured Achievement - Next to Earn
                         FeaturedAchievementSection()
                             .padding(.top, 24)
@@ -186,6 +191,222 @@ private struct StatStripItem: View {
                 .foregroundStyle(.white.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Active Program Progress Section
+private struct ActiveProgramProgressSection: View {
+    @Query private var userPrograms: [UserProgram]
+
+    private var activeProgram: UserProgram? {
+        userPrograms.first { $0.status == .active }
+    }
+
+    var body: some View {
+        if let program = activeProgram, let template = program.template {
+            VStack(alignment: .leading, spacing: 16) {
+                // Section header
+                HStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: "figure.run.circle.fill")
+                            .foregroundStyle(Color(hex: "BF5AF2"))
+                        Text("ACTIVE PROGRAM")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white.opacity(0.7))
+                            .tracking(1.5)
+                    }
+
+                    Spacer()
+
+                    NavigationLink {
+                        ProgramDetailView(
+                            program: template,
+                            activeProgram: program
+                        )
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("View")
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                        }
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(Color(hex: "BF5AF2"))
+                    }
+                }
+
+                // Program card
+                ActiveProgramCard(program: program, template: template)
+            }
+        }
+    }
+}
+
+private struct ActiveProgramCard: View {
+    let program: UserProgram
+    let template: ProgramTemplate
+
+    private var overallProgress: Double {
+        let totalWorkouts = template.durationWeeks * template.workoutsPerWeek
+        guard totalWorkouts > 0 else { return 0 }
+        return Double(program.completedWorkouts) / Double(totalWorkouts)
+    }
+
+    private var workoutsThisWeek: Int {
+        let weekKey = "week\(program.currentWeek)"
+        return program.completedDays[weekKey]?.count ?? 0
+    }
+
+    private var weekProgress: Double {
+        guard template.workoutsPerWeek > 0 else { return 0 }
+        return Double(workoutsThisWeek) / Double(template.workoutsPerWeek)
+    }
+
+    private var categoryColor: Color {
+        switch template.category {
+        case .strength: return Color(hex: "FF6B35")
+        case .cardio: return Color(hex: "FF2D55")
+        case .yoga: return Color(hex: "BF5AF2")
+        case .pilates: return Color(hex: "5AC8FA")
+        case .hiit: return Color(hex: "FF9500")
+        case .stretching: return Color(hex: "34C759")
+        case .running: return Color(hex: "00C7BE")
+        case .cycling: return Color(hex: "32ADE6")
+        case .swimming: return Color(hex: "007AFF")
+        case .calisthenics: return Color(hex: "AF52DE")
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header row
+            HStack(spacing: 14) {
+                // Category icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(categoryColor.opacity(0.2))
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: template.category.icon)
+                        .font(.title2)
+                        .foregroundStyle(categoryColor)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(template.name)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    HStack(spacing: 8) {
+                        Text("Week \(program.currentWeek) of \(template.durationWeeks)")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+
+                        Text("•")
+                            .foregroundStyle(.white.opacity(0.3))
+
+                        Text("\(program.completedWorkouts) workouts done")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+
+                Spacer()
+            }
+
+            // Overall progress
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Overall Progress")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Spacer()
+
+                    Text("\(Int(overallProgress * 100))%")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(categoryColor)
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [categoryColor, categoryColor.opacity(0.6)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geo.size.width * overallProgress, height: 8)
+                    }
+                }
+                .frame(height: 8)
+            }
+
+            // This week progress
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("This Week")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Spacer()
+
+                    Text("\(workoutsThisWeek)/\(template.workoutsPerWeek)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+
+                // Week workout dots
+                HStack(spacing: 8) {
+                    ForEach(0..<template.workoutsPerWeek, id: \.self) { index in
+                        let completed = index < workoutsThisWeek
+                        Circle()
+                            .fill(completed ? categoryColor : Color.white.opacity(0.15))
+                            .frame(width: 12, height: 12)
+                            .overlay(
+                                completed ?
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 7, weight: .bold))
+                                    .foregroundStyle(.white)
+                                : nil
+                            )
+                    }
+
+                    Spacer()
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            categoryColor.opacity(0.15),
+                            Color(hex: "1C1C1E").opacity(0.95)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(categoryColor.opacity(0.3), lineWidth: 1)
+                )
+        )
     }
 }
 

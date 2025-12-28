@@ -88,6 +88,9 @@ struct CoreFitnessApp: App {
             WorkoutExercise.self,
             WorkoutSession.self,
             CompletedSet.self,
+            // Program Models
+            ProgramTemplate.self,
+            UserProgram.self,
             // Fitness Data Models
             PersonalRecord.self,
             DailyHealthData.self,
@@ -172,8 +175,12 @@ struct CoreFitnessApp: App {
                     workoutManager.themeManager = themeManager
                     // Connect WaterIntakeManager to HealthKitManager for syncing
                     waterIntakeManager.setHealthKitManager(healthKitManager)
+                    // Connect NotificationManager to UserProfileManager for synced settings
+                    NotificationManager.shared.configure(with: userProfileManager)
                     // Seed achievements on first launch
                     AchievementDefinitions.seedAchievements(in: context)
+                    // Seed workout programs on first launch
+                    ProgramData.seedPrograms(in: context)
                 }
                 .task {
                     // Request HealthKit authorization on first launch
