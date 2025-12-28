@@ -339,6 +339,45 @@ struct ProgramData {
             goal: .strength,
             equipmentRequired: ["Barbell", "Squat Rack", "Bench", "Deadlift Platform"]
         )
+        powerlifting.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Heavy Squat", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Heavy Bench", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Heavy Deadlift", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Volume Day", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        powerlifting.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Heavy Squat", description: "Primary squat focus", estimatedMinutes: 75, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 5, reps: "3", weight: "85-90% 1RM", restSeconds: 300),
+                ProgramExerciseDefinition(exerciseName: "Pause Squats", sets: 3, reps: "3", weight: "70%", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Leg Press", sets: 3, reps: "8-10", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Romanian Deadlift", sets: 3, reps: "8", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Ab Wheel", sets: 3, reps: "10-12", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Heavy Bench", description: "Primary bench focus", estimatedMinutes: 75, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 5, reps: "3", weight: "85-90% 1RM", restSeconds: 300),
+                ProgramExerciseDefinition(exerciseName: "Close Grip Bench Press", sets: 3, reps: "5", weight: "75%", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Rows", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Overhead Press", sets: 3, reps: "6-8", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Tricep Pushdowns", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Heavy Deadlift", description: "Primary deadlift focus", estimatedMinutes: 75, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Deadlift", sets: 5, reps: "3", weight: "85-90% 1RM", restSeconds: 300),
+                ProgramExerciseDefinition(exerciseName: "Deficit Deadlift", sets: 3, reps: "3", weight: "70%", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Barbell Rows", sets: 4, reps: "6-8", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Pull-ups", sets: 3, reps: "6-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Face Pulls", sets: 3, reps: "15-20", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Volume Day", description: "Lighter technique work", estimatedMinutes: 70, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 4, reps: "6", weight: "70%", restSeconds: 150),
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 4, reps: "6", weight: "70%", restSeconds: 150),
+                ProgramExerciseDefinition(exerciseName: "Deadlift", sets: 3, reps: "5", weight: "65%", restSeconds: 150),
+                ProgramExerciseDefinition(exerciseName: "Lat Pulldown", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 3, reps: "12-15", restSeconds: 60)
+            ])
+        ]
         context.insert(powerlifting)
 
         // 7. German Volume Training
@@ -353,6 +392,41 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Barbell", "Dumbbells", "Bench"]
         )
+        gvt.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Chest & Back", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Legs & Abs", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Arms & Shoulders", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: "Light Recovery", isRest: false)
+        ]
+        gvt.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Chest & Back", description: "10x10 antagonist supersets", estimatedMinutes: 60, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 10, reps: "10", weight: "60% 1RM", restSeconds: 90, notes: "Superset with rows"),
+                ProgramExerciseDefinition(exerciseName: "Barbell Rows", sets: 10, reps: "10", weight: "60% 1RM", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Incline Dumbbell Flyes", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Cable Rows", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Legs & Abs", description: "10x10 leg destroyer", estimatedMinutes: 65, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 10, reps: "10", weight: "60% 1RM", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 10, reps: "10", weight: "60% 1RM", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Calf Raises", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Hanging Leg Raises", sets: 3, reps: "15-20", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Arms & Shoulders", description: "10x10 arm pump", estimatedMinutes: 60, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dips", sets: 10, reps: "10", weight: "Bodyweight", restSeconds: 90, notes: "Superset with curls"),
+                ProgramExerciseDefinition(exerciseName: "Barbell Curls", sets: 10, reps: "10", weight: "60% 1RM", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Lateral Raises", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Reverse Flyes", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Light Recovery", description: "Active recovery", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Lat Pulldown", sets: 3, reps: "12", weight: "Light", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Leg Press", sets: 3, reps: "12", weight: "Light", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Face Pulls", sets: 3, reps: "15", restSeconds: 45),
+                ProgramExerciseDefinition(exerciseName: "Ab Wheel", sets: 3, reps: "10-12", restSeconds: 45)
+            ])
+        ]
         context.insert(gvt)
 
         // 8. Starting Strength
@@ -368,6 +442,27 @@ struct ProgramData {
             equipmentRequired: ["Barbell", "Squat Rack", "Bench"],
             isFeatured: true
         )
+        startingStrength.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Workout A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Workout B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Workout A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        startingStrength.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Workout A", description: "Squat, Press, Deadlift", estimatedMinutes: 60, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 3, reps: "5", weight: "Add 5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Overhead Press", sets: 3, reps: "5", weight: "Add 2.5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Deadlift", sets: 1, reps: "5", weight: "Add 10lbs/session", restSeconds: 180)
+            ]),
+            ProgramWorkoutDefinition(name: "Workout B", description: "Squat, Bench, Power Clean", estimatedMinutes: 60, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 3, reps: "5", weight: "Add 5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 3, reps: "5", weight: "Add 2.5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Power Clean", sets: 5, reps: "3", weight: "Add 5lbs/session", restSeconds: 180)
+            ])
+        ]
         context.insert(startingStrength)
 
         // 9. Arnold Split
@@ -382,6 +477,63 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Full Gym Access"]
         )
+        arnoldSplit.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Chest & Back A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Shoulders & Arms A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Legs A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Chest & Back B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Shoulders & Arms B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: "Legs B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        arnoldSplit.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Chest & Back A", description: "Heavy chest and back", estimatedMinutes: 70, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 5, reps: "6-8", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Incline Dumbbell Press", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Pull-ups", sets: 5, reps: "8-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Barbell Rows", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Cable Flyes", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Pullovers", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Shoulders & Arms A", description: "Heavy shoulders and arms", estimatedMinutes: 65, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Overhead Press", sets: 4, reps: "6-8", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Lateral Raises", sets: 4, reps: "10-12", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Barbell Curls", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Skull Crushers", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Reverse Flyes", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Wrist Curls", sets: 3, reps: "15-20", restSeconds: 45)
+            ]),
+            ProgramWorkoutDefinition(name: "Legs A", description: "Heavy leg day", estimatedMinutes: 70, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 5, reps: "6-8", restSeconds: 150),
+                ProgramExerciseDefinition(exerciseName: "Leg Press", sets: 4, reps: "10-12", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Extensions", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Standing Calf Raises", sets: 5, reps: "15-20", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Chest & Back B", description: "Volume chest and back", estimatedMinutes: 70, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Incline Barbell Press", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Bench Press", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Lat Pulldown", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Seated Cable Row", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Pec Deck", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Straight Arm Pulldowns", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Shoulders & Arms B", description: "Volume shoulders and arms", estimatedMinutes: 65, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Arnold Press", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Cable Lateral Raises", sets: 4, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Incline Dumbbell Curls", sets: 4, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Tricep Pushdowns", sets: 4, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Face Pulls", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Hammer Curls", sets: 3, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Legs B", description: "Volume leg day", estimatedMinutes: 70, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Front Squats", sets: 4, reps: "8-10", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Romanian Deadlift", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Walking Lunges", sets: 3, reps: "12-15", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Seated Calf Raises", sets: 4, reps: "15-20", restSeconds: 60)
+            ])
+        ]
         context.insert(arnoldSplit)
 
         // 10. Minimalist Strength
@@ -396,6 +548,27 @@ struct ProgramData {
             goal: .strength,
             equipmentRequired: ["Barbell", "Squat Rack"]
         )
+        minimalist.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Day A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: "Day B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Day A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        minimalist.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Day A", description: "Squat and Press", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 3, reps: "5", weight: "Add 5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Overhead Press", sets: 3, reps: "5", weight: "Add 2.5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Pull-ups", sets: 3, reps: "AMRAP", restSeconds: 120)
+            ]),
+            ProgramWorkoutDefinition(name: "Day B", description: "Deadlift and Bench", estimatedMinutes: 40, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Deadlift", sets: 1, reps: "5", weight: "Add 10lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Barbell Bench Press", sets: 3, reps: "5", weight: "Add 2.5lbs/session", restSeconds: 180),
+                ProgramExerciseDefinition(exerciseName: "Barbell Rows", sets: 3, reps: "5", weight: "Add 5lbs/session", restSeconds: 120)
+            ])
+        ]
         context.insert(minimalist)
 
         // 11. Women's Glute Builder
@@ -410,6 +583,45 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Barbell", "Hip Thrust Bench", "Resistance Bands"]
         )
+        gluteBuilder.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Glute Focus A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Upper Body", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Glute Focus B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Full Lower", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        gluteBuilder.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Glute Focus A", description: "Heavy glute emphasis", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Hip Thrusts", sets: 4, reps: "8-10", weight: "Heavy", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Romanian Deadlift", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Bulgarian Split Squats", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Cable Kickbacks", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Banded Clamshells", sets: 3, reps: "15-20", restSeconds: 45)
+            ]),
+            ProgramWorkoutDefinition(name: "Upper Body", description: "Light upper maintenance", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Shoulder Press", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Lat Pulldown", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Push-ups", sets: 3, reps: "10-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Face Pulls", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Tricep Pushdowns", sets: 2, reps: "12-15", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Glute Focus B", description: "Volume glute work", estimatedMinutes: 50, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Sumo Deadlift", sets: 4, reps: "8-10", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Glute Bridge", sets: 4, reps: "12-15", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Step Ups", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Banded Hip Abduction", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Frog Pumps", sets: 3, reps: "20-25", restSeconds: 45)
+            ]),
+            ProgramWorkoutDefinition(name: "Full Lower", description: "Complete lower body", estimatedMinutes: 55, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Barbell Squats", sets: 4, reps: "8-10", restSeconds: 120),
+                ProgramExerciseDefinition(exerciseName: "Leg Press", sets: 3, reps: "12-15", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Hip Thrusts", sets: 3, reps: "12-15", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Leg Curls", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Calf Raises", sets: 3, reps: "15-20", restSeconds: 60)
+            ])
+        ]
         context.insert(gluteBuilder)
 
         // 12. Home Dumbbell Only
@@ -424,6 +636,47 @@ struct ProgramData {
             goal: .muscleBuilding,
             equipmentRequired: ["Dumbbells", "Adjustable Bench"]
         )
+        dumbbellOnly.schedule = [
+            ProgramDaySchedule(dayOfWeek: 1, workoutName: "Upper Body A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 2, workoutName: "Lower Body A", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 3, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 4, workoutName: "Upper Body B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 5, workoutName: "Lower Body B", isRest: false),
+            ProgramDaySchedule(dayOfWeek: 6, workoutName: nil, isRest: true),
+            ProgramDaySchedule(dayOfWeek: 7, workoutName: nil, isRest: true)
+        ]
+        dumbbellOnly.workoutDefinitions = [
+            ProgramWorkoutDefinition(name: "Upper Body A", description: "Push focus", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Bench Press", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Rows", sets: 4, reps: "8-10", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Shoulder Press", sets: 3, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Lateral Raises", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Curls", sets: 3, reps: "10-12", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Overhead Tricep Extension", sets: 3, reps: "10-12", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Lower Body A", description: "Quad focus", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Goblet Squats", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Romanian Deadlift", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Walking Lunges", sets: 3, reps: "12-15", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Calf Raises", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Plank", sets: 3, reps: "30-60s", restSeconds: 45)
+            ]),
+            ProgramWorkoutDefinition(name: "Upper Body B", description: "Pull focus", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Incline Dumbbell Press", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Pullovers", sets: 3, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Arnold Press", sets: 3, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Reverse Flyes", sets: 3, reps: "12-15", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Hammer Curls", sets: 3, reps: "10-12", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Skull Crushers", sets: 3, reps: "10-12", restSeconds: 60)
+            ]),
+            ProgramWorkoutDefinition(name: "Lower Body B", description: "Glute/ham focus", estimatedMinutes: 45, exercises: [
+                ProgramExerciseDefinition(exerciseName: "Dumbbell Sumo Squats", sets: 4, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Single Leg Romanian Deadlift", sets: 3, reps: "10-12", restSeconds: 90),
+                ProgramExerciseDefinition(exerciseName: "Step Ups", sets: 3, reps: "10-12", restSeconds: 75),
+                ProgramExerciseDefinition(exerciseName: "Glute Bridge", sets: 3, reps: "15-20", restSeconds: 60),
+                ProgramExerciseDefinition(exerciseName: "Dead Bug", sets: 3, reps: "10-12", restSeconds: 45)
+            ])
+        ]
         context.insert(dumbbellOnly)
     }
 

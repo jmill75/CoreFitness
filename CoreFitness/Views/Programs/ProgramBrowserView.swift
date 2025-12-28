@@ -55,12 +55,6 @@ struct ProgramBrowserView: View {
 
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Active Program Banner
-                        if let active = activeProgram, let template = active.template {
-                            ActiveProgramBanner(program: active, template: template)
-                                .padding(.horizontal)
-                        }
-
                         // Search Bar
                         HStack(spacing: 12) {
                             HStack {
@@ -252,57 +246,6 @@ struct ProgramBrowserView: View {
         case .intermediate: return .orange
         case .advanced: return .red
         }
-    }
-}
-
-// MARK: - Active Program Banner
-struct ActiveProgramBanner: View {
-    let program: UserProgram
-    let template: ProgramTemplate
-
-    var body: some View {
-        HStack(spacing: 16) {
-            // Progress Ring
-            ZStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.2), lineWidth: 4)
-                    .frame(width: 50, height: 50)
-                Circle()
-                    .trim(from: 0, to: program.progressPercentage / 100)
-                    .stroke(Color.green, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                    .frame(width: 50, height: 50)
-                    .rotationEffect(.degrees(-90))
-                Text("\(Int(program.progressPercentage))%")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Currently Active")
-                    .font(.caption)
-                    .foregroundStyle(.green)
-                Text(template.name)
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white)
-                Text("Week \(program.currentWeek) of \(template.durationWeeks)")
-                    .font(.caption)
-                    .foregroundStyle(.gray)
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .foregroundStyle(.gray)
-        }
-        .padding()
-        .background(Color.green.opacity(0.15))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.green.opacity(0.3), lineWidth: 1)
-        )
     }
 }
 
