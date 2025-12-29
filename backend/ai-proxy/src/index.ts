@@ -57,14 +57,19 @@ export default {
       return new Response(null, { headers: corsHeaders });
     }
 
-    // Only allow POST requests
-    if (request.method !== 'POST') {
-      return jsonResponse({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Only POST requests allowed' } }, 405);
-    }
-
     // Parse URL
     const url = new URL(request.url);
     const path = url.pathname;
+
+    // Health check endpoint (allow GET)
+    if (path === '/health' && request.method === 'GET') {
+      return jsonResponse({ status: 'ok', environment: env.ENVIRONMENT });
+    }
+
+    // Only allow POST requests for AI endpoints
+    if (request.method !== 'POST') {
+      return jsonResponse({ error: { code: 'METHOD_NOT_ALLOWED', message: 'Only POST requests allowed' } }, 405);
+    }
 
     // Check rate limit
     const deviceId = request.headers.get('X-Device-ID') || 'anonymous';
