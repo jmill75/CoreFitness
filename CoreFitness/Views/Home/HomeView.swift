@@ -1148,9 +1148,9 @@ struct ActiveWorkoutCard: View {
         workoutManager.currentSession
     }
 
-    // Current workout is the active one (from program) or the most recent
+    // Current workout is only shown if there's an active session or an explicitly active workout
     private var currentWorkout: Workout? {
-        activeSession?.workout ?? workouts.first { $0.isActive } ?? workouts.first
+        activeSession?.workout ?? workouts.first { $0.isActive }
     }
 
     private var isInProgress: Bool {
@@ -1473,9 +1473,9 @@ struct TodayWorkoutCard: View {
     @State private var showStartConfirmation = false
     @State private var selectedWorkout: Workout?
 
-    // Get current workout (active one from program or most recent)
+    // Get current workout only if explicitly active
     private var currentWorkout: Workout? {
-        workouts.first { $0.isActive } ?? workouts.first
+        workouts.first { $0.isActive }
     }
 
     var body: some View {

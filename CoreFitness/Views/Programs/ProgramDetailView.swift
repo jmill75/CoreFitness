@@ -103,7 +103,7 @@ struct ProgramDetailView: View {
                                 .clipShape(Circle())
                         }
 
-                        // Start Button
+                        // Add Program Button
                         Button {
                             if hasActiveProgram {
                                 showSwitchProgramAlert = true
@@ -112,8 +112,8 @@ struct ProgramDetailView: View {
                             }
                         } label: {
                             HStack(spacing: 10) {
-                                Image(systemName: "play.fill")
-                                Text("Start Program")
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add Program")
                                     .fontWeight(.semibold)
                             }
                             .foregroundStyle(.black)
@@ -148,24 +148,24 @@ struct ProgramDetailView: View {
             .sheet(isPresented: $showShareSheet) {
                 ShareProgramSheet(program: program)
             }
-            .alert("Start Program?", isPresented: $showStartConfirmation) {
+            .alert("Add Program?", isPresented: $showStartConfirmation) {
                 Button("Cancel", role: .cancel) { }
-                Button("Start") {
+                Button("Add") {
                     startProgram()
                 }
             } message: {
-                Text("You're about to start \(program.name). This \(program.durationWeeks)-week program will begin today.")
+                Text("Add \(program.name) to your workouts? This \(program.durationWeeks)-week program will be queued and ready to start.")
             }
-            .alert("Switch Program?", isPresented: $showSwitchProgramAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Save & Switch", role: .destructive) {
+            .alert("End Current Program?", isPresented: $showSwitchProgramAlert) {
+                Button("Keep Current", role: .cancel) { }
+                Button("End & Replace", role: .destructive) {
                     switchToProgram()
                 }
             } message: {
                 if let currentProgram = activeProgram?.template {
-                    Text("You're currently on \"\(currentProgram.name)\" (Week \(activeProgram?.currentWeek ?? 1)). Starting \(program.name) will save your progress and close out your current program. You can view your history anytime.")
+                    Text("⚠️ This will permanently end your current program.\n\n\"\(currentProgram.name)\" (Week \(activeProgram?.currentWeek ?? 1) of \(currentProgram.durationWeeks))\n\n• All remaining scheduled workouts will be cancelled\n• Your completed progress will be saved to history\n• You cannot resume this program later\n\nAre you sure you want to end it and start \"\(program.name)\"?")
                 } else {
-                    Text("Starting \(program.name) will save your current program progress. You can view your history anytime.")
+                    Text("⚠️ This will end your current program.\n\nYour completed progress will be saved to history, but remaining workouts will be cancelled. You cannot resume the current program later.\n\nAre you sure you want to start \"\(program.name)\"?")
                 }
             }
         }
@@ -176,8 +176,8 @@ struct ProgramDetailView: View {
         let userProgram = UserProgram(template: program)
         modelContext.insert(userProgram)
 
-        // Set today's workout as the current workout
-        setCurrentWorkoutFromProgram()
+        // Create ALL workouts for the entire program
+        createAllProgramWorkouts(userProgram: userProgram)
 
         try? modelContext.save()
 
@@ -199,8 +199,8 @@ struct ProgramDetailView: View {
         let userProgram = UserProgram(template: program)
         modelContext.insert(userProgram)
 
-        // Set today's workout as the current workout
-        setCurrentWorkoutFromProgram()
+        // Create ALL workouts for the entire program
+        createAllProgramWorkouts(userProgram: userProgram)
 
         try? modelContext.save()
 
@@ -211,7 +211,58 @@ struct ProgramDetailView: View {
         dismiss()
     }
 
-    // MARK: - Set Current Workout from Program
+    // MARK: - Create All Program Workouts
+
+    /// Creates all workouts for the entire program duration (e.g., 12 weeks = 36 workouts)
+    private func createAllProgramWorkouts(userProgram: UserProgram) {
+        let calendar = Calendar.current
+        let startDate = userProgram.startDate
+
+        // Clear any existing active workout - no workout should be active until user explicitly starts one
+        for workout in workouts where workout.isActive {
+            workout.isActive = false
+        }
+
+        var sessionNumber = 0
+
+        // Loop through each week of the program
+        for week in 1...program.durationWeeks {
+            // Calculate the start of this week
+            let weekStartDate = calendar.date(byAdding: .weekOfYear, value: week - 1, to: startDate) ?? startDate
+
+            // Loop through each day of the week schedule
+            for daySchedule in program.schedule {
+                // Skip rest days
+                guard !daySchedule.isRest,
+                      let workoutName = daySchedule.workoutName,
+                      let workoutDef = program.workoutDefinitions.first(where: { $0.name == workoutName }) else {
+                    continue
+                }
+
+                sessionNumber += 1
+
+                // Calculate the actual date for this workout
+                // daySchedule.dayOfWeek: 1 = Monday, 7 = Sunday
+                // We need to adjust based on the week start
+                let daysToAdd = daySchedule.dayOfWeek - 1 // 0 for Monday, 6 for Sunday
+                let workoutDate = calendar.date(byAdding: .day, value: daysToAdd, to: weekStartDate)
+
+                // Create the workout - NOT active until user explicitly starts it
+                let workout = createWorkoutFromDefinition(
+                    workoutDef,
+                    weekNumber: week,
+                    dayNumber: daySchedule.dayOfWeek,
+                    sessionNumber: sessionNumber,
+                    scheduledDate: workoutDate,
+                    isActive: false
+                )
+
+                modelContext.insert(workout)
+            }
+        }
+    }
+
+    // MARK: - Legacy: Set Current Workout from Program (kept for compatibility)
 
     private func setCurrentWorkoutFromProgram() {
         // Clear any existing active workout
@@ -253,17 +304,38 @@ struct ProgramDetailView: View {
         return program.workoutDefinitions.first
     }
 
-    private func createWorkoutFromDefinition(_ definition: ProgramWorkoutDefinition) -> Workout {
+    /// Creates a workout from a program definition with full program position tracking
+    private func createWorkoutFromDefinition(
+        _ definition: ProgramWorkoutDefinition,
+        weekNumber: Int = 0,
+        dayNumber: Int = 0,
+        sessionNumber: Int = 0,
+        scheduledDate: Date? = nil,
+        isActive: Bool = true
+    ) -> Workout {
         let workout = Workout(
             name: definition.name,
             description: definition.description,
             estimatedDuration: definition.estimatedMinutes,
             difficulty: program.difficulty,
-            creationType: .preset
+            creationType: .preset,
+            workoutType: .programSession,
+            goal: mapCategoryToGoal(program.category)
         )
-        workout.isActive = true
+
+        // Set program tracking info
+        workout.isActive = isActive
         workout.sourceProgramId = program.id
         workout.sourceProgramName = program.name
+        workout.programWeekNumber = weekNumber
+        workout.programDayNumber = dayNumber
+        workout.programSessionNumber = sessionNumber
+        workout.scheduledDate = scheduledDate
+
+        // Set program duration info on the workout
+        workout.totalWeeks = program.durationWeeks
+        workout.totalDays = program.workoutsPerWeek
+        workout.totalSessions = program.durationWeeks * program.workoutsPerWeek
 
         // Create workout exercises
         for (index, exerciseDef) in definition.exercises.enumerated() {
@@ -298,6 +370,16 @@ struct ProgramDetailView: View {
         }
 
         return workout
+    }
+
+    /// Maps exercise category to workout goal
+    private func mapCategoryToGoal(_ category: ExerciseCategory) -> WorkoutGoal {
+        switch category {
+        case .strength, .calisthenics: return .strength
+        case .cardio, .running, .cycling, .swimming: return .cardio
+        case .yoga, .pilates, .stretching: return .flexibility
+        case .hiit: return .fatLoss
+        }
     }
 
     private func parseReps(_ reps: String) -> Int {

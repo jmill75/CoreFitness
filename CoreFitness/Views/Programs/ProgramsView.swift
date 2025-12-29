@@ -59,15 +59,24 @@ struct ProgramsView: View {
                     .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
                     .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.05), value: animationStage)
 
+                    // MARK: - Workout Dashboard
+                    VStack(alignment: .leading, spacing: 12) {
+                        LibrarySectionHeader(title: "Workout Dashboard")
+                        WorkoutDashboardView()
+                    }
+                    .opacity(animationStage >= 3 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
+
                     // MARK: - Active Workout Hero Card
                     if let workout = currentWorkout {
                         VStack(alignment: .leading, spacing: 12) {
                             LibrarySectionHeader(title: "Current Workout")
                             ActiveWorkoutHeroCard(workout: workout)
                         }
-                        .opacity(animationStage >= 3 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
+                        .opacity(animationStage >= 4 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
                     }
 
                     // MARK: - Active Challenge Card
@@ -76,9 +85,9 @@ struct ProgramsView: View {
                             LibrarySectionHeader(title: "Active Challenge")
                             ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
                         }
-                        .opacity(animationStage >= 4 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
+                        .opacity(animationStage >= 5 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
                     }
 
                     // MARK: - Browse Programs Section
@@ -88,9 +97,9 @@ struct ProgramsView: View {
                             showProgramBrowser = true
                         }
                     }
-                    .opacity(animationStage >= 5 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 10))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
+                    .opacity(animationStage >= 6 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 6 ? 0 : 10))
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
 
                     // MARK: - Challenges Section
                     VStack(alignment: .leading, spacing: 12) {
@@ -100,24 +109,24 @@ struct ProgramsView: View {
                             onTap: { showChallenges = true }
                         )
                     }
-                    .opacity(animationStage >= 6 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 6 ? 0 : 10))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
+                    .opacity(animationStage >= 7 ? 1 : 0)
+                    .offset(y: reduceMotion ? 0 : (animationStage >= 7 ? 0 : 10))
+                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.3), value: animationStage)
 
                     // MARK: - Library Section
                     VStack(spacing: 12) {
                         LibrarySectionHeader(title: "Library")
-                            .opacity(animationStage >= 7 ? 1 : 0)
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.3), value: animationStage)
+                            .opacity(animationStage >= 8 ? 1 : 0)
+                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.35), value: animationStage)
 
                         LibraryGrid(
                             workoutCount: workouts.count,
                             onMyPrograms: { showSavedPrograms = true },
                             onExercises: { showExerciseLibrary = true }
                         )
-                        .opacity(animationStage >= 7 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 7 ? 0 : 10))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.35), value: animationStage)
+                        .opacity(animationStage >= 8 ? 1 : 0)
+                        .offset(y: reduceMotion ? 0 : (animationStage >= 8 ? 0 : 10))
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.4), value: animationStage)
                     }
                 }
                 .padding(.horizontal, 16)
@@ -130,9 +139,9 @@ struct ProgramsView: View {
                 .onAppear {
                     proxy.scrollTo("top", anchor: .top)
                     if reduceMotion {
-                        animationStage = 7
+                        animationStage = 8
                     } else {
-                        for stage in 1...7 {
+                        for stage in 1...8 {
                             DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
                                 animationStage = stage
                             }
@@ -300,89 +309,196 @@ private struct QuickCreateButton: View {
 
 // MARK: - Active Workout Hero Card (Matches HomeView ActiveWorkoutCard)
 private struct ActiveWorkoutHeroCard: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
+    @Query private var allWorkouts: [Workout]
 
     let workout: Workout
 
     @State private var showWorkoutExecution = false
     @State private var isPressed = false
 
-    // Pine green gradient
-    private let gradientStart = Color(hex: "2d6a4f")
-    private let gradientEnd = Color(hex: "1b4332")
+    /// Ensures this workout is active
+    private func ensureWorkoutActive() {
+        guard !workout.isActive else { return }
+        // Deactivate all other workouts
+        for w in allWorkouts where w.isActive && w.id != workout.id {
+            w.isActive = false
+        }
+        workout.isActive = true
+        workout.status = .active
+        try? modelContext.save()
+    }
+
+    // Dynamic gradient based on workout goal
+    private var gradientColors: (start: Color, end: Color) {
+        switch workout.goal {
+        case .strength, .muscleBuilding:
+            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
+        case .cardio:
+            return (Color(hex: "dc2626"), Color(hex: "991b1b"))  // Red
+        case .fatLoss:
+            return (Color(hex: "f59e0b"), Color(hex: "d97706"))  // Amber
+        case .endurance:
+            return (Color(hex: "0891b2"), Color(hex: "0e7490"))  // Cyan
+        case .flexibility:
+            return (Color(hex: "7c3aed"), Color(hex: "6d28d9"))  // Purple
+        default:
+            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
+        }
+    }
+
+    private var statusText: String {
+        switch workout.status {
+        case .created, .draft: return "READY TO START"
+        case .active, .inProgress: return "CONTINUE WORKOUT"
+        case .savedInMiddle: return "RESUME WORKOUT"
+        case .completed: return "COMPLETED"
+        default: return "START"
+        }
+    }
 
     var body: some View {
         Button {
             themeManager.mediumImpact()
+            ensureWorkoutActive()
             showWorkoutExecution = true
         } label: {
-            HStack(spacing: 16) {
-                // Workout icon
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 56, height: 56)
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    // Status badge
-                    Text("READY TO START")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .tracking(0.5)
-                        .foregroundStyle(.white.opacity(0.7))
-
-                    // Title
-                    Text(workout.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-
-                    // Stats row
-                    HStack(spacing: 14) {
-                        Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
-                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    // Workout icon based on goal
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 56, height: 56)
+                        Image(systemName: workout.goal.icon)
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
 
-                    // Progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.25))
-                                .frame(height: 6)
+                    VStack(alignment: .leading, spacing: 6) {
+                        // Status + Type badges
+                        HStack(spacing: 6) {
+                            Text(statusText)
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .tracking(0.5)
+                                .foregroundStyle(.white.opacity(0.8))
 
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white)
-                                .frame(width: 0, height: 6)
+                            if workout.workoutType == .challenge {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "trophy.fill")
+                                    Text("Challenge")
+                                }
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.yellow)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Color.yellow.opacity(0.2))
+                                .clipShape(Capsule())
+                            }
+
+                            if workout.isTrophyEligible {
+                                Image(systemName: "trophy.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.yellow)
+                            }
+                        }
+
+                        // Title
+                        Text(workout.name)
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .lineLimit(1)
+
+                        // Goal + Difficulty row
+                        HStack(spacing: 8) {
+                            Label(workout.goal.displayName, systemImage: workout.goal.icon)
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text(workout.difficulty.displayName)
+                                .fontWeight(.medium)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.8))
+
+                        // Stats row
+                        HStack(spacing: 14) {
+                            Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                            if workout.totalSessions > 1 {
+                                Label("\(workout.completedSessionsCount)/\(workout.totalSessions)", systemImage: "checkmark.circle")
+                            }
+                        }
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.85))
+                    }
+
+                    Spacer()
+
+                    // Play/Go button
+                    VStack(spacing: 6) {
+                        // Creation type badge
+                        Image(systemName: workout.creationType.icon)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+
+                        Spacer()
+
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 50, height: 50)
+                            Image(systemName: workout.status == .completed ? "arrow.counterclockwise" : "play.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.white)
                         }
                     }
-                    .frame(height: 6)
+                }
+                .foregroundStyle(.white)
+                .padding(20)
 
+                // Progress bar (if multi-session)
+                if workout.totalSessions > 1 {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.15))
+
+                            Rectangle()
+                                .fill(Color.white.opacity(0.6))
+                                .frame(width: geo.size.width * CGFloat(workout.progressPercentage / 100))
+                        }
+                    }
+                    .frame(height: 4)
                 }
 
-                Spacer()
-
-                // Play/Go button
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 50, height: 50)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                // Stats footer (if workout has history)
+                if workout.hasBeenStarted {
+                    HStack(spacing: 16) {
+                        if workout.totalCaloriesBurned > 0 {
+                            Label("\(workout.totalCaloriesBurned) cal", systemImage: "flame.fill")
+                        }
+                        if workout.personalRecordsCount > 0 {
+                            Label("\(workout.personalRecordsCount) PRs", systemImage: "star.fill")
+                        }
+                        Spacer()
+                        if let lastDate = workout.lastSessionDate {
+                            Text("Last: \(lastDate, style: .relative)")
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(Color.black.opacity(0.15))
                 }
             }
-            .foregroundStyle(.white)
-            .padding(20)
-            .frame(minHeight: 140)
             .background(
                 LinearGradient(
-                    colors: [gradientStart, gradientEnd],
+                    colors: [gradientColors.start, gradientColors.end],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -912,39 +1028,156 @@ struct SavedProgramsDetailView: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @State private var selectedFilter: ProgramFilter = .all
+    @State private var selectedStatusFilter: StatusFilter = .all
+    @State private var selectedGoalFilter: GoalFilter = .all
+    @State private var selectedWeek: Int = 0  // 0 = All weeks
     @State private var searchText = ""
+    @State private var showFilterSheet = false
+    @State private var sortBySchedule = true  // Sort by session number if true
 
+    // Source filter
     enum ProgramFilter: String, CaseIterable {
         case all = "All"
         case active = "Active"
+        case favorites = "Favorites"
         case userCreated = "My Programs"
         case aiGenerated = "AI Created"
         case imported = "Imported"
+        case challenges = "Challenges"
+        case programWorkouts = "Program"  // New: filter to program workouts only
+    }
+
+    // Status filter
+    enum StatusFilter: String, CaseIterable {
+        case all = "Any Status"
+        case created = "Not Started"
+        case inProgress = "In Progress"
+        case completed = "Completed"
+        case saved = "Saved"
+    }
+
+    // Goal filter
+    enum GoalFilter: String, CaseIterable {
+        case all = "Any Goal"
+        case strength = "Strength"
+        case cardio = "Cardio"
+        case muscleBuilding = "Muscle"
+        case fatLoss = "Fat Loss"
+        case endurance = "Endurance"
+        case flexibility = "Flexibility"
+    }
+
+    // Get available weeks from workouts
+    private var availableWeeks: [Int] {
+        let weeks = Set(workouts.compactMap { $0.programWeekNumber > 0 ? $0.programWeekNumber : nil })
+        return Array(weeks).sorted()
+    }
+
+    // Get max weeks for current program
+    private var maxWeeks: Int {
+        workouts.map { $0.totalWeeks }.max() ?? 12
     }
 
     var filteredWorkouts: [Workout] {
-        var programs = workouts
+        var programs = workouts.filter { !$0.isArchived && $0.status != .deleted }
 
+        // Source filter
         switch selectedFilter {
         case .all: break
         case .active: programs = programs.filter { $0.isActive }
-        case .userCreated: programs = programs.filter { $0.safeCreationType == .userCreated }
-        case .aiGenerated: programs = programs.filter { $0.safeCreationType == .aiGenerated }
-        case .imported: programs = programs.filter { $0.safeCreationType == .imported }
+        case .favorites: programs = programs.filter { $0.isFavorite }
+        case .userCreated: programs = programs.filter { $0.creationType == .userCreated }
+        case .aiGenerated: programs = programs.filter { $0.creationType == .aiGenerated }
+        case .imported: programs = programs.filter { $0.creationType == .imported }
+        case .challenges: programs = programs.filter { $0.workoutType == .challenge }
+        case .programWorkouts: programs = programs.filter { $0.programWeekNumber > 0 }
+        }
+
+        // Status filter
+        switch selectedStatusFilter {
+        case .all: break
+        case .created: programs = programs.filter { $0.status == .created || $0.status == .draft }
+        case .inProgress: programs = programs.filter { $0.status == .inProgress || $0.status == .active }
+        case .completed: programs = programs.filter { $0.status == .completed }
+        case .saved: programs = programs.filter { $0.status == .savedInMiddle }
+        }
+
+        // Goal filter
+        switch selectedGoalFilter {
+        case .all: break
+        case .strength: programs = programs.filter { $0.goal == .strength }
+        case .cardio: programs = programs.filter { $0.goal == .cardio }
+        case .muscleBuilding: programs = programs.filter { $0.goal == .muscleBuilding }
+        case .fatLoss: programs = programs.filter { $0.goal == .fatLoss }
+        case .endurance: programs = programs.filter { $0.goal == .endurance }
+        case .flexibility: programs = programs.filter { $0.goal == .flexibility }
+        }
+
+        // Week filter
+        if selectedWeek > 0 {
+            programs = programs.filter { $0.programWeekNumber == selectedWeek }
         }
 
         if !searchText.isEmpty {
             programs = programs.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
 
+        // Sort by schedule order if enabled (session number) or by date
+        if sortBySchedule {
+            programs = programs.sorted {
+                if $0.programSessionNumber != $1.programSessionNumber {
+                    return $0.programSessionNumber < $1.programSessionNumber
+                }
+                return $0.createdAt > $1.createdAt
+            }
+        }
+
         return programs
+    }
+
+    private var activeFilterCount: Int {
+        var count = 0
+        if selectedFilter != .all { count += 1 }
+        if selectedStatusFilter != .all { count += 1 }
+        if selectedGoalFilter != .all { count += 1 }
+        if selectedWeek > 0 { count += 1 }
+        return count
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    // Filter chips
+                VStack(spacing: 16) {
+                    // Summary stats row
+                    HStack(spacing: 12) {
+                        WorkoutStatBubble(
+                            count: workouts.filter { !$0.isArchived }.count,
+                            label: "Total",
+                            icon: "folder.fill",
+                            color: .blue
+                        )
+                        WorkoutStatBubble(
+                            count: workouts.filter { $0.status == .completed }.count,
+                            label: "Completed",
+                            icon: "checkmark.circle.fill",
+                            color: .green
+                        )
+                        WorkoutStatBubble(
+                            count: workouts.filter { $0.status == .inProgress || $0.status == .active }.count,
+                            label: "Active",
+                            icon: "play.circle.fill",
+                            color: .orange
+                        )
+                        WorkoutStatBubble(
+                            count: workouts.filter { $0.isFavorite }.count,
+                            label: "Favorites",
+                            icon: "heart.fill",
+                            color: .red
+                        )
+                    }
+                    .padding(.horizontal)
+
+                    // Source filter chips
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(ProgramFilter.allCases, id: \.self) { filter in
@@ -961,6 +1194,145 @@ struct SavedProgramsDetailView: View {
                         .padding(.horizontal)
                     }
 
+                    // Additional filter row (Status + Goal + Filter button)
+                    HStack(spacing: 8) {
+                        // Status picker
+                        Menu {
+                            ForEach(StatusFilter.allCases, id: \.self) { status in
+                                Button {
+                                    selectedStatusFilter = status
+                                } label: {
+                                    HStack {
+                                        Text(status.rawValue)
+                                        if selectedStatusFilter == status {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "flag.fill")
+                                Text(selectedStatusFilter.rawValue)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                            }
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(selectedStatusFilter != .all ? .white : .primary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(selectedStatusFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                            .clipShape(Capsule())
+                        }
+
+                        // Goal picker
+                        Menu {
+                            ForEach(GoalFilter.allCases, id: \.self) { goal in
+                                Button {
+                                    selectedGoalFilter = goal
+                                } label: {
+                                    HStack {
+                                        Text(goal.rawValue)
+                                        if selectedGoalFilter == goal {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "target")
+                                Text(selectedGoalFilter.rawValue)
+                                Image(systemName: "chevron.down")
+                                    .font(.caption2)
+                            }
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(selectedGoalFilter != .all ? .white : .primary)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(selectedGoalFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                            .clipShape(Capsule())
+                        }
+
+                        // Week picker (only show if there are program workouts)
+                        if !availableWeeks.isEmpty {
+                            Menu {
+                                Button {
+                                    selectedWeek = 0
+                                } label: {
+                                    HStack {
+                                        Text("All Weeks")
+                                        if selectedWeek == 0 {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+
+                                Divider()
+
+                                ForEach(1...maxWeeks, id: \.self) { week in
+                                    Button {
+                                        selectedWeek = week
+                                    } label: {
+                                        HStack {
+                                            Text("Week \(week)")
+                                            if selectedWeek == week {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "calendar")
+                                    Text(selectedWeek > 0 ? "Week \(selectedWeek)" : "All Weeks")
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption2)
+                                }
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(selectedWeek > 0 ? .white : .primary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(selectedWeek > 0 ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                                .clipShape(Capsule())
+                            }
+                        }
+
+                        Spacer()
+
+                        // Clear filters button
+                        if activeFilterCount > 0 {
+                            Button {
+                                withAnimation {
+                                    selectedFilter = .all
+                                    selectedStatusFilter = .all
+                                    selectedGoalFilter = .all
+                                    selectedWeek = 0
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "xmark.circle.fill")
+                                    Text("Clear (\(activeFilterCount))")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+
+                    // Results count
+                    HStack {
+                        Text("\(filteredWorkouts.count) workout\(filteredWorkouts.count == 1 ? "" : "s")")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                    .padding(.horizontal)
+
                     // Programs list
                     LazyVStack(spacing: 12) {
                         ForEach(filteredWorkouts) { workout in
@@ -975,23 +1347,38 @@ struct SavedProgramsDetailView: View {
                                 .font(.system(size: 56))
                                 .foregroundStyle(.tertiary)
 
-                            Text("No programs found")
+                            Text("No workouts found")
                                 .font(.headline)
                                 .foregroundStyle(.secondary)
 
-                            Text("Try adjusting your filters or create a new program")
+                            Text("Try adjusting your filters or create a new workout")
                                 .font(.subheadline)
                                 .foregroundStyle(.tertiary)
                                 .multilineTextAlignment(.center)
+
+                            if activeFilterCount > 0 {
+                                Button {
+                                    withAnimation {
+                                        selectedFilter = .all
+                                        selectedStatusFilter = .all
+                                        selectedGoalFilter = .all
+                                        selectedWeek = 0
+                                    }
+                                } label: {
+                                    Text("Clear All Filters")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                            }
                         }
-                        .padding(.top, 60)
+                        .padding(.top, 40)
                     }
                 }
                 .padding(.vertical)
             }
             .background(Color(.systemGroupedBackground))
-            .searchable(text: $searchText, prompt: "Search programs")
-            .navigationTitle("My Programs")
+            .searchable(text: $searchText, prompt: "Search workouts")
+            .navigationTitle("My Workouts")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -1002,6 +1389,35 @@ struct SavedProgramsDetailView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Workout Stat Bubble
+private struct WorkoutStatBubble: View {
+    let count: Int
+    let label: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption2)
+                Text("\(count)")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+            }
+            .foregroundStyle(color)
+
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(color.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -1028,96 +1444,228 @@ private struct ProgramFilterChip: View {
     }
 }
 
-// MARK: - Saved Workout Card (Exact copy from HomeView ActiveWorkoutCard)
+// MARK: - Enhanced Saved Workout Card
 struct SavedWorkoutCard: View {
+    @Environment(\.modelContext) private var modelContext
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
+    @Query private var allWorkouts: [Workout]
 
     let workout: Workout
 
     @State private var showWorkoutExecution = false
+    @State private var showWorkoutDetail = false
     @State private var isPressed = false
 
-    // Pine green gradient
-    private let gradientStart = Color(hex: "2d6a4f")
-    private let gradientEnd = Color(hex: "1b4332")
+    /// Activates this workout and deactivates all others
+    private func activateWorkout() {
+        // Deactivate all other workouts
+        for w in allWorkouts where w.isActive && w.id != workout.id {
+            w.isActive = false
+        }
+        // Activate this workout
+        workout.isActive = true
+        workout.status = .active
+        try? modelContext.save()
+    }
+
+    // Dynamic gradient based on workout status
+    private var gradientColors: (start: Color, end: Color) {
+        switch workout.status {
+        case .completed:
+            return (Color(hex: "16a34a"), Color(hex: "15803d"))  // Green
+        case .inProgress, .active:
+            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
+        case .savedInMiddle:
+            return (Color(hex: "f59e0b"), Color(hex: "d97706"))  // Amber
+        case .abandoned:
+            return (Color(hex: "6b7280"), Color(hex: "4b5563"))  // Gray
+        default:
+            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
+        }
+    }
+
+    private var statusText: String {
+        switch workout.status {
+        case .draft: return "DRAFT"
+        case .created: return "READY TO START"
+        case .active: return "ACTIVE"
+        case .inProgress: return "IN PROGRESS"
+        case .completed: return "COMPLETED"
+        case .savedInMiddle: return "SAVED"
+        case .abandoned: return "ABANDONED"
+        case .deleted: return "DELETED"
+        }
+    }
 
     var body: some View {
         Button {
             themeManager.mediumImpact()
+            activateWorkout()
             showWorkoutExecution = true
         } label: {
-            HStack(spacing: 16) {
-                // Workout icon
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 56, height: 56)
-                    Image(systemName: "figure.strengthtraining.traditional")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    // Status badge
-                    Text("READY TO START")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .tracking(0.5)
-                        .foregroundStyle(.white.opacity(0.7))
-
-                    // Title
-                    Text(workout.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-
-                    // Stats row
-                    HStack(spacing: 14) {
-                        Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
-                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+            VStack(spacing: 0) {
+                // Main card content
+                HStack(spacing: 14) {
+                    // Workout icon with goal indicator
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 52, height: 52)
+                        Image(systemName: workout.goal.icon)
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
 
-                    // Progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.25))
-                                .frame(height: 6)
+                    VStack(alignment: .leading, spacing: 6) {
+                        // Top row: Status + Type + Trophy badges
+                        HStack(spacing: 6) {
+                            // Status badge
+                            Text(statusText)
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .tracking(0.5)
+                                .foregroundStyle(.white.opacity(0.8))
 
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white)
-                                .frame(width: 0, height: 6)
+                            // Workout type badge
+                            if workout.workoutType != .regular {
+                                WorkoutTypeBadge(type: workout.workoutType)
+                            }
+
+                            // Trophy badge
+                            if workout.isTrophyEligible {
+                                Image(systemName: "trophy.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.yellow)
+                            }
+                        }
+
+                        // Title with optional week/session info
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(workout.name)
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .lineLimit(1)
+
+                            // Show week/session for program workouts
+                            if workout.programWeekNumber > 0 {
+                                HStack(spacing: 6) {
+                                    Text("Week \(workout.programWeekNumber)")
+                                        .fontWeight(.semibold)
+                                    if workout.programSessionNumber > 0 {
+                                        Text("•")
+                                        Text("Session \(workout.programSessionNumber)")
+                                    }
+                                    if let scheduledDate = workout.scheduledDate {
+                                        Text("•")
+                                        Text(scheduledDate, style: .date)
+                                    }
+                                }
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.6))
+                            }
+                        }
+
+                        // Goal and difficulty
+                        HStack(spacing: 8) {
+                            Label(workout.goal.displayName, systemImage: workout.goal.icon)
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.8))
+
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.5))
+
+                            Text(workout.difficulty.displayName)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white.opacity(0.8))
+                        }
+
+                        // Stats row
+                        HStack(spacing: 12) {
+                            Label("\(workout.exerciseCount)", systemImage: "dumbbell.fill")
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                            if workout.totalSessions > 1 {
+                                Label("\(workout.completedSessionsCount)/\(workout.totalSessions)", systemImage: "checkmark.circle")
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.75))
+                    }
+
+                    Spacer()
+
+                    // Right side: Progress + Action
+                    VStack(alignment: .trailing, spacing: 8) {
+                        // Creation type icon
+                        Image(systemName: workout.creationType.icon)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+
+                        Spacer()
+
+                        // Play button
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.2))
+                                .frame(width: 44, height: 44)
+                            Image(systemName: workout.status == .completed ? "arrow.counterclockwise" : "play.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
                         }
                     }
-                    .frame(height: 6)
+                }
+                .foregroundStyle(.white)
+                .padding(16)
 
+                // Progress bar (if multi-session workout)
+                if workout.totalSessions > 1 {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Rectangle()
+                                .fill(Color.white.opacity(0.15))
+
+                            Rectangle()
+                                .fill(Color.white.opacity(0.6))
+                                .frame(width: geo.size.width * CGFloat(workout.progressPercentage / 100))
+                        }
+                    }
+                    .frame(height: 4)
                 }
 
-                Spacer()
-
-                // Play/Go button
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 50, height: 50)
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                // Stats footer (if workout has been used)
+                if workout.hasBeenStarted {
+                    HStack(spacing: 16) {
+                        if workout.totalCaloriesBurned > 0 {
+                            Label("\(workout.totalCaloriesBurned) cal", systemImage: "flame.fill")
+                        }
+                        if workout.totalMinutesCompleted > 0 {
+                            Label("\(workout.totalMinutesCompleted) min", systemImage: "timer")
+                        }
+                        if workout.personalRecordsCount > 0 {
+                            Label("\(workout.personalRecordsCount) PRs", systemImage: "star.fill")
+                        }
+                        Spacer()
+                        if let lastDate = workout.lastSessionDate {
+                            Text(lastDate, style: .relative)
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.black.opacity(0.15))
                 }
             }
-            .foregroundStyle(.white)
-            .padding(20)
-            .frame(minHeight: 140)
             .background(
                 LinearGradient(
-                    colors: [gradientStart, gradientEnd],
+                    colors: [gradientColors.start, gradientColors.end],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
@@ -1125,11 +1673,312 @@ struct SavedWorkoutCard: View {
         .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
             isPressed = pressing
         }, perform: {})
+        .contextMenu {
+            Button {
+                showWorkoutDetail = true
+            } label: {
+                Label("View Details", systemImage: "info.circle")
+            }
+
+            Button {
+                activateWorkout()
+                showWorkoutExecution = true
+            } label: {
+                Label("Start Workout", systemImage: "play.fill")
+            }
+
+            if workout.isFavorite {
+                Button {
+                    workout.isFavorite = false
+                } label: {
+                    Label("Remove from Favorites", systemImage: "heart.slash")
+                }
+            } else {
+                Button {
+                    workout.isFavorite = true
+                } label: {
+                    Label("Add to Favorites", systemImage: "heart")
+                }
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                workout.status = .deleted
+                workout.isArchived = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             WorkoutExecutionView(workout: workout)
                 .environmentObject(workoutManager)
                 .environmentObject(themeManager)
         }
+        .sheet(isPresented: $showWorkoutDetail) {
+            WorkoutDetailSheet(workout: workout)
+        }
+    }
+}
+
+// MARK: - Workout Type Badge
+private struct WorkoutTypeBadge: View {
+    let type: WorkoutType
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: type.icon)
+            Text(type.displayName)
+        }
+        .font(.system(size: 9, weight: .semibold))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(Color.white.opacity(0.2))
+        .clipShape(Capsule())
+    }
+}
+
+// MARK: - Workout Detail Sheet
+private struct WorkoutDetailSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let workout: Workout
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    VStack(spacing: 12) {
+                        // Icon
+                        ZStack {
+                            Circle()
+                                .fill(goalColor.opacity(0.15))
+                                .frame(width: 80, height: 80)
+                            Image(systemName: workout.goal.icon)
+                                .font(.system(size: 36))
+                                .foregroundStyle(goalColor)
+                        }
+
+                        Text(workout.name)
+                            .font(.title2)
+                            .fontWeight(.bold)
+
+                        if let description = workout.workoutDescription {
+                            Text(description)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+
+                        // Tags
+                        if !workout.tags.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(workout.tags, id: \.self) { tag in
+                                        Text(tag)
+                                            .font(.caption)
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 5)
+                                            .background(Color.accentColor.opacity(0.1))
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+
+                    // Info Cards
+                    VStack(spacing: 12) {
+                        // Status & Type
+                        DetailInfoCard(title: "Status & Type") {
+                            DetailRow(icon: workout.status.icon, label: "Status", value: workout.status.displayName, color: statusColor)
+                            DetailRow(icon: workout.workoutType.icon, label: "Type", value: workout.workoutType.displayName)
+                            DetailRow(icon: workout.creationType.icon, label: "Created", value: workout.creationType.displayName)
+                        }
+
+                        // Goal & Difficulty
+                        DetailInfoCard(title: "Goal & Difficulty") {
+                            DetailRow(icon: workout.goal.icon, label: "Goal", value: workout.goal.displayName, color: goalColor)
+                            DetailRow(icon: "speedometer", label: "Difficulty", value: workout.difficulty.displayName, color: difficultyColor)
+                            DetailRow(icon: workout.category.icon, label: "Category", value: workout.category.displayName)
+                        }
+
+                        // Duration & Schedule
+                        DetailInfoCard(title: "Duration & Schedule") {
+                            DetailRow(icon: "clock", label: "Session Length", value: "\(workout.sessionLength) min")
+                            if workout.totalWeeks > 1 {
+                                DetailRow(icon: "calendar", label: "Duration", value: "\(workout.totalWeeks) weeks")
+                            }
+                            if workout.totalDays > 1 {
+                                DetailRow(icon: "calendar.day.timeline.left", label: "Days/Week", value: "\(workout.totalDays) days")
+                            }
+                            DetailRow(icon: "number", label: "Total Sessions", value: "\(workout.totalSessions)")
+                        }
+
+                        // Progress
+                        if workout.hasBeenStarted {
+                            DetailInfoCard(title: "Progress") {
+                                DetailRow(icon: "checkmark.circle", label: "Completed", value: "\(workout.completedSessionsCount)/\(workout.totalSessions) sessions")
+                                DetailRow(icon: "percent", label: "Progress", value: String(format: "%.0f%%", workout.progressPercentage))
+                                if workout.totalCaloriesBurned > 0 {
+                                    DetailRow(icon: "flame.fill", label: "Calories Burned", value: "\(workout.totalCaloriesBurned)")
+                                }
+                                if workout.totalMinutesCompleted > 0 {
+                                    DetailRow(icon: "timer", label: "Total Time", value: "\(workout.totalMinutesCompleted) min")
+                                }
+                                if workout.personalRecordsCount > 0 {
+                                    DetailRow(icon: "star.fill", label: "PRs Set", value: "\(workout.personalRecordsCount)")
+                                }
+                            }
+                        }
+
+                        // Trophy
+                        if workout.isTrophyEligible {
+                            DetailInfoCard(title: "Trophy") {
+                                DetailRow(icon: "trophy.fill", label: "Trophy Eligible", value: "Yes", color: .yellow)
+                                if let category = workout.trophyCategory {
+                                    DetailRow(icon: "tag", label: "Category", value: category)
+                                }
+                                if let requirement = workout.trophyRequirement {
+                                    DetailRow(icon: "target", label: "Requirement", value: requirement)
+                                }
+                                if let achievedAt = workout.trophyAchievedAt {
+                                    DetailRow(icon: "checkmark.seal.fill", label: "Achieved", value: achievedAt.formatted(date: .abbreviated, time: .omitted))
+                                }
+                            }
+                        }
+
+                        // Dates
+                        DetailInfoCard(title: "Dates") {
+                            DetailRow(icon: "calendar.badge.plus", label: "Created", value: workout.createdAt.formatted(date: .abbreviated, time: .omitted))
+                            if let startedAt = workout.firstStartedAt {
+                                DetailRow(icon: "play.circle", label: "First Started", value: startedAt.formatted(date: .abbreviated, time: .omitted))
+                            }
+                            if let completedAt = workout.lastCompletedAt {
+                                DetailRow(icon: "checkmark.circle", label: "Last Completed", value: completedAt.formatted(date: .abbreviated, time: .omitted))
+                            }
+                        }
+
+                        // Exercises preview
+                        if workout.exerciseCount > 0 {
+                            DetailInfoCard(title: "Exercises (\(workout.exerciseCount))") {
+                                ForEach(workout.sortedExercises.prefix(5)) { workoutExercise in
+                                    if let exercise = workoutExercise.exercise {
+                                        HStack {
+                                            Image(systemName: exercise.muscleGroup.icon)
+                                                .foregroundStyle(.secondary)
+                                                .frame(width: 24)
+                                            Text(exercise.name)
+                                                .font(.subheadline)
+                                            Spacer()
+                                            Text("\(workoutExercise.targetSets)×\(workoutExercise.targetReps)")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .padding(.vertical, 4)
+                                    }
+                                }
+                                if workout.exerciseCount > 5 {
+                                    Text("+ \(workout.exerciseCount - 5) more")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.bottom, 32)
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Workout Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private var goalColor: Color {
+        switch workout.goal {
+        case .strength: return .blue
+        case .cardio: return .red
+        case .muscleBuilding: return .orange
+        case .fatLoss: return .yellow
+        case .endurance: return .green
+        case .flexibility: return .purple
+        default: return .accentColor
+        }
+    }
+
+    private var statusColor: Color {
+        switch workout.status {
+        case .completed: return .green
+        case .inProgress, .active: return .blue
+        case .savedInMiddle: return .orange
+        case .abandoned, .deleted: return .red
+        default: return .secondary
+        }
+    }
+
+    private var difficultyColor: Color {
+        switch workout.difficulty {
+        case .beginner: return .green
+        case .intermediate: return .orange
+        case .advanced: return .red
+        }
+    }
+}
+
+// MARK: - Detail Info Card
+private struct DetailInfoCard<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 10) {
+                content
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Detail Row
+private struct DetailRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    var color: Color = .primary
+
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+                .frame(width: 24)
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .fontWeight(.medium)
+                .foregroundStyle(color)
+        }
+        .font(.subheadline)
     }
 }
 
@@ -1265,118 +2114,37 @@ struct ImportWorkoutView: View {
     @State private var importSuccess = false
     @State private var errorMessage: String?
 
+    // Naming step
+    @State private var pendingWorkout: Workout?
+    @State private var customWorkoutName: String = ""
+    @State private var showNamingStep = false
+    @FocusState private var isNameFieldFocused: Bool
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(hex: "0ea5e9").opacity(0.15))
-                            .frame(width: 100, height: 100)
-
-                        if isProcessing {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                        } else if importSuccess {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 44, weight: .bold))
-                                .foregroundStyle(.green)
-                        } else {
-                            Image(systemName: "square.and.arrow.down")
-                                .font(.system(size: 44))
-                                .foregroundStyle(Color(hex: "0ea5e9"))
-                        }
+                    if showNamingStep {
+                        // Naming step UI
+                        namingStepContent
+                    } else {
+                        // Initial import UI
+                        initialImportContent
                     }
-                    .padding(.top, 32)
-
-                    Text(importSuccess ? "Import Successful!" : "Import Workout")
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    Text(importSuccess ?
-                         "Your workout has been added to My Programs." :
-                         "Import your workout routines from various file formats.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
-
-                    if !importSuccess {
-                        VStack(spacing: 12) {
-                            ImportOptionCard(
-                                icon: "doc.text.fill",
-                                title: "PDF Document",
-                                subtitle: "Import from PDF files",
-                                color: .accentRed
-                            ) {
-                                showFilePicker = true
-                            }
-
-                            ImportOptionCard(
-                                icon: "tablecells.fill",
-                                title: "CSV Spreadsheet",
-                                subtitle: "Import from CSV files",
-                                color: .accentGreen
-                            ) {
-                                showFilePicker = true
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-
-                    if let fileName = importedFileName, importSuccess {
-                        HStack {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text("Imported: \(fileName)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding()
-                        .background(Color.green.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal)
-                    }
-
-                    if let error = errorMessage {
-                        HStack {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundStyle(.orange)
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding()
-                        .background(Color.orange.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal)
-                    }
-
-                    if importSuccess {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Text("Done")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(Color(hex: "2d6a4f"))
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
-                        }
-                        .padding(.horizontal)
-                    }
-
-                    Spacer(minLength: 40)
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Import Workout")
+            .navigationTitle(showNamingStep ? "Name Your Workout" : "Import Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Cancel") { dismiss() }
+                    if showNamingStep {
+                        Button("Cancel") {
+                            cancelNaming()
+                        }
+                    } else {
+                        Button("Cancel") { dismiss() }
+                    }
                 }
             }
             .fileImporter(
@@ -1387,7 +2155,7 @@ struct ImportWorkoutView: View {
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        importWorkout(from: url)
+                        parseWorkoutFile(from: url)
                     }
                 case .failure(let error):
                     errorMessage = "Import error: \(error.localizedDescription)"
@@ -1396,7 +2164,200 @@ struct ImportWorkoutView: View {
         }
     }
 
-    private func importWorkout(from url: URL) {
+    // MARK: - Initial Import Content
+    private var initialImportContent: some View {
+        VStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .fill(Color(hex: "0ea5e9").opacity(0.15))
+                    .frame(width: 100, height: 100)
+
+                if isProcessing {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                } else if importSuccess {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundStyle(.green)
+                } else {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 44))
+                        .foregroundStyle(Color(hex: "0ea5e9"))
+                }
+            }
+            .padding(.top, 32)
+
+            Text(importSuccess ? "Import Successful!" : "Import Workout")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text(importSuccess ?
+                 "Your workout has been added to My Programs." :
+                 "Import your workout routines from various file formats.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            if !importSuccess {
+                VStack(spacing: 12) {
+                    ImportOptionCard(
+                        icon: "doc.text.fill",
+                        title: "PDF Document",
+                        subtitle: "Import from PDF files",
+                        color: .accentRed
+                    ) {
+                        showFilePicker = true
+                    }
+
+                    ImportOptionCard(
+                        icon: "tablecells.fill",
+                        title: "CSV Spreadsheet",
+                        subtitle: "Import from CSV files",
+                        color: .accentGreen
+                    ) {
+                        showFilePicker = true
+                    }
+                }
+                .padding(.horizontal)
+            }
+
+            if let fileName = importedFileName, importSuccess {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Imported: \(fileName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .background(Color.green.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal)
+            }
+
+            if let error = errorMessage {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding()
+                .background(Color.orange.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal)
+            }
+
+            if importSuccess {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Done")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(hex: "2d6a4f"))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .padding(.horizontal)
+            }
+
+            Spacer(minLength: 40)
+        }
+    }
+
+    // MARK: - Naming Step Content
+    private var namingStepContent: some View {
+        VStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .fill(Color(hex: "0ea5e9").opacity(0.15))
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: "pencil.line")
+                    .font(.system(size: 44))
+                    .foregroundStyle(Color(hex: "0ea5e9"))
+            }
+            .padding(.top, 32)
+
+            Text("Name Your Workout")
+                .font(.title2)
+                .fontWeight(.bold)
+
+            Text("Give your imported workout a custom name")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            // Name text field
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Workout Name")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+
+                TextField("Enter workout name", text: $customWorkoutName)
+                    .font(.body)
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .focused($isNameFieldFocused)
+            }
+            .padding(.horizontal)
+
+            // Original filename hint
+            if let fileName = importedFileName {
+                HStack {
+                    Image(systemName: "doc.fill")
+                        .foregroundStyle(.secondary)
+                    Text("Original: \(fileName)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+            }
+
+            Spacer()
+
+            // Save button
+            VStack(spacing: 12) {
+                Button {
+                    saveWorkout()
+                } label: {
+                    Text("Save Workout")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(customWorkoutName.trimmingCharacters(in: .whitespaces).isEmpty ? Color.gray : Color(hex: "2d6a4f"))
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+                .disabled(customWorkoutName.trimmingCharacters(in: .whitespaces).isEmpty)
+
+                Button {
+                    cancelNaming()
+                } label: {
+                    Text("Cancel")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 32)
+        }
+        .onAppear {
+            isNameFieldFocused = true
+        }
+    }
+
+    private func parseWorkoutFile(from url: URL) {
         isProcessing = true
         errorMessage = nil
 
@@ -1412,7 +2373,7 @@ struct ImportWorkoutView: View {
         let fileName = url.deletingPathExtension().lastPathComponent
         importedFileName = url.lastPathComponent
 
-        // Create a workout from the imported file
+        // Create a workout from the imported file (but don't save yet)
         let workout = Workout(
             name: fileName,
             description: "Imported from \(url.lastPathComponent)",
@@ -1435,17 +2396,46 @@ struct ImportWorkoutView: View {
                 try parseTextFile(from: url, into: workout)
             }
 
-            modelContext.insert(workout)
-            try modelContext.save()
+            // Store the pending workout and show naming step
+            pendingWorkout = workout
+            customWorkoutName = fileName  // Pre-fill with the file name
 
-            themeManager.notifySuccess()
             withAnimation {
                 isProcessing = false
-                importSuccess = true
+                showNamingStep = true
             }
         } catch {
             errorMessage = "Failed to parse file: \(error.localizedDescription)"
             isProcessing = false
+        }
+    }
+
+    private func saveWorkout() {
+        guard let workout = pendingWorkout else { return }
+
+        // Apply the custom name
+        workout.name = customWorkoutName.trimmingCharacters(in: .whitespaces)
+
+        // Now save to the database
+        modelContext.insert(workout)
+        do {
+            try modelContext.save()
+            themeManager.notifySuccess()
+            withAnimation {
+                showNamingStep = false
+                importSuccess = true
+            }
+        } catch {
+            errorMessage = "Failed to save workout: \(error.localizedDescription)"
+        }
+    }
+
+    private func cancelNaming() {
+        // Clear pending workout and go back
+        pendingWorkout = nil
+        customWorkoutName = ""
+        withAnimation {
+            showNamingStep = false
         }
     }
 
@@ -2393,7 +3383,9 @@ struct ExerciseDetailView: View {
     @Environment(\.modelContext) private var modelContext
     let exercise: Exercise
 
-    @State private var isVideoPlaying = false
+    @State private var showImageViewer = false
+    @State private var selectedImageIndex = 0
+    @State private var showingStartPosition = true  // For cycling animation
 
     private var difficultyColor: Color {
         switch exercise.safeDifficulty {
@@ -2403,84 +3395,82 @@ struct ExerciseDetailView: View {
         }
     }
 
-    private var exerciseFallbackIcon: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.secondarySystemBackground))
-            Image(systemName: exercise.safeCategory.icon)
-                .font(.system(size: 56))
-                .foregroundStyle(Color(hex: "0ea5e9").opacity(0.6))
-        }
-        .frame(height: 220)
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Exercise Demo - 2 Static Images
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isVideoPlaying.toggle()
-                        }
-                        themeManager.lightImpact()
-                    } label: {
+                    // Exercise Demo - Cycling Animation
+                    VStack(spacing: 6) {
+                        // Single image container with cycling animation
                         ZStack {
-                            // Background
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(
-                                    LinearGradient(
-                                        colors: isVideoPlaying
-                                            ? [Color.accentGreen.opacity(0.15), Color.accentGreen.opacity(0.05)]
-                                            : [Color(.secondarySystemBackground), Color(.tertiarySystemBackground)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-
-                            // Content - switches between 2 states
-                            VStack(spacing: 16) {
-                                // Exercise icon - changes based on state
-                                ZStack {
+                            // Current position image
+                            if let imageName = showingStartPosition
+                                ? exercise.startImageName
+                                : exercise.endImageName,
+                               UIImage(named: imageName) != nil {
+                                Image(imageName)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                                    .id(imageName)
+                                    .transition(.opacity)
+                            } else {
+                                // Fallback when no image
+                                VStack(spacing: 8) {
                                     Image(systemName: exercise.safeCategory.icon)
-                                        .font(.system(size: isVideoPlaying ? 44 : 56, weight: .medium))
-                                        .foregroundStyle(
-                                            isVideoPlaying
-                                                ? Color.accentGreen
-                                                : Color(hex: "0ea5e9").opacity(0.6)
-                                        )
-                                        .scaleEffect(isVideoPlaying ? 1.1 : 1.0)
-
-                                    // Animated ring when "playing"
-                                    if isVideoPlaying {
-                                        Circle()
-                                            .stroke(Color.accentGreen.opacity(0.3), lineWidth: 3)
-                                            .frame(width: 90, height: 90)
-                                            .scaleEffect(isVideoPlaying ? 1.2 : 0.8)
-                                            .opacity(isVideoPlaying ? 0 : 1)
-                                            .animation(.easeOut(duration: 1.5).repeatForever(autoreverses: false), value: isVideoPlaying)
-                                    }
-                                }
-
-                                // State label
-                                HStack(spacing: 8) {
-                                    Image(systemName: isVideoPlaying ? "figure.run" : "figure.stand")
-                                        .font(.title3)
-                                    Text(isVideoPlaying ? "Exercise in Motion" : "Starting Position")
-                                        .font(.subheadline)
+                                        .font(.system(size: 50, weight: .medium))
+                                        .foregroundStyle(showingStartPosition ? Color(hex: "0ea5e9").opacity(0.7) : Color.accentGreen.opacity(0.7))
+                                    Text(showingStartPosition ? "Start" : "End")
+                                        .font(.caption)
                                         .fontWeight(.medium)
+                                        .foregroundStyle(.secondary)
                                 }
-                                .foregroundStyle(isVideoPlaying ? Color.accentGreen : .secondary)
-
-                                // Tap hint
-                                Text("Tap to toggle position")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .background(Color(.secondarySystemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
                             }
                         }
-                        .frame(height: 220)
+                        .frame(height: 240)
+                        .onTapGesture {
+                            selectedImageIndex = 0  // Always start with start position
+                            showImageViewer = true
+                            themeManager.lightImpact()
+                        }
+                        .onAppear {
+                            startCyclingAnimation()
+                        }
+
+                        // Position indicator and tap hint
+                        HStack(spacing: 12) {
+                            // Position dots
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(showingStartPosition ? Color.primary : Color.secondary.opacity(0.4))
+                                    .frame(width: 6, height: 6)
+                                Circle()
+                                    .fill(!showingStartPosition ? Color.primary : Color.secondary.opacity(0.4))
+                                    .frame(width: 6, height: 6)
+                            }
+
+                            Spacer()
+
+                            // Tap to view hint
+                            Button {
+                                selectedImageIndex = 0  // Always start with start position
+                                showImageViewer = true
+                                themeManager.lightImpact()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                                        .font(.system(size: 10, weight: .medium))
+                                    Text("Enlarge")
+                                        .font(.caption2)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                        }
                     }
-                    .buttonStyle(.plain)
                     .padding(.horizontal)
                     .padding(.top, 20)
 
@@ -2564,6 +3554,22 @@ struct ExerciseDetailView: View {
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
                 }
+            }
+            .fullScreenCover(isPresented: $showImageViewer) {
+                ExerciseImageViewer(
+                    startImageName: exercise.startImageName,
+                    endImageName: exercise.endImageName,
+                    exerciseName: exercise.name,
+                    selectedIndex: $selectedImageIndex
+                )
+            }
+        }
+    }
+
+    private func startCyclingAnimation() {
+        Timer.scheduledTimer(withTimeInterval: 3.5, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.6)) {
+                showingStartPosition.toggle()
             }
         }
     }
