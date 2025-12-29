@@ -41,8 +41,13 @@ struct HomeView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             // Welcome Header
-                            WelcomeHeader(userName: "Jeff")
-                                .id("top")
+                            WelcomeHeader(
+                                userName: "Jeff",
+                                selectedTab: $selectedTab,
+                                onCheckIn: { showDailyCheckIn = true },
+                                onWaterIntake: { showWaterIntake = true }
+                            )
+                            .id("top")
                                 .opacity(animationStage >= 1 ? 1 : 0)
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
                                 .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
@@ -54,8 +59,8 @@ struct HomeView: View {
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
                                 .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
 
-                            // Today's Recovery - Improved Hero Card
-                            TodayRecoveryCard(selectedTab: $selectedTab)
+                            // Today's Recovery Section
+                            TodayRecoverySection(selectedTab: $selectedTab)
                                 .opacity(animationStage >= 3 ? 1 : 0)
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
                                 .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
@@ -203,6 +208,12 @@ struct HomeView: View {
 // MARK: - Welcome Header
 struct WelcomeHeader: View {
     let userName: String
+    @Binding var selectedTab: Tab
+    var onCheckIn: () -> Void
+    var onWaterIntake: () -> Void
+
+    @State private var hasNotifications = true // TODO: Connect to actual notification state
+    @State private var showNotifications = false
 
     private var firstName: String {
         userName.components(separatedBy: " ").first ?? userName
@@ -219,19 +230,219 @@ struct WelcomeHeader: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            Text("\(timeGreeting), ")
-                .font(.title)
-                .fontWeight(.bold)
+        HStack {
+            // Greeting text
+            HStack(spacing: 0) {
+                Text("\(timeGreeting), ")
+                    .font(.title)
+                    .fontWeight(.bold)
 
-            Text(firstName)
-                .font(.title)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.accentBlue)
+                Text(firstName)
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.accentBlue)
+            }
+
+            Spacer()
+
+            // Notification Bell
+            Button {
+                showNotifications = true
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(.primary.opacity(0.7))
+
+                    // Notification badge
+                    if hasNotifications {
+                        Circle()
+                            .fill(Color.accentRed)
+                            .frame(width: 10, height: 10)
+                            .offset(x: 2, y: -2)
+                    }
+                }
+                .frame(width: 44, height: 44)
+                .background(Color(.tertiarySystemGroupedBackground))
+                .clipShape(Circle())
+            }
+            .accessibilityLabel("Notifications")
+            .accessibilityHint(hasNotifications ? "You have unread notifications" : "No new notifications")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 16)
         .padding(.bottom, 8)
+        .sheet(isPresented: $showNotifications) {
+            NotificationsSheet(
+                selectedTab: $selectedTab,
+                onCheckIn: onCheckIn,
+                onWaterIntake: onWaterIntake
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+// MARK: - Notifications Sheet
+struct NotificationsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedTab: Tab
+    var onCheckIn: () -> Void
+    var onWaterIntake: () -> Void
+
+    // Sample notifications - replace with actual data
+    @State private var notifications: [AppNotification] = [
+        AppNotification(icon: "trophy.fill", iconColor: .yellow, title: "Achievement Unlocked!", message: "You completed your 7-day workout streak", time: "2h ago", destination: .progress),
+        AppNotification(icon: "drop.fill", iconColor: .accentBlue, title: "Water Reminder", message: "You're at 40% of your daily water goal. Stay hydrated!", time: "3h ago", destination: .water),
+        AppNotification(icon: "figure.run", iconColor: .accentGreen, title: "Workout Reminder", message: "Don't forget your scheduled leg day workout", time: "4h ago", destination: .workout),
+        AppNotification(icon: "checkmark.circle.fill", iconColor: Color.brandPrimary, title: "Check-in Reminder", message: "How are you feeling today? Log your daily check-in", time: "5h ago", destination: .checkIn),
+        AppNotification(icon: "flag.checkered", iconColor: .accentOrange, title: "Challenge Update", message: "You're in 2nd place! Keep pushing to take the lead", time: "Yesterday", destination: .challenges),
+        AppNotification(icon: "heart.fill", iconColor: .accentRed, title: "Recovery Alert", message: "Your HRV is low today. Consider a rest day", time: "Yesterday", destination: .health),
+    ]
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if notifications.isEmpty {
+                    // Empty state
+                    VStack(spacing: 16) {
+                        Image(systemName: "bell.slash")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.tertiary)
+                        Text("No Notifications")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("You're all caught up!")
+                            .font(.subheadline)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 60)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                } else {
+                    ForEach(notifications) { notification in
+                        NotificationRow(notification: notification)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                handleNotificationTap(notification)
+                            }
+                            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                    }
+                    .onDelete(perform: deleteNotification)
+                }
+            }
+            .listStyle(.plain)
+            .background(Color(.systemGroupedBackground))
+            .scrollContentBackground(.hidden)
+            .navigationTitle("Notifications")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if !notifications.isEmpty {
+                        Button("Clear All") {
+                            withAnimation {
+                                notifications.removeAll()
+                            }
+                        }
+                        .foregroundStyle(.red)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
+    }
+
+    private func handleNotificationTap(_ notification: AppNotification) {
+        dismiss()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            switch notification.destination {
+            case .progress:
+                selectedTab = .progress
+            case .health:
+                selectedTab = .health
+            case .programs, .workout:
+                selectedTab = .programs
+            case .challenges:
+                selectedTab = .programs
+            case .checkIn:
+                onCheckIn()
+            case .water:
+                onWaterIntake()
+            }
+        }
+    }
+
+    private func deleteNotification(at offsets: IndexSet) {
+        withAnimation {
+            notifications.remove(atOffsets: offsets)
+        }
+    }
+}
+
+// MARK: - Notification Destination
+enum NotificationDestination {
+    case progress
+    case health
+    case programs
+    case challenges
+    case checkIn
+    case water
+    case workout
+}
+
+// MARK: - App Notification Model
+struct AppNotification: Identifiable {
+    let id = UUID()
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let message: String
+    let time: String
+    let destination: NotificationDestination
+}
+
+// MARK: - Notification Row
+struct NotificationRow: View {
+    let notification: AppNotification
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            // Icon
+            Image(systemName: notification.icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(notification.iconColor)
+                .frame(width: 40, height: 40)
+                .background(notification.iconColor.opacity(0.15))
+                .clipShape(Circle())
+
+            // Content
+            VStack(alignment: .leading, spacing: 4) {
+                Text(notification.title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text(notification.message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                Text(notification.time)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -441,9 +652,12 @@ struct QuickOptionsGrid: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Header with Edit button
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with Edit button (outside card)
             HStack {
+                Image(systemName: "square.grid.2x2")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentOrange)
                 Text("Quick Actions")
                     .font(.headline)
                     .fontWeight(.bold)
@@ -464,39 +678,43 @@ struct QuickOptionsGrid: View {
                 .accessibilityHint("Double tap to customize your shortcuts")
             }
 
-            // Dynamic Grid (supports 1-8 items)
-            if !selectedActions.isEmpty {
-                LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(selectedActions) { action in
-                        QuickActionButton(
-                            icon: action.icon,
-                            title: action.title,
-                            color: action.color
-                        ) {
-                            handleAction(action)
+            // Card content
+            Group {
+                if !selectedActions.isEmpty {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(selectedActions) { action in
+                            QuickActionButton(
+                                icon: action.icon,
+                                title: action.title,
+                                color: action.color
+                            ) {
+                                handleAction(action)
+                            }
                         }
                     }
-                }
-            } else {
-                // Empty state
-                HStack {
-                    Spacer()
-                    VStack(spacing: 8) {
-                        Image(systemName: "square.grid.2x2")
-                            .font(.title)
-                            .foregroundStyle(.tertiary)
-                        Text("No shortcuts")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                } else {
+                    // Empty state
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 8) {
+                            Image(systemName: "square.grid.2x2")
+                                .font(.title)
+                                .foregroundStyle(.tertiary)
+                            Text("No shortcuts")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 20)
+                        Spacer()
                     }
-                    .padding(.vertical, 20)
-                    Spacer()
                 }
             }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .padding(.top, 8)
+        .padding(.bottom, 8)
         .sheet(isPresented: $showEditSheet) {
             EditQuickActionsSheet(
                 selectedActions: selectedActions,
@@ -793,6 +1011,31 @@ struct QuickActionButton: View {
     }
 }
 
+// MARK: - Today's Recovery Section
+struct TodayRecoverySection: View {
+    @Binding var selectedTab: Tab
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Section Header
+            HStack {
+                Image(systemName: "heart.circle.fill")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.accentBlue)
+                Text("Today's Recovery")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+
+            // Recovery Card
+            TodayRecoveryCard(selectedTab: $selectedTab)
+        }
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+    }
+}
+
 // MARK: - Today's Recovery Card (Large Hero Card)
 struct TodayRecoveryCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
@@ -858,10 +1101,6 @@ struct TodayRecoveryCard: View {
 
                     // Info
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Today's Recovery")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white.opacity(0.85))
                         Text(scoreMessage)
                             .font(.title2)
                             .fontWeight(.bold)
@@ -1108,7 +1347,7 @@ struct DayScoreCell: View {
     }
 }
 
-// MARK: - Current Activity Section (Workout + Challenge)
+// MARK: - Today's Focus Section (Workout + Challenge Combined)
 struct CurrentActivitySection: View {
     let activeChallenges: [Challenge]
     let currentUserParticipant: (Challenge) -> ChallengeParticipant?
@@ -1116,33 +1355,275 @@ struct CurrentActivitySection: View {
     var onShowWorkoutPopup: ((Workout) -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            // Today's Workout
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Today's Workout")
+        VStack(alignment: .leading, spacing: 12) {
+            // Section Header
+            HStack {
+                Image(systemName: "target")
+                    .font(.subheadline)
+                    .foregroundStyle(Color.brandPrimary)
+                Text("Today's Focus")
                     .font(.headline)
                     .fontWeight(.bold)
-
-                ActiveWorkoutCard(selectedTab: $selectedTab, onShowPopup: onShowWorkoutPopup)
+                Spacer()
             }
 
-            // Active Challenge (if exists)
-            if let challenge = activeChallenges.first {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Active Challenge")
-                        .font(.headline)
-                        .fontWeight(.bold)
-
-                    HomeChallengeCard(
-                        challenge: challenge,
-                        currentUserParticipant: currentUserParticipant(challenge),
-                        selectedTab: $selectedTab
-                    )
-                }
-            }
+            // Combined Focus Card
+            TodaysFocusCard(
+                activeChallenges: activeChallenges,
+                currentUserParticipant: currentUserParticipant,
+                selectedTab: $selectedTab,
+                onShowWorkoutPopup: onShowWorkoutPopup
+            )
         }
         .padding(.top, 8)
         .padding(.bottom, 8)
+    }
+}
+
+// MARK: - Today's Focus Card (Combined Workout + Challenge)
+struct TodaysFocusCard: View {
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var navigationState: NavigationState
+    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
+
+    let activeChallenges: [Challenge]
+    let currentUserParticipant: (Challenge) -> ChallengeParticipant?
+    @Binding var selectedTab: Tab
+    var onShowWorkoutPopup: ((Workout) -> Void)?
+
+    @State private var showWorkoutExecution = false
+
+    private var activeSession: WorkoutSession? {
+        workoutManager.currentSession
+    }
+
+    private var currentWorkout: Workout? {
+        activeSession?.workout ?? workouts.first { $0.isActive }
+    }
+
+    private var isWorkoutInProgress: Bool {
+        activeSession != nil && workoutManager.currentPhase != .idle && workoutManager.currentPhase != .completed
+    }
+
+    private var activeChallenge: Challenge? {
+        activeChallenges.first
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Workout Section
+            workoutSection
+                .padding(16)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: "2d6a4f"), Color(hex: "1b4332")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            // Challenge Section (if active)
+            if let challenge = activeChallenge {
+                Divider()
+                    .background(Color.white.opacity(0.2))
+
+                challengeSection(challenge)
+                    .padding(16)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
+        .fullScreenCover(isPresented: $showWorkoutExecution) {
+            if let workout = currentWorkout {
+                WorkoutExecutionView(workout: workout)
+                    .environmentObject(workoutManager)
+            }
+        }
+    }
+
+    // MARK: - Workout Section
+    @ViewBuilder
+    private var workoutSection: some View {
+        if let workout = currentWorkout {
+            Button {
+                themeManager.mediumImpact()
+                if isWorkoutInProgress {
+                    showWorkoutExecution = true
+                } else {
+                    onShowWorkoutPopup?(workout)
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    // Icon
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: isWorkoutInProgress ? "figure.run" : "dumbbell.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(isWorkoutInProgress ? "IN PROGRESS" : "WORKOUT")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
+
+                        Text(workout.name)
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+
+                        HStack(spacing: 12) {
+                            Label("\(workout.exerciseCount) exercises", systemImage: "list.bullet")
+                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.8))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            // No active workout - show prompt
+            Button {
+                themeManager.mediumImpact()
+                selectedTab = .programs
+            } label: {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 50, height: 50)
+                        Image(systemName: "plus")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("WORKOUT")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
+
+                        Text("Start a Workout")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+
+                        Text("Choose from your saved workouts")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: - Challenge Section
+    private func challengeSection(_ challenge: Challenge) -> some View {
+        let participant = currentUserParticipant(challenge)
+        let userRank = calculateRank(for: participant, in: challenge)
+        let totalParticipants = challenge.participants?.count ?? 0
+        let currentStreak = participant?.currentStreak ?? 0
+
+        return Button {
+            themeManager.mediumImpact()
+            selectedTab = .programs
+            navigationState.showChallenges = true
+        } label: {
+            HStack(spacing: 14) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("CHALLENGE")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(0.5)
+                            .foregroundStyle(.white.opacity(0.7))
+
+                        if userRank > 0 {
+                            Text("•")
+                                .foregroundStyle(.white.opacity(0.5))
+                            Text("#\(userRank) of \(totalParticipants)")
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+
+                    Text(challenge.name)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+
+                    HStack(spacing: 12) {
+                        Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
+                        if currentStreak > 0 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "flame.fill")
+                                    .foregroundStyle(Color(hex: "fcd34d"))
+                                Text("\(currentStreak)")
+                            }
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.8))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func calculateRank(for participant: ChallengeParticipant?, in challenge: Challenge) -> Int {
+        guard let participant = participant,
+              let participants = challenge.participants else { return 0 }
+        let sorted = participants.sorted { $0.completedDays > $1.completedDays }
+        return (sorted.firstIndex(where: { $0.id == participant.id }) ?? -1) + 1
     }
 }
 
