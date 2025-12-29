@@ -113,7 +113,9 @@ struct CoreFitnessApp: App {
             ChallengeDayLog.self,
             ChallengeActivityData.self,
             ChallengeStrengthSet.self,
-            ChallengeWeeklySummary.self
+            ChallengeWeeklySummary.self,
+            // Rest Day Model
+            RestDay.self
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
@@ -200,6 +202,8 @@ struct CoreFitnessApp: App {
                     }
                     // Load water intake data from HealthKit
                     await waterIntakeManager.loadTodayDataAsync()
+                    // Fetch AI configuration from CloudKit
+                    await AIConfigManager.shared.fetchConfig()
                 }
                 .onOpenURL { url in
                     handleDeepLink(url)
@@ -267,4 +271,11 @@ struct CoreFitnessApp: App {
 // - User authentication (via iCloud account)
 // - Challenge data sync between participants
 // - User profile and preferences storage
+// - AI configuration management (AIConfig record type)
+//
+// AIConfig Record Type Setup (in CloudKit Dashboard):
+// - activeProvider: String ("gemini" or "claude")
+// - isEnabled: Int(64) (1 = enabled, 0 = disabled)
+// - geminiModel: String (e.g., "gemini-pro")
+// - claudeModel: String (e.g., "claude-3-haiku-20240307")
 // ============================================

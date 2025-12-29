@@ -2528,65 +2528,8 @@ struct CreateProgramView: View {
 }
 
 struct AIWorkoutCreationView: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Spacer()
-
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: "6366f1").opacity(0.15))
-                        .frame(width: 120, height: 120)
-
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 50))
-                        .foregroundStyle(Color(hex: "6366f1"))
-                }
-
-                Text("Create with AI")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text("Tell us your goals and we'll create a personalized workout program just for you.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-
-                Spacer()
-
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Coming Soon")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: [Color(hex: "6366f1"), Color(hex: "8b5cf6")],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 32)
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("AI Create")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-        }
+        WorkoutQuestionnaireView()
     }
 }
 
