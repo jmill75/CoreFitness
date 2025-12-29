@@ -65,6 +65,10 @@ private struct ProgressHeader: View {
     @Query private var userAchievements: [UserAchievement]
     @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
 
+    private let cardBg = Color(hex: "161616")
+    private let goldStart = Color(hex: "feca57")
+    private let goldEnd = Color(hex: "ff9f43")
+
     private var completedSessions: [WorkoutSession] {
         workoutSessions.filter { $0.status == .completed }
     }
@@ -104,66 +108,82 @@ private struct ProgressHeader: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Title
+            // Title with gradient
             HStack {
-                Text("Your Progress")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                Text("PROGRESS")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, goldStart],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                 Spacer()
             }
             .padding(.horizontal)
             .padding(.top, 8)
 
-            // Stats Strip
+            // Stats Strip with accent bar
             HStack(spacing: 0) {
                 StatStripItem(
                     value: "\(currentStreak)",
                     label: "Day Streak",
                     icon: "flame.fill",
-                    color: Color(hex: "FF6B35")
+                    color: Color(hex: "ff6b6b")
                 )
 
                 Divider()
                     .frame(height: 32)
-                    .background(Color.white.opacity(0.2))
+                    .background(Color.white.opacity(0.15))
 
                 StatStripItem(
                     value: "\(earnedCount)",
                     label: "Trophies",
                     icon: "trophy.fill",
-                    color: Color(hex: "FFD700")
+                    color: goldStart
                 )
 
                 Divider()
                     .frame(height: 32)
-                    .background(Color.white.opacity(0.2))
+                    .background(Color.white.opacity(0.15))
 
                 StatStripItem(
                     value: "\(totalPoints)",
                     label: "Points",
                     icon: "star.fill",
-                    color: Color(hex: "5AC8FA")
+                    color: Color(hex: "54a0ff")
                 )
 
                 Divider()
                     .frame(height: 32)
-                    .background(Color.white.opacity(0.2))
+                    .background(Color.white.opacity(0.15))
 
                 StatStripItem(
                     value: "\(completedSessions.count)",
                     label: "Workouts",
                     icon: "figure.strengthtraining.traditional",
-                    color: Color(hex: "34C759")
+                    color: Color(hex: "1dd1a1")
                 )
             }
             .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [goldStart, goldEnd],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .padding(.horizontal)
         }
@@ -198,6 +218,8 @@ private struct StatStripItem: View {
 private struct ActiveProgramProgressSection: View {
     @Query private var userPrograms: [UserProgram]
 
+    private let cyanColor = Color(hex: "54a0ff")
+
     private var activeProgram: UserProgram? {
         userPrograms.first { $0.status == .active }
     }
@@ -205,11 +227,23 @@ private struct ActiveProgramProgressSection: View {
     var body: some View {
         if let program = activeProgram, let template = program.template {
             VStack(alignment: .leading, spacing: 16) {
-                // Section header
+                // Section header with colored icon
                 HStack {
-                    HStack(spacing: 8) {
-                        Image(systemName: "figure.run.circle.fill")
-                            .foregroundStyle(Color(hex: "BF5AF2"))
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [cyanColor, cyanColor.opacity(0.7)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 28, height: 28)
+                            Image(systemName: "figure.run.circle.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.white)
+                        }
                         Text("ACTIVE PROGRAM")
                             .font(.caption)
                             .fontWeight(.bold)
@@ -232,7 +266,7 @@ private struct ActiveProgramProgressSection: View {
                         }
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(Color(hex: "BF5AF2"))
+                        .foregroundStyle(cyanColor)
                     }
                 }
 
@@ -246,6 +280,8 @@ private struct ActiveProgramProgressSection: View {
 private struct ActiveProgramCard: View {
     let program: UserProgram
     let template: ProgramTemplate
+
+    private let cardBg = Color(hex: "161616")
 
     private var overallProgress: Double {
         let totalWorkouts = template.durationWeeks * template.workoutsPerWeek
@@ -265,16 +301,16 @@ private struct ActiveProgramCard: View {
 
     private var categoryColor: Color {
         switch template.category {
-        case .strength: return Color(hex: "FF6B35")
-        case .cardio: return Color(hex: "FF2D55")
-        case .yoga: return Color(hex: "BF5AF2")
-        case .pilates: return Color(hex: "5AC8FA")
-        case .hiit: return Color(hex: "FF9500")
-        case .stretching: return Color(hex: "34C759")
-        case .running: return Color(hex: "00C7BE")
-        case .cycling: return Color(hex: "32ADE6")
-        case .swimming: return Color(hex: "007AFF")
-        case .calisthenics: return Color(hex: "AF52DE")
+        case .strength: return Color(hex: "ff6b6b")
+        case .cardio: return Color(hex: "ff6b6b")
+        case .yoga: return Color(hex: "00d2d3")
+        case .pilates: return Color(hex: "54a0ff")
+        case .hiit: return Color(hex: "ff9f43")
+        case .stretching: return Color(hex: "1dd1a1")
+        case .running: return Color(hex: "00d2d3")
+        case .cycling: return Color(hex: "54a0ff")
+        case .swimming: return Color(hex: "54a0ff")
+        case .calisthenics: return Color(hex: "00d2d3")
         }
     }
 
@@ -282,15 +318,26 @@ private struct ActiveProgramCard: View {
         VStack(spacing: 16) {
             // Header row
             HStack(spacing: 14) {
-                // Category icon
+                // Category icon with glow
                 ZStack {
-                    RoundedRectangle(cornerRadius: 14)
+                    Circle()
                         .fill(categoryColor.opacity(0.2))
-                        .frame(width: 52, height: 52)
+                        .frame(width: 56, height: 56)
+                        .blur(radius: 8)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [categoryColor, categoryColor.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: template.category.icon)
-                        .font(.title2)
-                        .foregroundStyle(categoryColor)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -303,14 +350,14 @@ private struct ActiveProgramCard: View {
                     HStack(spacing: 8) {
                         Text("Week \(program.currentWeek) of \(template.durationWeeks)")
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.5))
 
                         Text("•")
                             .foregroundStyle(.white.opacity(0.3))
 
                         Text("\(program.completedWorkouts) workouts done")
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.5))
                     }
                 }
 
@@ -323,7 +370,7 @@ private struct ActiveProgramCard: View {
                     Text("Overall Progress")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.5))
 
                     Spacer()
 
@@ -342,7 +389,7 @@ private struct ActiveProgramCard: View {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(
                                 LinearGradient(
-                                    colors: [categoryColor, categoryColor.opacity(0.6)],
+                                    colors: [categoryColor, categoryColor.opacity(0.7)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -359,14 +406,14 @@ private struct ActiveProgramCard: View {
                     Text("This Week")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(.white.opacity(0.5))
 
                     Spacer()
 
                     Text("\(workoutsThisWeek)/\(template.workoutsPerWeek)")
                         .font(.caption)
                         .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.7))
                 }
 
                 // Week workout dots
@@ -374,7 +421,7 @@ private struct ActiveProgramCard: View {
                     ForEach(0..<template.workoutsPerWeek, id: \.self) { index in
                         let completed = index < workoutsThisWeek
                         Circle()
-                            .fill(completed ? categoryColor : Color.white.opacity(0.15))
+                            .fill(completed ? categoryColor : Color.white.opacity(0.1))
                             .frame(width: 12, height: 12)
                             .overlay(
                                 completed ?
@@ -390,22 +437,23 @@ private struct ActiveProgramCard: View {
             }
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            categoryColor.opacity(0.15),
-                            Color(hex: "1C1C1E").opacity(0.95)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .overlay(
+            VStack {
+                LinearGradient(
+                    colors: [categoryColor.opacity(0.9), categoryColor],
+                    startPoint: .leading,
+                    endPoint: .trailing
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(categoryColor.opacity(0.3), lineWidth: 1)
-                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
         )
     }
 }
@@ -414,6 +462,9 @@ private struct ActiveProgramCard: View {
 private struct FeaturedAchievementSection: View {
     @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
     @Query private var userAchievements: [UserAchievement]
+
+    private let goldColor = Color(hex: "feca57")
+    private let cyanColor = Color(hex: "54a0ff")
 
     private var nextAchievement: (achievement: Achievement, progress: Double)? {
         // Find the closest-to-complete unearned achievement
@@ -443,13 +494,29 @@ private struct FeaturedAchievementSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header
+            // Section header with colored icon
             HStack {
-                Text("NEXT TROPHY")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color(hex: "FFD700"))
-                    .tracking(1.5)
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [goldColor, Color(hex: "ff9f43")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    Text("NEXT TROPHY")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .tracking(1.5)
+                }
 
                 Spacer()
 
@@ -463,7 +530,7 @@ private struct FeaturedAchievementSection: View {
                     }
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(Color(hex: "5AC8FA"))
+                    .foregroundStyle(cyanColor)
                 }
             }
 
@@ -486,14 +553,16 @@ private struct FeaturedAchievementCard: View {
 
     @State private var animatedProgress: Double = 0
 
+    private let cardBg = Color(hex: "161616")
+
     private var categoryColor: Color {
         switch achievement.category {
-        case .workout: return Color(hex: "5AC8FA")
-        case .streak: return Color(hex: "FF6B35")
-        case .strength: return Color(hex: "BF5AF2")
-        case .social: return Color(hex: "FF2D55")
-        case .milestone: return Color(hex: "34C759")
-        case .challenge: return Color(hex: "FFD700")
+        case .workout: return Color(hex: "54a0ff")
+        case .streak: return Color(hex: "ff6b6b")
+        case .strength: return Color(hex: "00d2d3")
+        case .social: return Color(hex: "ff6b6b")
+        case .milestone: return Color(hex: "1dd1a1")
+        case .challenge: return Color(hex: "feca57")
         }
     }
 
@@ -503,44 +572,37 @@ private struct FeaturedAchievementCard: View {
             ZStack {
                 // Outer glow
                 Circle()
-                    .fill(categoryColor.opacity(0.15))
-                    .frame(width: 110, height: 110)
-                    .blur(radius: 10)
+                    .fill(categoryColor.opacity(0.2))
+                    .frame(width: 105, height: 105)
+                    .blur(radius: 12)
 
                 // Background ring
                 Circle()
-                    .stroke(Color.white.opacity(0.1), lineWidth: 8)
-                    .frame(width: 90, height: 90)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 8)
+                    .frame(width: 88, height: 88)
 
                 // Progress ring
                 Circle()
                     .trim(from: 0, to: animatedProgress)
                     .stroke(
                         LinearGradient(
-                            colors: [categoryColor, categoryColor.opacity(0.6)],
+                            colors: [categoryColor, categoryColor.opacity(0.7)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         style: StrokeStyle(lineWidth: 8, lineCap: .round)
                     )
-                    .frame(width: 90, height: 90)
+                    .frame(width: 88, height: 88)
                     .rotationEffect(.degrees(-90))
 
                 // Inner circle
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "1C1C1E"), Color(hex: "2C2C2E")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 74, height: 74)
+                    .fill(cardBg)
+                    .frame(width: 72, height: 72)
 
                 // Emoji
                 Text(achievement.emoji)
-                    .font(.system(size: 36))
-                    .opacity(0.9)
+                    .font(.system(size: 34))
             }
             .onAppear {
                 withAnimation(.spring(response: 1.0, dampingFraction: 0.8).delay(0.3)) {
@@ -557,7 +619,7 @@ private struct FeaturedAchievementCard: View {
 
                 Text(achievement.achievementDescription)
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.white.opacity(0.5))
                     .lineLimit(2)
 
                 HStack(spacing: 12) {
@@ -568,14 +630,14 @@ private struct FeaturedAchievementCard: View {
                         .foregroundStyle(categoryColor)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(categoryColor.opacity(0.2))
+                        .background(categoryColor.opacity(0.15))
                         .clipShape(Capsule())
 
                     // Points
                     HStack(spacing: 4) {
                         Image(systemName: "star.fill")
                             .font(.caption2)
-                            .foregroundStyle(Color(hex: "FFD700"))
+                            .foregroundStyle(Color(hex: "feca57"))
                         Text("\(achievement.points) pts")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.5))
@@ -586,24 +648,24 @@ private struct FeaturedAchievementCard: View {
             Spacer()
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            categoryColor.opacity(0.15),
-                            Color(hex: "1C1C1E").opacity(0.95)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .overlay(
+            VStack {
+                LinearGradient(
+                    colors: [categoryColor.opacity(0.9), categoryColor],
+                    startPoint: .leading,
+                    endPoint: .trailing
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(categoryColor.opacity(0.3), lineWidth: 1)
-                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 22))
         )
-        .shadow(color: categoryColor.opacity(0.2), radius: 20, y: 10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 22)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
@@ -650,6 +712,9 @@ private struct TrophyCaseSection: View {
     @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
     @Query private var userAchievements: [UserAchievement]
 
+    private let goldColor = Color(hex: "feca57")
+    private let cardBg = Color(hex: "161616")
+
     private var earnedAchievements: [Achievement] {
         achievements.filter { achievement in
             userAchievements.first { $0.achievementId == achievement.id }?.isComplete ?? false
@@ -665,11 +730,23 @@ private struct TrophyCaseSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header
+            // Section header with colored icon
             HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "trophy.fill")
-                        .foregroundStyle(Color(hex: "FFD700"))
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [goldColor, Color(hex: "ff9f43")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
                     Text("TROPHY CASE")
                         .font(.caption)
                         .fontWeight(.bold)
@@ -696,13 +773,11 @@ private struct TrophyCaseSection: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
-                .background(
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(white: 0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
             } else {
                 // Trophy grid
@@ -715,13 +790,23 @@ private struct TrophyCaseSection: View {
                     }
                 }
                 .padding(16)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(white: 0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [goldColor, Color(hex: "ff9f43")],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
 
                 // View all if more than 8
@@ -736,10 +821,10 @@ private struct TrophyCaseSection: View {
                             Image(systemName: "arrow.right")
                                 .font(.caption)
                         }
-                        .foregroundStyle(Color(hex: "5AC8FA"))
+                        .foregroundStyle(Color(hex: "54a0ff"))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color(hex: "5AC8FA").opacity(0.1))
+                        .background(Color(hex: "54a0ff").opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
@@ -757,12 +842,12 @@ private struct TrophyBadge: View {
 
     private var categoryColor: Color {
         switch achievement.category {
-        case .workout: return Color(hex: "5AC8FA")
-        case .streak: return Color(hex: "FF6B35")
-        case .strength: return Color(hex: "BF5AF2")
-        case .social: return Color(hex: "FF2D55")
-        case .milestone: return Color(hex: "34C759")
-        case .challenge: return Color(hex: "FFD700")
+        case .workout: return Color(hex: "54a0ff")
+        case .streak: return Color(hex: "ff6b6b")
+        case .strength: return Color(hex: "00d2d3")
+        case .social: return Color(hex: "ff6b6b")
+        case .milestone: return Color(hex: "1dd1a1")
+        case .challenge: return Color(hex: "feca57")
         }
     }
 
@@ -827,6 +912,8 @@ private struct InProgressSection: View {
     @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
     @Query private var userAchievements: [UserAchievement]
 
+    private let cyanColor = Color(hex: "54a0ff")
+
     private var inProgressAchievements: [(achievement: Achievement, progress: Double)]  {
         achievements.compactMap { achievement in
             guard !achievement.isSecret else { return nil }
@@ -846,10 +933,22 @@ private struct InProgressSection: View {
     var body: some View {
         if !inProgressAchievements.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
-                // Section header
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(Color(hex: "5AC8FA"))
+                // Section header with colored icon
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [cyanColor, cyanColor.opacity(0.7)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
                     Text("IN PROGRESS")
                         .font(.caption)
                         .fontWeight(.bold)
@@ -874,14 +973,16 @@ private struct InProgressRow: View {
     let achievement: Achievement
     let progress: Double
 
+    private let cardBg = Color(hex: "161616")
+
     private var categoryColor: Color {
         switch achievement.category {
-        case .workout: return Color(hex: "5AC8FA")
-        case .streak: return Color(hex: "FF6B35")
-        case .strength: return Color(hex: "BF5AF2")
-        case .social: return Color(hex: "FF2D55")
-        case .milestone: return Color(hex: "34C759")
-        case .challenge: return Color(hex: "FFD700")
+        case .workout: return Color(hex: "54a0ff")
+        case .streak: return Color(hex: "ff6b6b")
+        case .strength: return Color(hex: "00d2d3")
+        case .social: return Color(hex: "ff6b6b")
+        case .milestone: return Color(hex: "1dd1a1")
+        case .challenge: return Color(hex: "feca57")
         }
     }
 
@@ -895,7 +996,6 @@ private struct InProgressRow: View {
 
                 Text(achievement.emoji)
                     .font(.title3)
-                    .opacity(0.6)
             }
 
             // Info and progress
@@ -918,13 +1018,13 @@ private struct InProgressRow: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.1))
+                            .fill(Color.white.opacity(0.08))
                             .frame(height: 6)
 
                         RoundedRectangle(cornerRadius: 3)
                             .fill(
                                 LinearGradient(
-                                    colors: [categoryColor, categoryColor.opacity(0.6)],
+                                    colors: [categoryColor, categoryColor.opacity(0.7)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -936,13 +1036,11 @@ private struct InProgressRow: View {
             }
         }
         .padding(14)
-        .background(
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(white: 0.12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
         )
     }
 }
@@ -959,6 +1057,9 @@ private struct ActivitySection: View {
 
 private struct WeeklyStreakSection: View {
     @Query private var workoutSessions: [WorkoutSession]
+
+    private let limeColor = Color(hex: "1dd1a1")
+    private let cardBg = Color(hex: "161616")
 
     private var completedSessions: [WorkoutSession] {
         workoutSessions.filter { $0.status == .completed }
@@ -983,9 +1084,22 @@ private struct WeeklyStreakSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .foregroundStyle(Color(hex: "34C759"))
+            // Section header with colored icon
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [limeColor, Color(hex: "10ac84")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 28, height: 28)
+                    Image(systemName: "calendar")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
                 Text("THIS WEEK")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -998,7 +1112,7 @@ private struct WeeklyStreakSection: View {
                     VStack(spacing: 8) {
                         ZStack {
                             Circle()
-                                .fill(day.hasWorkout ? Color(hex: "34C759") : Color.white.opacity(0.08))
+                                .fill(day.hasWorkout ? limeColor : Color.white.opacity(0.06))
                                 .frame(width: 38, height: 38)
 
                             if day.hasWorkout {
@@ -1010,7 +1124,7 @@ private struct WeeklyStreakSection: View {
                         }
                         .overlay(
                             Circle()
-                                .stroke(day.isToday ? Color.white.opacity(0.5) : Color.clear, lineWidth: 2)
+                                .stroke(day.isToday ? Color.white.opacity(0.4) : Color.clear, lineWidth: 2)
                                 .frame(width: 42, height: 42)
                         )
 
@@ -1023,13 +1137,23 @@ private struct WeeklyStreakSection: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [limeColor, Color(hex: "10ac84")],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
     }
@@ -1037,6 +1161,9 @@ private struct WeeklyStreakSection: View {
 
 private struct RecentWorkoutsSection: View {
     @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workoutSessions: [WorkoutSession]
+
+    private let cyanColor = Color(hex: "54a0ff")
+    private let cardBg = Color(hex: "161616")
 
     private var completedSessions: [WorkoutSession] {
         workoutSessions.filter { $0.status == .completed }
@@ -1062,9 +1189,22 @@ private struct RecentWorkoutsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "clock.arrow.circlepath")
-                    .foregroundStyle(Color(hex: "5AC8FA"))
+            // Section header with colored icon
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [cyanColor, Color(hex: "2e86de")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 28, height: 28)
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
                 Text("RECENT WORKOUTS")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -1083,25 +1223,25 @@ private struct RecentWorkoutsSection: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 32)
-                .background(
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(white: 0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
             } else {
                 VStack(spacing: 10) {
                     ForEach(recentWorkouts) { session in
                         HStack(spacing: 14) {
                             // Icon
-                            Image(systemName: "figure.strengthtraining.traditional")
-                                .font(.body)
-                                .foregroundStyle(.white)
-                                .frame(width: 40, height: 40)
-                                .background(Color(hex: "2D5A4A"))
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            ZStack {
+                                Circle()
+                                    .fill(cyanColor.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(cyanColor)
+                            }
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(session.workout?.name ?? "Workout")
@@ -1121,18 +1261,28 @@ private struct RecentWorkoutsSection: View {
                                 .foregroundStyle(.white.opacity(0.5))
                         }
                         .padding(12)
-                        .background(Color(white: 0.15))
+                        .background(Color.white.opacity(0.04))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
                 .padding(12)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(white: 0.12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [cyanColor, Color(hex: "2e86de")],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
             }
         }

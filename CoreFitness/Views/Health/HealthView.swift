@@ -246,12 +246,21 @@ private struct HealthPageHeader: View {
     let onCheckIn: () -> Void
     let onLogWater: () -> Void
 
+    private let tealColor = Color(hex: "00d2d3")
+    private let cyanColor = Color(hex: "54a0ff")
+
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Health")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                Text("HEALTH")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, tealColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                 Text("Your wellness dashboard")
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.5))
@@ -267,7 +276,7 @@ private struct HealthPageHeader: View {
                         .frame(width: 40, height: 40)
                         .background(
                             LinearGradient(
-                                colors: [Color(hex: "0ea5e9"), Color(hex: "0284c7")],
+                                colors: [cyanColor, Color(hex: "2e86de")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -282,7 +291,7 @@ private struct HealthPageHeader: View {
                         .frame(width: 40, height: 40)
                         .background(
                             LinearGradient(
-                                colors: [Color(hex: "2D5A4A"), Color(hex: "1b4332")],
+                                colors: [Color(hex: "1dd1a1"), Color(hex: "10ac84")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -300,18 +309,16 @@ private struct RecoveryHeroCard: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
     @State private var animateRing = false
 
-    // Consistent blue palette (matching HomeView)
-    private let ringStart = Color(hex: "60a5fa")
-    private let ringEnd = Color(hex: "3b82f6")
-    private let bgStart = Color(hex: "1e40af")
-    private let bgEnd = Color(hex: "1e3a8a")
+    private let cardBg = Color(hex: "161616")
+    private let tealStart = Color(hex: "00d2d3")
+    private let tealEnd = Color(hex: "0097a7")
 
     private var score: Int {
         healthKitManager.calculateOverallScore()
     }
 
     private var scoreColor: Color {
-        ringEnd // Always blue to match HomeView
+        tealStart
     }
 
     private var scoreMessage: String {
@@ -342,19 +349,19 @@ private struct RecoveryHeroCard: View {
                 ZStack {
                     // Glow
                     Circle()
-                        .fill(ringEnd.opacity(0.3))
-                        .frame(width: 120, height: 120)
+                        .fill(tealStart.opacity(0.25))
+                        .frame(width: 115, height: 115)
                         .blur(radius: 15)
 
                     Circle()
-                        .stroke(Color.white.opacity(0.15), lineWidth: 12)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 12)
                         .frame(width: 100, height: 100)
 
                     Circle()
                         .trim(from: 0, to: animateRing ? CGFloat(score) / 100.0 : 0)
                         .stroke(
                             LinearGradient(
-                                colors: [ringStart, ringEnd],
+                                colors: [tealStart, tealEnd],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
@@ -379,7 +386,7 @@ private struct RecoveryHeroCard: View {
                     Text("Today's Recovery")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(tealStart)
 
                     Text(scoreMessage)
                         .font(.title2)
@@ -401,48 +408,57 @@ private struct RecoveryHeroCard: View {
                     icon: "moon.fill",
                     value: sleepValue,
                     label: "Sleep",
-                    color: Color(hex: "a78bfa"),
+                    color: Color(hex: "54a0ff"),
                     status: sleepStatus
                 )
 
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.15))
+                    .background(Color.white.opacity(0.1))
 
                 RecoveryFactorPill(
                     icon: "waveform.path.ecg",
                     value: hrvValue,
                     label: "HRV",
-                    color: Color(hex: "22c55e"),
+                    color: Color(hex: "1dd1a1"),
                     status: hrvStatus
                 )
 
                 Divider()
                     .frame(height: 40)
-                    .background(Color.white.opacity(0.15))
+                    .background(Color.white.opacity(0.1))
 
                 RecoveryFactorPill(
                     icon: "heart.fill",
                     value: hrValue,
                     label: "Rest HR",
-                    color: Color(hex: "ef4444"),
+                    color: Color(hex: "ff6b6b"),
                     status: hrStatus
                 )
             }
             .padding(.vertical, 14)
-            .background(Color.white.opacity(0.06))
+            .background(Color.white.opacity(0.04))
             .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .padding(20)
-        .background(
-            LinearGradient(
-                colors: [bgStart, bgEnd],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: bgEnd.opacity(0.4), radius: 20, y: 10)
+        .overlay(
+            VStack {
+                LinearGradient(
+                    colors: [tealStart, tealEnd],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+        )
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 withAnimation(.easeOut(duration: 1.0)) {
@@ -494,9 +510,9 @@ private enum MetricStatus {
 
     var color: Color {
         switch self {
-        case .good: return Color(hex: "22c55e")
-        case .moderate: return Color(hex: "f59e0b")
-        case .low: return Color(hex: "ef4444")
+        case .good: return Color(hex: "1dd1a1")
+        case .moderate: return Color(hex: "feca57")
+        case .low: return Color(hex: "ff6b6b")
         case .unknown: return Color.gray
         }
     }
@@ -579,6 +595,8 @@ private struct MyHealthMetricsSection: View {
 
     @State private var metricTrends: [HealthMetricType: TrendData] = [:]
 
+    private let coralColor = Color(hex: "ff6b6b")
+
     private let columns = [
         GridItem(.flexible(), spacing: 12),
         GridItem(.flexible(), spacing: 12)
@@ -587,9 +605,21 @@ private struct MyHealthMetricsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "heart.text.clipboard.fill")
-                        .foregroundStyle(Color(hex: "FF6B35"))
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [coralColor, Color(hex: "ee5a5a")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "heart.text.clipboard.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
                     Text("MY HEALTH")
                         .font(.caption)
                         .fontWeight(.bold)
@@ -733,7 +763,7 @@ struct TrendData {
 
     var color: Color {
         if percentChange < 5 { return Color.white.opacity(0.5) }
-        return isPositive ? Color(hex: "22c55e") : Color(hex: "f59e0b")
+        return isPositive ? Color(hex: "1dd1a1") : Color(hex: "feca57")
     }
 
     var icon: String {
@@ -753,6 +783,8 @@ private struct HealthMetricCard: View {
     let onTap: () -> Void
 
     @State private var isPressed = false
+
+    private let cardBg = Color(hex: "161616")
 
     var body: some View {
         Button(action: onTap) {
@@ -804,13 +836,23 @@ private struct HealthMetricCard: View {
             }
             .padding(16)
             .frame(height: 140)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [type.color.opacity(0.8), type.color],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -827,11 +869,25 @@ private struct LifestyleCardsSection: View {
     @Binding var showWaterDetail: Bool
     @Binding var showMoodDetail: Bool
 
+    private let limeColor = Color(hex: "1dd1a1")
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .foregroundStyle(Color(hex: "22c55e"))
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [limeColor, Color(hex: "10ac84")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 28, height: 28)
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
                 Text("LIFESTYLE")
                     .font(.caption)
                     .fontWeight(.bold)
@@ -851,6 +907,9 @@ private struct WaterCard: View {
     @Binding var showDetail: Bool
     @EnvironmentObject var waterManager: WaterIntakeManager
 
+    private let cardBg = Color(hex: "161616")
+    private let cyanColor = Color(hex: "54a0ff")
+
     var body: some View {
         Button {
             showDetail = true
@@ -859,7 +918,7 @@ private struct WaterCard: View {
                 HStack {
                     Image(systemName: "drop.fill")
                         .font(.title2)
-                        .foregroundStyle(Color(hex: "0ea5e9"))
+                        .foregroundStyle(cyanColor)
                     Spacer()
                     Text("\(Int(waterManager.ringProgress * 100))%")
                         .font(.caption)
@@ -867,7 +926,7 @@ private struct WaterCard: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(waterManager.hasReachedGoal ? Color(hex: "22c55e") : Color(hex: "0ea5e9"))
+                        .background(waterManager.hasReachedGoal ? Color(hex: "1dd1a1") : cyanColor)
                         .clipShape(Capsule())
                 }
 
@@ -886,13 +945,23 @@ private struct WaterCard: View {
             .padding(16)
             .frame(height: 140)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [cyanColor, Color(hex: "2e86de")],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -902,6 +971,9 @@ private struct WaterCard: View {
 private struct MoodCard: View {
     @Binding var showDetail: Bool
     @Query(sort: \MoodEntry.date, order: .reverse) private var moodEntries: [MoodEntry]
+
+    private let cardBg = Color(hex: "161616")
+    private let tealColor = Color(hex: "00d2d3")
 
     private var todayMood: Mood? {
         let today = Calendar.current.startOfDay(for: Date())
@@ -932,7 +1004,7 @@ private struct MoodCard: View {
                 HStack {
                     Image(systemName: "face.smiling.fill")
                         .font(.title2)
-                        .foregroundStyle(Color(hex: "a855f7"))
+                        .foregroundStyle(tealColor)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.caption)
@@ -952,13 +1024,23 @@ private struct MoodCard: View {
             .padding(16)
             .frame(height: 140)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [tealColor, Color(hex: "0097a7")],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -1034,13 +1116,28 @@ private struct WeeklyRecoveryTrendSection: View {
         Calendar.current.isDateInToday(date)
     }
 
+    private let cyanColor = Color(hex: "54a0ff")
+    private let cardBg = Color(hex: "161616")
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
+            // Header with colored icon
             HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .foregroundStyle(Color(hex: "5AC8FA"))
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(
+                                LinearGradient(
+                                    colors: [cyanColor, Color(hex: "2e86de")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 28, height: 28)
+                        Image(systemName: "chart.line.uptrend.xyaxis")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
                     Text("RECOVERY TREND")
                         .font(.caption)
                         .fontWeight(.bold)
@@ -1062,7 +1159,7 @@ private struct WeeklyRecoveryTrendSection: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(trendPercentage >= 0 ? Color(hex: "22c55e") : Color(hex: "f59e0b"))
+                    .background(trendPercentage >= 0 ? Color(hex: "1dd1a1") : Color(hex: "feca57"))
                     .clipShape(Capsule())
                 }
             }
@@ -1114,7 +1211,7 @@ private struct WeeklyRecoveryTrendSection: View {
                                 }
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color(hex: "2D5A4A").opacity(0.4), Color(hex: "2D5A4A").opacity(0.05)],
+                                        colors: [cyanColor.opacity(0.3), cyanColor.opacity(0.05)],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
@@ -1134,7 +1231,7 @@ private struct WeeklyRecoveryTrendSection: View {
                                 }
                                 .stroke(
                                     LinearGradient(
-                                        colors: [Color(hex: "2D5A4A"), Color(hex: "22c55e")],
+                                        colors: [cyanColor, Color(hex: "1dd1a1")],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     ),
@@ -1149,7 +1246,7 @@ private struct WeeklyRecoveryTrendSection: View {
 
                                     if value > 0 {
                                         Circle()
-                                            .fill(Color(hex: "22c55e"))
+                                            .fill(Color(hex: "1dd1a1"))
                                             .frame(width: 8, height: 8)
                                             .overlay(
                                                 Circle()
@@ -1173,12 +1270,12 @@ private struct WeeklyRecoveryTrendSection: View {
                                     Text(dayName(for: date))
                                         .font(.system(size: 10))
                                         .fontWeight(.medium)
-                                        .foregroundStyle(isToday(date) ? Color(hex: "22c55e") : .white.opacity(0.4))
+                                        .foregroundStyle(isToday(date) ? Color(hex: "1dd1a1") : .white.opacity(0.4))
                                     Text(dayNumber(for: date))
                                         .font(.system(size: 11, weight: .semibold))
                                         .foregroundStyle(isToday(date) ? .white : .white.opacity(0.6))
                                         .frame(width: 22, height: 22)
-                                        .background(isToday(date) ? Color(hex: "22c55e") : Color.clear)
+                                        .background(isToday(date) ? Color(hex: "1dd1a1") : Color.clear)
                                         .clipShape(Circle())
                                 }
                                 .frame(maxWidth: .infinity)
@@ -1203,13 +1300,23 @@ private struct WeeklyRecoveryTrendSection: View {
                 }
             }
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(white: 0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [cyanColor, Color(hex: "2e86de")],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
     }

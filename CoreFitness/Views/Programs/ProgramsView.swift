@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
+import PDFKit
 
 // MARK: - Programs View (Redesigned)
 struct ProgramsView: View {
@@ -144,11 +145,15 @@ struct ProgramsView: View {
     // MARK: - Header
     private var programsHeader: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Programs")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-            }
+            Text("PROGRAMS")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, Color(hex: "54a0ff")],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
 
             Spacer()
 
@@ -174,12 +179,16 @@ struct ProgramsView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(Color(hex: "161616"))
                         .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                        )
 
                     Image(systemName: "plus")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.white.opacity(0.7))
                 }
             }
         }
@@ -225,7 +234,7 @@ struct ProgramsView: View {
         VStack(spacing: 24) {
             // Workout Dashboard
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Workout Dashboard")
+                sectionHeader("Workout Dashboard", icon: "chart.bar.fill", color: Color(hex: "54a0ff"))
                 WorkoutDashboardView()
             }
             .opacity(animationStage >= 3 ? 1 : 0)
@@ -234,7 +243,7 @@ struct ProgramsView: View {
             // Active Workout
             if let workout = currentWorkout {
                 VStack(alignment: .leading, spacing: 16) {
-                    sectionHeader("Active Workout")
+                    sectionHeader("Active Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
                     ActiveWorkoutHeroCard(workout: workout)
                 }
                 .opacity(animationStage >= 4 ? 1 : 0)
@@ -242,7 +251,7 @@ struct ProgramsView: View {
             } else {
                 // Empty state for no active workout
                 VStack(alignment: .leading, spacing: 16) {
-                    sectionHeader("Active Workout")
+                    sectionHeader("Active Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
                     emptyWorkoutCard
                 }
                 .opacity(animationStage >= 4 ? 1 : 0)
@@ -252,7 +261,7 @@ struct ProgramsView: View {
             // Active Challenge
             if let challenge = activeChallenge {
                 VStack(alignment: .leading, spacing: 16) {
-                    sectionHeader("Active Challenge")
+                    sectionHeader("Active Challenge", icon: "trophy.fill", color: Color(hex: "feca57"))
                     ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
                 }
                 .opacity(animationStage >= 5 ? 1 : 0)
@@ -266,7 +275,7 @@ struct ProgramsView: View {
         VStack(spacing: 24) {
             // Quick Create Row (moved to top)
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Create")
+                sectionHeader("Quick Create", icon: "plus.circle.fill", color: Color(hex: "54a0ff"))
                 quickCreateRow
             }
             .opacity(animationStage >= 3 ? 1 : 0)
@@ -274,7 +283,7 @@ struct ProgramsView: View {
 
             // Browse Programs
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Find Your Program")
+                sectionHeader("Find Your Program", icon: "magnifyingglass", color: Color(hex: "1dd1a1"))
                 DiscoverProgramsCard { showProgramBrowser = true }
             }
             .opacity(animationStage >= 4 ? 1 : 0)
@@ -282,7 +291,7 @@ struct ProgramsView: View {
 
             // Challenges
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Challenges")
+                sectionHeader("Challenges", icon: "trophy.fill", color: Color(hex: "feca57"))
                 DiscoverChallengesCard(challengeCount: challenges.count) { showChallenges = true }
             }
             .opacity(animationStage >= 5 ? 1 : 0)
@@ -296,21 +305,21 @@ struct ProgramsView: View {
             // My Programs
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    sectionHeader("My Workouts")
+                    sectionHeader("My Workouts", icon: "folder.fill", color: Color(hex: "1dd1a1"))
                     Spacer()
                     Text("\(workouts.count)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.4))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.08))
+                        .background(Color.white.opacity(0.06))
                         .clipShape(Capsule())
                 }
                 LibraryRowCard(
                     icon: "folder.fill",
                     title: "Saved Workouts",
                     subtitle: "View all your programs",
-                    accentColor: Color(hex: "6366f1")
+                    accentColor: Color(hex: "1dd1a1")
                 ) { showSavedPrograms = true }
             }
             .opacity(animationStage >= 3 ? 1 : 0)
@@ -318,12 +327,12 @@ struct ProgramsView: View {
 
             // Exercises
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Exercise Library")
+                sectionHeader("Exercise Library", icon: "dumbbell.fill", color: Color(hex: "00d2d3"))
                 LibraryRowCard(
                     icon: "dumbbell.fill",
                     title: "Browse Exercises",
                     subtitle: "1300+ exercises with demos",
-                    accentColor: Color(hex: "22c55e")
+                    accentColor: Color(hex: "00d2d3")
                 ) { showExerciseLibrary = true }
             }
             .opacity(animationStage >= 4 ? 1 : 0)
@@ -332,28 +341,54 @@ struct ProgramsView: View {
     }
 
     // MARK: - Section Header
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundStyle(.white.opacity(0.5))
-            .textCase(.uppercase)
-            .tracking(1)
+    private func sectionHeader(_ title: String, icon: String? = nil, color: Color = Color(hex: "54a0ff")) -> some View {
+        HStack(spacing: 10) {
+            if let icon = icon {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [color.opacity(0.8), color],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 28, height: 28)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.4))
+                .textCase(.uppercase)
+                .tracking(1.5)
+        }
     }
 
     // MARK: - Empty Workout Card
     private var emptyWorkoutCard: some View {
-        Button {
+        let cyanColor = Color(hex: "54a0ff")
+
+        return Button {
             showProgramBrowser = true
         } label: {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(width: 56, height: 56)
+                        .fill(cyanColor.opacity(0.15))
+                        .frame(width: 50, height: 50)
+
+                    Circle()
+                        .stroke(cyanColor.opacity(0.3), lineWidth: 2)
+                        .frame(width: 50, height: 50)
 
                     Image(systemName: "plus")
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.4))
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(cyanColor.opacity(0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -363,23 +398,39 @@ struct ProgramsView: View {
 
                     Text("Browse programs to get started")
                         .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.35))
+                        .foregroundStyle(.white.opacity(0.4))
                 }
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.3))
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
             }
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            .background(Color(hex: "161616"))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [cyanColor.opacity(0.5), cyanColor.opacity(0.3)],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -388,11 +439,11 @@ struct ProgramsView: View {
     // MARK: - Quick Create Row
     private var quickCreateRow: some View {
         HStack(spacing: 12) {
-            QuickCreatePill(icon: "plus", title: "Create", color: Color(hex: "2d6a4f")) {
+            QuickCreatePill(icon: "plus", title: "Create", color: Color(hex: "54a0ff")) {
                 showCreateProgram = true
             }
 
-            QuickCreatePill(icon: "sparkles", title: "AI", color: Color(hex: "8b5cf6")) {
+            QuickCreatePill(icon: "sparkles", title: "AI", color: Color(hex: "00d2d3")) {
                 showAIWorkoutCreation = true
             }
 
@@ -409,76 +460,78 @@ private struct DiscoverProgramsCard: View {
     let action: () -> Void
     @State private var isPressed = false
 
+    private let cardBg = Color(hex: "161616")
+    private let accentColor = Color(hex: "1dd1a1") // Lime green
+
     var body: some View {
         Button {
             themeManager.mediumImpact()
             action()
         } label: {
-            VStack(alignment: .leading, spacing: 0) {
-                // Top section with gradient
-                HStack(spacing: 16) {
-                    // Icon with glow
-                    ZStack {
-                        // Ambient glow
-                        Circle()
-                            .fill(Color(hex: "6366f1").opacity(0.3))
-                            .frame(width: 70, height: 70)
-                            .blur(radius: 20)
+            HStack(spacing: 16) {
+                // Icon with glow
+                ZStack {
+                    Circle()
+                        .fill(accentColor.opacity(0.25))
+                        .frame(width: 65, height: 65)
+                        .blur(radius: 12)
 
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color(hex: "6366f1"), Color(hex: "8b5cf6")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [accentColor, Color(hex: "10ac84")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                            .frame(width: 56, height: 56)
+                        )
+                        .frame(width: 52, height: 52)
 
-                        Image(systemName: "square.grid.2x2.fill")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("100+ Programs")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(.white)
-
-                        Text("Strength • Cardio • Yoga • HIIT")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    Spacer()
-
-                    // Arrow
-                    ZStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 44, height: 44)
-
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
+                    Image(systemName: "square.grid.2x2.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
-                .padding(24)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("100+ Programs")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    Text("Strength • Cardio • Yoga • HIIT")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.55))
+                }
+
+                Spacer()
+
+                // Arrow
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.7))
+                }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.white.opacity(0.06))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color(hex: "6366f1").opacity(0.3), Color.clear],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+            .padding(20)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [accentColor.opacity(0.9), accentColor, Color(hex: "10ac84")],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
@@ -497,6 +550,10 @@ private struct DiscoverChallengesCard: View {
     let action: () -> Void
     @State private var isPressed = false
 
+    private let cardBg = Color(hex: "161616")
+    private let goldStart = Color(hex: "feca57")
+    private let goldEnd = Color(hex: "ff9f43")
+
     var body: some View {
         Button {
             themeManager.mediumImpact()
@@ -506,28 +563,28 @@ private struct DiscoverChallengesCard: View {
                 // Icon with glow
                 ZStack {
                     Circle()
-                        .fill(Color(hex: "f97316").opacity(0.25))
-                        .frame(width: 60, height: 60)
-                        .blur(radius: 15)
+                        .fill(goldStart.opacity(0.25))
+                        .frame(width: 55, height: 55)
+                        .blur(radius: 10)
 
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
+                                colors: [goldStart, goldEnd],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 50, height: 50)
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Challenges")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
 
                     Text("\(challengeCount) available")
@@ -537,18 +594,34 @@ private struct DiscoverChallengesCard: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.4))
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
-            .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            .padding(18)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [goldStart, goldEnd],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
@@ -569,6 +642,8 @@ private struct QuickCreatePill: View {
     let action: () -> Void
     @State private var isPressed = false
 
+    private let cardBg = Color(hex: "161616")
+
     var body: some View {
         Button {
             themeManager.mediumImpact()
@@ -578,18 +653,22 @@ private struct QuickCreatePill: View {
                 // Icon with gradient background
                 ZStack {
                     Circle()
+                        .fill(color.opacity(0.2))
+                        .frame(width: 52, height: 52)
+                        .blur(radius: 8)
+
+                    Circle()
                         .fill(
                             LinearGradient(
-                                colors: [color, color.opacity(0.7)],
+                                colors: [color, color.opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 48, height: 48)
-                        .shadow(color: color.opacity(0.4), radius: 8, y: 4)
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
@@ -600,13 +679,23 @@ private struct QuickCreatePill: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [color.opacity(0.8), color],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .scaleEffect(isPressed ? 0.96 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
@@ -628,24 +717,37 @@ private struct LibraryRowCard: View {
     let action: () -> Void
     @State private var isPressed = false
 
+    private let cardBg = Color(hex: "161616")
+
     var body: some View {
         Button {
             themeManager.mediumImpact()
             action()
         } label: {
             HStack(spacing: 16) {
-                // Icon with subtle glow
+                // Icon with glow
                 ZStack {
                     Circle()
-                        .fill(accentColor.opacity(0.15))
-                        .frame(width: 48, height: 48)
+                        .fill(accentColor.opacity(0.2))
+                        .frame(width: 50, height: 50)
+                        .blur(radius: 8)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [accentColor, accentColor.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
 
                     Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(accentColor)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
                 }
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
@@ -657,18 +759,34 @@ private struct LibraryRowCard: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.3))
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
             .padding(18)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color.white.opacity(0.04))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [accentColor.opacity(0.9), accentColor],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
@@ -806,6 +924,10 @@ private struct ActiveWorkoutHeroCard: View {
     @State private var showWorkoutExecution = false
     @State private var isPressed = false
 
+    private let cardBg = Color(hex: "161616")
+    private let cyanStart = Color(hex: "54a0ff")
+    private let cyanEnd = Color(hex: "2e86de")
+
     /// Ensures this workout is active
     private func ensureWorkoutActive() {
         guard !workout.isActive else { return }
@@ -816,24 +938,6 @@ private struct ActiveWorkoutHeroCard: View {
         workout.isActive = true
         workout.status = .active
         try? modelContext.save()
-    }
-
-    // Dynamic gradient based on workout goal
-    private var gradientColors: (start: Color, end: Color) {
-        switch workout.goal {
-        case .strength, .muscleBuilding:
-            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
-        case .cardio:
-            return (Color(hex: "dc2626"), Color(hex: "991b1b"))  // Red
-        case .fatLoss:
-            return (Color(hex: "f59e0b"), Color(hex: "d97706"))  // Amber
-        case .endurance:
-            return (Color(hex: "0891b2"), Color(hex: "0e7490"))  // Cyan
-        case .flexibility:
-            return (Color(hex: "7c3aed"), Color(hex: "6d28d9"))  // Purple
-        default:
-            return (Color(hex: "2d6a4f"), Color(hex: "1b4332"))  // Pine green
-        }
     }
 
     private var statusText: String {
@@ -857,10 +961,22 @@ private struct ActiveWorkoutHeroCard: View {
                     // Workout icon based on goal
                     ZStack {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 56, height: 56)
+                            .fill(cyanStart.opacity(0.2))
+                            .frame(width: 60, height: 60)
+                            .blur(radius: 10)
+
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [cyanStart, cyanEnd],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 50, height: 50)
+
                         Image(systemName: workout.goal.icon)
-                            .font(.system(size: 24, weight: .semibold))
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(.white)
                     }
 
@@ -871,7 +987,7 @@ private struct ActiveWorkoutHeroCard: View {
                                 .font(.caption2)
                                 .fontWeight(.bold)
                                 .tracking(0.5)
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(cyanStart)
 
                             if workout.workoutType == .challenge {
                                 HStack(spacing: 3) {
@@ -879,17 +995,17 @@ private struct ActiveWorkoutHeroCard: View {
                                     Text("Challenge")
                                 }
                                 .font(.system(size: 9, weight: .semibold))
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(Color(hex: "feca57"))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
-                                .background(Color.yellow.opacity(0.2))
+                                .background(Color(hex: "feca57").opacity(0.2))
                                 .clipShape(Capsule())
                             }
 
                             if workout.isTrophyEligible {
                                 Image(systemName: "trophy.fill")
                                     .font(.caption2)
-                                    .foregroundStyle(.yellow)
+                                    .foregroundStyle(Color(hex: "feca57"))
                             }
                         }
 
@@ -898,17 +1014,18 @@ private struct ActiveWorkoutHeroCard: View {
                             .font(.title3)
                             .fontWeight(.bold)
                             .lineLimit(1)
+                            .foregroundStyle(.white)
 
                         // Goal + Difficulty row
                         HStack(spacing: 8) {
                             Label(workout.goal.displayName, systemImage: workout.goal.icon)
                             Text("•")
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.4))
                             Text(workout.difficulty.displayName)
                                 .fontWeight(.medium)
                         }
                         .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.6))
 
                         // Stats row
                         HStack(spacing: 14) {
@@ -919,7 +1036,7 @@ private struct ActiveWorkoutHeroCard: View {
                             }
                         }
                         .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.white.opacity(0.7))
                     }
 
                     Spacer()
@@ -929,21 +1046,25 @@ private struct ActiveWorkoutHeroCard: View {
                         // Creation type badge
                         Image(systemName: workout.creationType.icon)
                             .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.4))
 
                         Spacer()
 
                         ZStack {
                             Circle()
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: 50, height: 50)
+                                .fill(cyanStart.opacity(0.15))
+                                .frame(width: 48, height: 48)
+
+                            Circle()
+                                .stroke(cyanStart.opacity(0.4), lineWidth: 2)
+                                .frame(width: 48, height: 48)
+
                             Image(systemName: workout.status == .completed ? "arrow.counterclockwise" : "play.fill")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(cyanStart)
                         }
                     }
                 }
-                .foregroundStyle(.white)
                 .padding(20)
 
                 // Progress bar (if multi-session)
@@ -951,10 +1072,16 @@ private struct ActiveWorkoutHeroCard: View {
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Rectangle()
-                                .fill(Color.white.opacity(0.15))
+                                .fill(Color.white.opacity(0.1))
 
                             Rectangle()
-                                .fill(Color.white.opacity(0.6))
+                                .fill(
+                                    LinearGradient(
+                                        colors: [cyanStart, cyanEnd],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                                 .frame(width: geo.size.width * CGFloat(workout.progressPercentage / 100))
                         }
                     }
@@ -966,31 +1093,42 @@ private struct ActiveWorkoutHeroCard: View {
                     HStack(spacing: 16) {
                         if workout.totalCaloriesBurned > 0 {
                             Label("\(workout.totalCaloriesBurned) cal", systemImage: "flame.fill")
+                                .foregroundStyle(Color(hex: "ff6b6b"))
                         }
                         if workout.personalRecordsCount > 0 {
                             Label("\(workout.personalRecordsCount) PRs", systemImage: "star.fill")
+                                .foregroundStyle(Color(hex: "feca57"))
                         }
                         Spacer()
                         if let lastDate = workout.lastSessionDate {
                             Text("Last: \(lastDate, style: .relative)")
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.4))
                         }
                     }
                     .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.7))
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.15))
+                    .background(Color.black.opacity(0.3))
                 }
             }
-            .background(
-                LinearGradient(
-                    colors: [gradientColors.start, gradientColors.end],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [cyanStart, cyanEnd],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 22))
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
@@ -1044,9 +1182,9 @@ private struct ActiveChallengeHeroCard: View {
 
     @State private var isPressed = false
 
-    // Orange gradient
-    private let gradientStart = Color(hex: "f97316")
-    private let gradientEnd = Color(hex: "ea580c")
+    private let cardBg = Color(hex: "161616")
+    private let goldStart = Color(hex: "feca57")
+    private let goldEnd = Color(hex: "ff9f43")
 
     private var totalParticipants: Int {
         challenge.participants?.count ?? 0
@@ -1061,10 +1199,22 @@ private struct ActiveChallengeHeroCard: View {
                 // Challenge icon
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 56, height: 56)
+                        .fill(goldStart.opacity(0.2))
+                        .frame(width: 60, height: 60)
+                        .blur(radius: 10)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [goldStart, goldEnd],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
@@ -1075,15 +1225,15 @@ private struct ActiveChallengeHeroCard: View {
                             .font(.caption2)
                             .fontWeight(.bold)
                             .tracking(0.5)
-                            .foregroundStyle(.white.opacity(0.7))
+                            .foregroundStyle(goldStart)
 
                         if totalParticipants > 0 {
                             Text("•")
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(.white.opacity(0.4))
                             Text("\(totalParticipants) participants")
                                 .font(.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.white.opacity(0.5))
                         }
                     }
 
@@ -1091,6 +1241,7 @@ private struct ActiveChallengeHeroCard: View {
                     Text(challenge.name)
                         .font(.title3)
                         .fontWeight(.bold)
+                        .foregroundStyle(.white)
 
                     // Stats row
                     HStack(spacing: 14) {
@@ -1098,17 +1249,23 @@ private struct ActiveChallengeHeroCard: View {
                         Label("\(Int(challenge.progress * 100))%", systemImage: "checkmark.circle")
                     }
                     .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.85))
+                    .foregroundStyle(.white.opacity(0.7))
 
                     // Progress bar
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.25))
+                                .fill(Color.white.opacity(0.1))
                                 .frame(height: 6)
 
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [goldStart, goldEnd],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
                                 .frame(width: geo.size.width * challenge.progress, height: 6)
                         }
                     }
@@ -1120,25 +1277,38 @@ private struct ActiveChallengeHeroCard: View {
                 // Go button
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 50, height: 50)
+                        .fill(goldStart.opacity(0.15))
+                        .frame(width: 48, height: 48)
+
+                    Circle()
+                        .stroke(goldStart.opacity(0.4), lineWidth: 2)
+                        .frame(width: 48, height: 48)
+
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(goldStart)
                 }
             }
-            .foregroundStyle(.white)
             .padding(20)
             .frame(minHeight: 140)
-            .background(
-                LinearGradient(
-                    colors: [gradientStart, gradientEnd],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [goldStart, goldEnd],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 22))
             )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .shadow(color: gradientStart.opacity(0.3), radius: 10, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            )
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }
         .buttonStyle(.plain)
@@ -2544,6 +2714,11 @@ struct ImportWorkoutView: View {
     @State private var importSuccess = false
     @State private var errorMessage: String?
 
+    // AI Parsing
+    @State private var showAIProcessing = false
+    @State private var parsedWorkout: ParsedWorkout?
+    @State private var showParsedPreview = false
+
     // Naming step
     @State private var pendingWorkout: Workout?
     @State private var customWorkoutName: String = ""
@@ -2552,23 +2727,38 @@ struct ImportWorkoutView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    if showNamingStep {
-                        // Naming step UI
-                        namingStepContent
-                    } else {
-                        // Initial import UI
-                        initialImportContent
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        if showParsedPreview, let parsed = parsedWorkout {
+                            // Show AI-parsed workout preview
+                            parsedWorkoutPreview(parsed)
+                        } else if showNamingStep {
+                            // Naming step UI
+                            namingStepContent
+                        } else {
+                            // Initial import UI
+                            initialImportContent
+                        }
                     }
                 }
+                .background(Color(.systemGroupedBackground))
+
+                // AI Processing Overlay
+                if showAIProcessing {
+                    aiProcessingOverlay
+                }
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle(showNamingStep ? "Name Your Workout" : "Import Workout")
+            .navigationTitle(showParsedPreview ? "Review Workout" : (showNamingStep ? "Name Your Workout" : "Import Workout"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if showNamingStep {
+                    if showParsedPreview {
+                        Button("Cancel") {
+                            showParsedPreview = false
+                            parsedWorkout = nil
+                        }
+                    } else if showNamingStep {
                         Button("Cancel") {
                             cancelNaming()
                         }
@@ -2579,18 +2769,164 @@ struct ImportWorkoutView: View {
             }
             .fileImporter(
                 isPresented: $showFilePicker,
-                allowedContentTypes: [.pdf, .plainText, .commaSeparatedText],
+                allowedContentTypes: [.pdf, .plainText, .commaSeparatedText, .image],
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        parseWorkoutFile(from: url)
+                        parseWorkoutFileWithAI(from: url)
                     }
                 case .failure(let error):
                     errorMessage = "Import error: \(error.localizedDescription)"
                 }
             }
+        }
+    }
+
+    // MARK: - AI Processing Overlay
+    private var aiProcessingOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .background(.ultraThinMaterial)
+
+            VStack(spacing: 24) {
+                ZStack {
+                    Circle()
+                        .stroke(Color(hex: "0ea5e9").opacity(0.3), lineWidth: 3)
+                        .frame(width: 100, height: 100)
+
+                    Circle()
+                        .fill(Color(hex: "0ea5e9").opacity(0.15))
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color(hex: "0ea5e9"))
+                }
+
+                VStack(spacing: 8) {
+                    Text("Analyzing Workout")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+
+                    Text("AI is extracting exercises from your file...")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.2)
+            }
+        }
+    }
+
+    // MARK: - Parsed Workout Preview
+    private func parsedWorkoutPreview(_ parsed: ParsedWorkout) -> some View {
+        VStack(spacing: 20) {
+            // Header
+            VStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+
+                Text("Workout Parsed!")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("\(parsed.exercises.count) exercises found")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 24)
+
+            // Workout Name
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Workout Name")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField("Workout name", text: $customWorkoutName)
+                    .font(.headline)
+                    .padding()
+                    .background(Color(.tertiarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal)
+
+            // Exercises List
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Exercises")
+                    .font(.headline)
+                    .padding(.horizontal)
+
+                ForEach(Array(parsed.exercises.enumerated()), id: \.offset) { index, exercise in
+                    HStack(spacing: 12) {
+                        Text("\(index + 1)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .frame(width: 24, height: 24)
+                            .background(Color(hex: "0ea5e9"))
+                            .clipShape(Circle())
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(exercise.name)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+
+                            HStack(spacing: 8) {
+                                Text("\(exercise.sets) sets × \(exercise.reps)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+
+                                if let weight = exercise.weight {
+                                    Text("• \(weight)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                }
+            }
+
+            // Info Row
+            HStack(spacing: 16) {
+                Label("\(parsed.estimatedDuration) min", systemImage: "clock")
+                Label(parsed.difficulty.capitalized, systemImage: "chart.bar")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding()
+
+            // Save Button
+            Button {
+                saveAIParsedWorkout(parsed)
+            } label: {
+                Text("Save Workout")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(hex: "2d6a4f"))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 32)
+        }
+        .onAppear {
+            customWorkoutName = parsed.name
         }
     }
 
@@ -2866,6 +3202,165 @@ struct ImportWorkoutView: View {
         customWorkoutName = ""
         withAnimation {
             showNamingStep = false
+        }
+    }
+
+    // MARK: - AI Parsing
+
+    private func parseWorkoutFileWithAI(from url: URL) {
+        Task {
+            // Show AI processing overlay
+            withAnimation {
+                showAIProcessing = true
+            }
+            errorMessage = nil
+
+            // Get security-scoped access
+            guard url.startAccessingSecurityScopedResource() else {
+                await MainActor.run {
+                    errorMessage = "Unable to access file"
+                    showAIProcessing = false
+                }
+                return
+            }
+
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            let fileName = url.lastPathComponent
+            importedFileName = fileName
+            let fileExtension = url.pathExtension.lowercased()
+
+            // Read file content
+            var fileContent: String = ""
+            do {
+                if fileExtension == "pdf" {
+                    // Extract text from PDF
+                    if let pdfDocument = PDFDocument(url: url) {
+                        var pdfText = ""
+                        for pageIndex in 0..<pdfDocument.pageCount {
+                            if let page = pdfDocument.page(at: pageIndex),
+                               let pageContent = page.string {
+                                pdfText += pageContent + "\n"
+                            }
+                        }
+                        fileContent = pdfText
+                    } else {
+                        fileContent = "Unable to read PDF content"
+                    }
+                } else {
+                    fileContent = try String(contentsOf: url, encoding: .utf8)
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to read file: \(error.localizedDescription)"
+                    showAIProcessing = false
+                }
+                return
+            }
+
+            // Determine file type
+            let fileType: String
+            switch fileExtension {
+            case "pdf": fileType = "pdf"
+            case "csv": fileType = "csv"
+            default: fileType = "text"
+            }
+
+            // Call AI to parse the workout
+            do {
+                let response = try await AIProxyService.shared.parseWorkout(
+                    fileContent: fileContent,
+                    fileName: fileName,
+                    fileType: fileType
+                )
+
+                await MainActor.run {
+                    showAIProcessing = false
+
+                    if let parsed = response.parsed {
+                        parsedWorkout = parsed
+                        withAnimation {
+                            showParsedPreview = true
+                        }
+                        themeManager.mediumImpact()
+                    } else {
+                        errorMessage = response.parseError ?? "Failed to parse workout content"
+                        themeManager.notifyError()
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    showAIProcessing = false
+                    errorMessage = "AI parsing failed: \(error.localizedDescription)"
+                    themeManager.notifyError()
+                }
+            }
+        }
+    }
+
+    private func saveAIParsedWorkout(_ parsed: ParsedWorkout) {
+        // Map difficulty string to enum
+        let difficulty: Difficulty
+        switch parsed.difficulty.lowercased() {
+        case "beginner": difficulty = .beginner
+        case "advanced": difficulty = .advanced
+        default: difficulty = .intermediate
+        }
+
+        // Create the workout
+        let workout = Workout(
+            name: customWorkoutName.isEmpty ? parsed.name : customWorkoutName,
+            description: parsed.description,
+            estimatedDuration: parsed.estimatedDuration,
+            difficulty: difficulty,
+            creationType: .imported
+        )
+
+        // Add exercises
+        for (index, parsedExercise) in parsed.exercises.enumerated() {
+            // Parse reps string to get target reps
+            let targetReps = Int(parsedExercise.reps.components(separatedBy: CharacterSet.decimalDigits.inverted).first ?? "10") ?? 10
+
+            // Parse weight if present
+            let targetWeight: Double?
+            if let weightStr = parsedExercise.weight {
+                targetWeight = Double(weightStr.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) ?? nil
+            } else {
+                targetWeight = nil
+            }
+
+            let workoutExercise = WorkoutExercise(
+                order: index,
+                targetSets: parsedExercise.sets,
+                targetReps: targetReps,
+                targetWeight: targetWeight,
+                restDuration: parsedExercise.restSeconds ?? 60
+            )
+
+            // Create or find exercise
+            let exercise = Exercise(
+                name: parsedExercise.name,
+                muscleGroup: .fullBody,
+                category: .strength,
+                difficulty: difficulty
+            )
+            modelContext.insert(exercise)
+            workoutExercise.exercise = exercise
+            workoutExercise.workout = workout
+            modelContext.insert(workoutExercise)
+        }
+
+        // Save everything
+        modelContext.insert(workout)
+        do {
+            try modelContext.save()
+            themeManager.notifySuccess()
+            withAnimation {
+                showParsedPreview = false
+                importSuccess = true
+            }
+        } catch {
+            errorMessage = "Failed to save workout: \(error.localizedDescription)"
         }
     }
 
