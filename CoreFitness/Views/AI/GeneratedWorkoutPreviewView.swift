@@ -126,7 +126,7 @@ struct GeneratedWorkoutPreviewView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.brandPrimary.opacity(0.15))
-            .foregroundStyle(.brandPrimary)
+            .foregroundStyle(Color.brandPrimary)
             .clipShape(Capsule())
 
             Text(plan.name)
@@ -236,11 +236,11 @@ struct GeneratedWorkoutPreviewView: View {
                 try await generator.saveGeneratedPlan()
                 isSaving = false
                 showSaveSuccess = true
-                themeManager.successNotification()
+                themeManager.notifySuccess()
             } catch {
                 isSaving = false
                 saveError = error
-                themeManager.errorNotification()
+                themeManager.notifyError()
             }
         }
     }
@@ -257,7 +257,7 @@ struct OverviewStat: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(.brandPrimary)
+                .foregroundStyle(Color.brandPrimary)
 
             Text(value)
                 .font(.title2)

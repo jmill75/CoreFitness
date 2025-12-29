@@ -116,7 +116,7 @@ struct WorkoutQuestionnaireView: View {
         VStack(spacing: 8) {
             Image(systemName: step.icon)
                 .font(.system(size: 32))
-                .foregroundStyle(.brandPrimary)
+                .foregroundStyle(Color.brandPrimary)
 
             Text(step.title)
                 .font(.title2)
@@ -132,7 +132,7 @@ struct WorkoutQuestionnaireView: View {
 
     private var goalStep: some View {
         VStack(spacing: 12) {
-            ForEach(WorkoutGoal.allCases) { goal in
+            ForEach(QWorkoutGoal.allCases) { goal in
                 GoalOptionCard(
                     goal: goal,
                     isSelected: generator.questionnaire.primaryGoal == goal,
@@ -317,7 +317,7 @@ struct WorkoutQuestionnaireView: View {
                     .font(.headline)
 
                 FlowLayout(spacing: 8) {
-                    ForEach(Equipment.allCases) { equipment in
+                    ForEach(QEquipment.allCases) { equipment in
                         EquipmentChip(
                             equipment: equipment,
                             isSelected: generator.questionnaire.availableEquipment.contains(equipment),
@@ -457,7 +457,7 @@ struct WorkoutQuestionnaireView: View {
                     .foregroundStyle(.secondary)
 
                 FlowLayout(spacing: 8) {
-                    ForEach(MuscleGroup.allCases) { muscle in
+                    ForEach(QMuscleGroup.allCases) { muscle in
                         MuscleChip(
                             muscle: muscle,
                             isSelected: generator.questionnaire.focusAreas.contains(muscle),
@@ -595,7 +595,7 @@ struct WorkoutQuestionnaireView: View {
                 themeManager.mediumImpact()
             } catch {
                 // Error is stored in generator.generationError
-                themeManager.errorNotification()
+                themeManager.notifyError()
             }
         }
     }
@@ -604,7 +604,7 @@ struct WorkoutQuestionnaireView: View {
 // MARK: - Supporting Views
 
 struct GoalOptionCard: View {
-    let goal: WorkoutGoal
+    let goal: QWorkoutGoal
     let isSelected: Bool
     let onTap: () -> Void
 
@@ -633,7 +633,7 @@ struct GoalOptionCard: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(.brandPrimary)
+                        .foregroundStyle(Color.brandPrimary)
                 }
             }
             .padding()
@@ -671,7 +671,7 @@ struct ExperienceLevelCard: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(.brandPrimary)
+                        .foregroundStyle(Color.brandPrimary)
                 }
             }
             .padding()
@@ -687,7 +687,7 @@ struct ExperienceLevelCard: View {
 }
 
 struct EquipmentChip: View {
-    let equipment: Equipment
+    let equipment: QEquipment
     let isSelected: Bool
     let onTap: () -> Void
 
@@ -733,7 +733,7 @@ struct CardioChip: View {
 }
 
 struct MuscleChip: View {
-    let muscle: MuscleGroup
+    let muscle: QMuscleGroup
     let isSelected: Bool
     let onTap: () -> Void
 
@@ -764,49 +764,6 @@ struct ReviewRow: View {
                 .fontWeight(.medium)
         }
         .font(.subheadline)
-    }
-}
-
-// MARK: - Flow Layout
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y), proposal: .unspecified)
-        }
-    }
-
-    struct FlowResult {
-        var size: CGSize = .zero
-        var positions: [CGPoint] = []
-
-        init(in width: CGFloat, subviews: Subviews, spacing: CGFloat) {
-            var x: CGFloat = 0
-            var y: CGFloat = 0
-            var maxHeight: CGFloat = 0
-
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-                if x + size.width > width && x > 0 {
-                    x = 0
-                    y += maxHeight + spacing
-                    maxHeight = 0
-                }
-                positions.append(CGPoint(x: x, y: y))
-                maxHeight = max(maxHeight, size.height)
-                x += size.width + spacing
-            }
-
-            self.size = CGSize(width: width, height: y + maxHeight)
-        }
     }
 }
 

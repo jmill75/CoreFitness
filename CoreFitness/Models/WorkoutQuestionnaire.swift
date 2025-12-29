@@ -5,7 +5,7 @@ import Foundation
 /// Captures user preferences for AI-generated workout plans
 struct WorkoutQuestionnaire: Codable, Equatable {
     // MARK: - Goal
-    var primaryGoal: WorkoutGoal = .strength
+    var primaryGoal: QWorkoutGoal = .strength
 
     // MARK: - Schedule
     var daysPerWeek: Int = 4
@@ -14,7 +14,7 @@ struct WorkoutQuestionnaire: Codable, Equatable {
 
     // MARK: - Location & Equipment
     var location: WorkoutLocation = .gym
-    var availableEquipment: Set<Equipment> = [.barbell, .dumbbell, .machines]
+    var availableEquipment: Set<QEquipment> = [.barbell, .dumbbell, .machines]
 
     // MARK: - Cardio Preferences
     var includeCardio: Bool = true
@@ -25,14 +25,14 @@ struct WorkoutQuestionnaire: Codable, Equatable {
     var experienceLevel: ExperienceLevel = .intermediate
 
     // MARK: - Preferences
-    var focusAreas: Set<MuscleGroup> = []
+    var focusAreas: Set<QMuscleGroup> = []
     var avoidExercises: [String] = []
     var additionalNotes: String = ""
 }
 
-// MARK: - Workout Goal
+// MARK: - Questionnaire Workout Goal
 
-enum WorkoutGoal: String, Codable, CaseIterable, Identifiable {
+enum QWorkoutGoal: String, Codable, CaseIterable, Identifiable {
     case strength = "Build Strength"
     case muscle = "Build Muscle"
     case fatLoss = "Lose Fat"
@@ -109,9 +109,9 @@ enum WorkoutLocation: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Equipment
+// MARK: - Questionnaire Equipment
 
-enum Equipment: String, Codable, CaseIterable, Identifiable {
+enum QEquipment: String, Codable, CaseIterable, Identifiable, Hashable {
     case barbell = "Barbell"
     case dumbbell = "Dumbbells"
     case kettlebell = "Kettlebells"
@@ -211,9 +211,9 @@ enum ExperienceLevel: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Muscle Group
+// MARK: - Questionnaire Muscle Group
 
-enum MuscleGroup: String, Codable, CaseIterable, Identifiable {
+enum QMuscleGroup: String, Codable, CaseIterable, Identifiable, Hashable {
     case chest = "Chest"
     case back = "Back"
     case shoulders = "Shoulders"

@@ -127,13 +127,12 @@ class WorkoutGeneratorEngine: ObservableObject {
         // Create the program template
         let program = ProgramTemplate(
             name: plan.name,
-            programDescription: plan.description,
+            description: plan.description,
             category: categoryForGoal(questionnaire.primaryGoal),
             difficulty: difficultyForLevel(questionnaire.experienceLevel),
             durationWeeks: plan.weeks,
             workoutsPerWeek: plan.workoutsPerWeek,
-            isPremium: false,
-            creationType: .aiGenerated
+            isPremium: false
         )
 
         context.insert(program)
@@ -142,8 +141,8 @@ class WorkoutGeneratorEngine: ObservableObject {
         for generatedWorkout in plan.workouts {
             let workout = Workout(
                 name: generatedWorkout.name,
-                creationType: .aiGenerated,
-                estimatedDuration: generatedWorkout.estimatedDuration
+                estimatedDuration: generatedWorkout.estimatedDuration,
+                creationType: .aiGenerated
             )
 
             context.insert(workout)
@@ -154,13 +153,13 @@ class WorkoutGeneratorEngine: ObservableObject {
                 let exercise = findOrCreateExercise(name: genExercise.exerciseName, in: context)
 
                 let workoutExercise = WorkoutExercise(
-                    exercise: exercise,
-                    workout: workout,
                     order: index,
                     targetSets: genExercise.sets,
                     targetReps: parseReps(genExercise.reps),
-                    restSeconds: genExercise.restSeconds
+                    restDuration: genExercise.restSeconds
                 )
+                workoutExercise.exercise = exercise
+                workoutExercise.workout = workout
 
                 if let notes = genExercise.notes {
                     workoutExercise.notes = notes
@@ -324,7 +323,7 @@ class WorkoutGeneratorEngine: ObservableObject {
         }
     }
 
-    private func categoryForGoal(_ goal: WorkoutGoal) -> ExerciseCategory {
+    private func categoryForGoal(_ goal: QWorkoutGoal) -> ExerciseCategory {
         switch goal {
         case .strength: return .strength
         case .muscle: return .strength
@@ -361,10 +360,10 @@ class WorkoutGeneratorEngine: ObservableObject {
         // Create new exercise
         let exercise = Exercise(
             name: name,
+            muscleGroup: .fullBody,
+            equipment: .bodyweight,
             category: .strength,
-            muscleGroups: [],
-            difficulty: .intermediate,
-            equipment: .bodyweight
+            difficulty: .intermediate
         )
 
         context.insert(exercise)

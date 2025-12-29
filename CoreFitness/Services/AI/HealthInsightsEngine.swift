@@ -329,7 +329,7 @@ class HealthInsightsEngine: ObservableObject {
             return .unknown
         }
 
-        let percentage = waterManager.percentComplete
+        let percentage = waterManager.progressPercentage
         return hydrationStatusFromPercentage(percentage)
     }
 
@@ -434,8 +434,9 @@ class HealthInsightsEngine: ObservableObject {
     private func fetchDaysSinceLastWorkout() -> Int? {
         guard let context = modelContext else { return nil }
 
+        let completedStatus = SessionStatus.completed.rawValue
         let descriptor = FetchDescriptor<WorkoutSession>(
-            predicate: #Predicate { $0.status == .completed },
+            predicate: #Predicate { $0.statusRaw == completedStatus },
             sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
         )
 
