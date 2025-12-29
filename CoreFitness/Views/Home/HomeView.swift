@@ -106,7 +106,7 @@ struct HomeView: View {
                             .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
                         }
                         .padding()
-                        .padding(.bottom, 80)
+                        .padding(.bottom, 140)
                     }
                     .scrollIndicators(.hidden)
                     .background(Color(.systemGroupedBackground))
@@ -222,49 +222,69 @@ struct WelcomeHeader: View {
     private var timeGreeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<21: return "Good evening"
-        default: return "Good night"
+        case 5..<12: return "GOOD MORNING"
+        case 12..<17: return "GOOD AFTERNOON"
+        case 17..<21: return "GOOD EVENING"
+        default: return "GOOD NIGHT"
         }
     }
 
-    var body: some View {
-        HStack {
-            // Greeting text
-            HStack(spacing: 0) {
-                Text("\(timeGreeting), ")
-                    .font(.title)
-                    .fontWeight(.bold)
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d"
+        return formatter.string(from: Date())
+    }
 
-                Text(firstName)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.accentBlue)
+    var body: some View {
+        HStack(alignment: .top) {
+            // Greeting with gradient and date
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(timeGreeting), \(firstName.uppercased())")
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, Color(hex: "feca57"), Color(hex: "ff9f43")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+
+                Text(dateString)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white.opacity(0.7))
             }
 
             Spacer()
 
-            // Notification Bell
+            // Notification Bell - dark style
             Button {
                 showNotifications = true
             } label: {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(.primary.opacity(0.7))
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
 
-                    // Notification badge
+                    // Coral notification badge
                     if hasNotifications {
                         Circle()
-                            .fill(Color.accentRed)
+                            .fill(Color(hex: "ff6b6b"))
                             .frame(width: 10, height: 10)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(hex: "0a0a0a"), lineWidth: 2)
+                            )
                             .offset(x: 2, y: -2)
                     }
                 }
                 .frame(width: 44, height: 44)
-                .background(Color(.tertiarySystemGroupedBackground))
+                .background(Color(hex: "161616"))
                 .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
             }
             .accessibilityLabel("Notifications")
             .accessibilityHint(hasNotifications ? "You have unread notifications" : "No new notifications")
@@ -487,14 +507,14 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
     var color: Color {
         switch self {
-        case .checkIn: return Color(hex: "e74c3c") // Red
-        case .water: return Color(hex: "3498db") // Blue
-        case .exercises: return Color(hex: "e67e22") // Orange
-        case .progress: return Color(hex: "27ae60") // Green
-        case .health: return Color(hex: "e91e8c") // Pink
-        case .programs: return Color(hex: "1abc9c") // Teal
-        case .challenges: return Color(hex: "f1c40f") // Yellow/Gold
-        case .settings: return Color(hex: "5a6068") // Gray
+        case .checkIn: return Color(hex: "ff6b6b") // Coral
+        case .water: return Color(hex: "54a0ff") // Cyan
+        case .exercises: return Color(hex: "ff9f43") // Orange
+        case .progress: return Color(hex: "1dd1a1") // Lime
+        case .health: return Color(hex: "ee5253") // Red
+        case .programs: return Color(hex: "00d2d3") // Teal
+        case .challenges: return Color(hex: "feca57") // Gold
+        case .settings: return Color(hex: "576574") // Gray
         }
     }
 }
@@ -508,18 +528,23 @@ struct AIInsightsSection: View {
     let onCheckIn: () -> Void
     let onWaterIntake: () -> Void
 
-    var body: some View {
-        if aiService.aiEnabled && !aiService.insights.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Image(systemName: "sparkles")
-                        .foregroundStyle(.purple)
-                    Text("AI Insights")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                    Spacer()
-                }
+    private let tealAccent = Color(hex: "00d2d3")
+    private let tealDeep = Color(hex: "01a3a4")
+    private let cardBg = Color(hex: "161616")
 
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Section Header
+            HStack {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(tealAccent)
+                Text("AI Insights")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+
+            if aiService.aiEnabled && !aiService.insights.isEmpty {
                 ForEach(aiService.insights) { insight in
                     AIInsightCard(
                         insight: insight,
@@ -533,11 +558,65 @@ struct AIInsightsSection: View {
                         }
                     )
                 }
+            } else {
+                // Placeholder card when no insights
+                VStack(alignment: .leading, spacing: 16) {
+                    // AI Coach badge
+                    HStack(spacing: 6) {
+                        Image(systemName: "graduationcap.fill")
+                            .font(.system(size: 12))
+                        Text("AI COACH")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(1)
+                    }
+                    .foregroundStyle(tealAccent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(tealAccent.opacity(0.15))
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(tealAccent.opacity(0.3), lineWidth: 1)
+                    )
+
+                    // Content
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("INSIGHTS LOADING")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+
+                        Text("AI-powered insights based on your health data will appear here.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                }
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [tealDeep, tealAccent, Color(hex: "1dd1a1")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
             }
-            .padding(.top, 8)
-            .task {
-                await aiService.generateInsights()
-            }
+        }
+        .padding(.top, 8)
+        .task {
+            await aiService.generateInsights()
         }
     }
 
@@ -569,58 +648,118 @@ struct AIInsightCard: View {
     let onAction: () -> Void
     let onDismiss: () -> Void
 
-    var body: some View {
-        HStack(spacing: 12) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(insight.color.opacity(0.15))
-                    .frame(width: 44, height: 44)
+    private let tealAccent = Color(hex: "00d2d3")
+    private let tealDeep = Color(hex: "01a3a4")
+    private let cardBg = Color(hex: "161616")
 
-                Image(systemName: insight.icon)
-                    .font(.system(size: 18))
-                    .foregroundStyle(insight.color)
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // AI Coach badge
+            HStack(spacing: 6) {
+                Image(systemName: "graduationcap.fill")
+                    .font(.system(size: 12))
+                Text("AI COACH")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+                    .tracking(1)
             }
+            .foregroundStyle(tealAccent)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                LinearGradient(
+                    colors: [tealAccent.opacity(0.2), Color(hex: "1dd1a1").opacity(0.1)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(tealAccent.opacity(0.3), lineWidth: 1)
+            )
 
             // Content
-            VStack(alignment: .leading, spacing: 4) {
-                Text(insight.title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(insight.title.uppercased())
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
 
                 Text(insight.message)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.7))
                     .lineLimit(3)
             }
 
-            Spacer()
-
-            // Actions
-            VStack(spacing: 8) {
+            // Action buttons
+            HStack(spacing: 12) {
                 if let actionLabel = insight.actionLabel {
                     Button(action: onAction) {
                         Text(actionLabel)
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(insight.color)
-                            .clipShape(Capsule())
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(
+                                LinearGradient(
+                                    colors: [tealDeep, tealAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
 
                 Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    Text("Dismiss")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
                 }
             }
         }
-        .padding()
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(24)
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .overlay(
+            // Teal accent bar at top
+            VStack {
+                LinearGradient(
+                    colors: [tealDeep, tealAccent, Color(hex: "1dd1a1")],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+        .overlay(
+            // Teal glow in corner
+            RadialGradient(
+                colors: [tealAccent.opacity(0.1), Color.clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 150
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .allowsHitTesting(false)
+        )
     }
 }
 
@@ -657,7 +796,7 @@ struct QuickOptionsGrid: View {
             HStack {
                 Image(systemName: "square.grid.2x2")
                     .font(.subheadline)
-                    .foregroundStyle(Color.accentOrange)
+                    .foregroundStyle(Color(hex: "1dd1a1"))
                 Text("Quick Actions")
                     .font(.headline)
                     .fontWeight(.bold)
@@ -1021,7 +1160,7 @@ struct TodayRecoverySection: View {
             HStack {
                 Image(systemName: "heart.circle.fill")
                     .font(.subheadline)
-                    .foregroundStyle(Color.accentBlue)
+                    .foregroundStyle(Color(hex: "ff6b6b"))
                 Text("Today's Recovery")
                     .font(.headline)
                     .fontWeight(.bold)
@@ -1043,11 +1182,10 @@ struct TodayRecoveryCard: View {
     @Binding var selectedTab: Tab
     @State private var isPressed = false
 
-    // Original blue palette
-    private let ringStart = Color(hex: "60a5fa")
-    private let ringEnd = Color(hex: "3b82f6")
-    private let bgStart = Color(hex: "1e40af")
-    private let bgEnd = Color(hex: "1e3a8a")
+    // Vibrant coral accent colors
+    private let coralStart = Color(hex: "e85555")
+    private let coralEnd = Color(hex: "ff6b6b")
+    private let cardBg = Color(hex: "161616")
 
     private var score: Int {
         healthKitManager.calculateOverallScore()
@@ -1080,7 +1218,7 @@ struct TodayRecoveryCard: View {
                             .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
                             .stroke(
                                 LinearGradient(
-                                    colors: [ringStart, ringEnd],
+                                    colors: [coralStart, coralEnd, Color(hex: "ff9f43")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -1092,10 +1230,11 @@ struct TodayRecoveryCard: View {
                         VStack(spacing: 0) {
                             Text(healthKitManager.isAuthorized ? "\(score)" : "--")
                                 .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(Color(hex: "ff6b6b"))
                             Text("score")
                                 .font(.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.white.opacity(0.85))
+                                .foregroundStyle(.white.opacity(0.5))
                         }
                     }
 
@@ -1121,29 +1260,44 @@ struct TodayRecoveryCard: View {
                     Spacer()
                 }
 
-                // Recovery Stats - Single row
+                // Recovery Stats - Single row with unique colors per metric
                 HStack(spacing: 0) {
-                    HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "a78bfa"))
-                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "34d399"))
-                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "Resting HR", color: Color.accentRed)
+                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "ff6b6b"))
+                    HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "00d2d3"))
+                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "Rest HR", color: Color(hex: "54a0ff"))
                 }
                 .padding(.vertical, 14)
                 .padding(.horizontal, 8)
-                .background(Color.white.opacity(0.08))
+                .background(Color(hex: "111111"))
                 .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
             }
             .foregroundStyle(.white)
             .padding(20)
             .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(
-                    colors: [bgStart, bgEnd],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
+            .background(cardBg)
             .clipShape(RoundedRectangle(cornerRadius: 24))
-            .shadow(color: bgStart.opacity(0.3), radius: 12, y: 6)
+            .overlay(
+                // Coral accent bar at top
+                VStack {
+                    LinearGradient(
+                        colors: [coralStart, coralEnd, Color(hex: "ff9f43")],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.3), radius: 12, y: 6)
             .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
             .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
         }
@@ -1360,7 +1514,7 @@ struct CurrentActivitySection: View {
             HStack {
                 Image(systemName: "target")
                     .font(.subheadline)
-                    .foregroundStyle(Color.brandPrimary)
+                    .foregroundStyle(Color(hex: "54a0ff"))
                 Text("Today's Focus")
                     .font(.headline)
                     .fontWeight(.bold)
@@ -1410,37 +1564,57 @@ struct TodaysFocusCard: View {
         activeChallenges.first
     }
 
+    private let cardBg = Color(hex: "161616")
+    private let cyanAccent = Color(hex: "54a0ff")
+    private let goldAccent = Color(hex: "feca57")
+
     var body: some View {
         VStack(spacing: 0) {
-            // Workout Section
-            workoutSection
-                .padding(16)
-                .background(
-                    LinearGradient(
-                        colors: [Color(hex: "2d6a4f"), Color(hex: "1b4332")],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+            // Workout Section - dark with subtle cyan glow
+            ZStack(alignment: .topTrailing) {
+                workoutSection
+                    .padding(20)
+
+                // Subtle cyan glow in corner
+                RadialGradient(
+                    colors: [cyanAccent.opacity(0.15), Color.clear],
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 150
                 )
+                .allowsHitTesting(false)
+            }
 
             // Challenge Section (if active)
             if let challenge = activeChallenge {
-                Divider()
-                    .background(Color.white.opacity(0.2))
+                Rectangle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(height: 1)
 
                 challengeSection(challenge)
                     .padding(16)
-                    .background(
-                        LinearGradient(
-                            colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
             }
         }
+        .background(cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
+        .overlay(
+            // Cyan accent bar at top
+            VStack {
+                LinearGradient(
+                    colors: [Color(hex: "2e86de"), cyanAccent, Color(hex: "00d2d3")],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = currentWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -1461,44 +1635,58 @@ struct TodaysFocusCard: View {
                     onShowWorkoutPopup?(workout)
                 }
             } label: {
-                HStack(spacing: 14) {
-                    // Icon
-                    ZStack {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Cyan badge
+                    HStack(spacing: 6) {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Image(systemName: isWorkoutInProgress ? "figure.run" : "dumbbell.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(isWorkoutInProgress ? "IN PROGRESS" : "WORKOUT")
+                            .fill(cyanAccent)
+                            .frame(width: 6, height: 6)
+                        Text(isWorkoutInProgress ? "IN PROGRESS" : "SCHEDULED")
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .tracking(0.5)
-                            .foregroundStyle(.white.opacity(0.7))
-
-                        Text(workout.name)
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-
-                        HStack(spacing: 12) {
-                            Label("\(workout.exerciseCount) exercises", systemImage: "list.bullet")
-                            Label("\(workout.estimatedDuration) min", systemImage: "clock")
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.8))
+                            .tracking(1)
                     }
+                    .foregroundStyle(cyanAccent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(cyanAccent.opacity(0.15))
+                    .clipShape(Capsule())
 
-                    Spacer()
+                    // Title
+                    Text(workout.name.uppercased())
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
 
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white.opacity(0.6))
+                    // Details
+                    HStack(spacing: 16) {
+                        Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                        Label("\(workout.exerciseCount) exercises", systemImage: "dumbbell.fill")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.6))
+
+                    // Cyan Start button
+                    HStack {
+                        Spacer()
+                        Text("START WORKOUT")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .tracking(1)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(hex: "2e86de"), cyanAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        Spacer()
+                    }
                 }
             }
             .buttonStyle(.plain)
@@ -1508,39 +1696,54 @@ struct TodaysFocusCard: View {
                 themeManager.mediumImpact()
                 selectedTab = .programs
             } label: {
-                HStack(spacing: 14) {
-                    ZStack {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Cyan badge
+                    HStack(spacing: 6) {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                        Image(systemName: "plus")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("WORKOUT")
+                            .fill(cyanAccent)
+                            .frame(width: 6, height: 6)
+                        Text("NO WORKOUT")
                             .font(.caption2)
                             .fontWeight(.bold)
-                            .tracking(0.5)
-                            .foregroundStyle(.white.opacity(0.7))
-
-                        Text("Start a Workout")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-
-                        Text("Choose from your saved workouts")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
+                            .tracking(1)
                     }
+                    .foregroundStyle(cyanAccent)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(cyanAccent.opacity(0.15))
+                    .clipShape(Capsule())
 
-                    Spacer()
+                    // Title
+                    Text("START A WORKOUT")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
 
-                    Image(systemName: "chevron.right")
+                    // Subtitle
+                    Text("Choose from your saved workouts")
                         .font(.subheadline)
-                        .fontWeight(.semibold)
                         .foregroundStyle(.white.opacity(0.6))
+
+                    // Cyan button
+                    HStack {
+                        Spacer()
+                        Text("BROWSE WORKOUTS")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .tracking(1)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 14)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(hex: "2e86de"), cyanAccent],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        Spacer()
+                    }
                 }
             }
             .buttonStyle(.plain)
@@ -1550,70 +1753,55 @@ struct TodaysFocusCard: View {
     // MARK: - Challenge Section
     private func challengeSection(_ challenge: Challenge) -> some View {
         let participant = currentUserParticipant(challenge)
-        let userRank = calculateRank(for: participant, in: challenge)
-        let totalParticipants = challenge.participants?.count ?? 0
-        let currentStreak = participant?.currentStreak ?? 0
+        let completedDays = participant?.completedDays ?? 0
 
         return Button {
             themeManager.mediumImpact()
             selectedTab = .programs
             navigationState.showChallenges = true
         } label: {
-            HStack(spacing: 14) {
-                // Icon
+            HStack(spacing: 12) {
+                // Gold trophy icon
                 ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 50, height: 50)
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(
+                            LinearGradient(
+                                colors: [goldAccent, Color(hex: "ff9f43")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 40, height: 40)
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        Text("CHALLENGE")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .tracking(0.5)
-                            .foregroundStyle(.white.opacity(0.7))
-
-                        if userRank > 0 {
-                            Text("•")
-                                .foregroundStyle(.white.opacity(0.5))
-                            Text("#\(userRank) of \(totalParticipants)")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white.opacity(0.7))
-                        }
-                    }
-
+                VStack(alignment: .leading, spacing: 2) {
                     Text(challenge.name)
-                        .font(.headline)
-                        .fontWeight(.bold)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
-                    HStack(spacing: 12) {
-                        Label("Day \(challenge.currentDay)/\(challenge.durationDays)", systemImage: "calendar")
-                        if currentStreak > 0 {
-                            HStack(spacing: 2) {
-                                Image(systemName: "flame.fill")
-                                    .foregroundStyle(Color(hex: "fcd34d"))
-                                Text("\(currentStreak)")
-                            }
-                        }
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.8))
+                    Text("Week \(min(4, (challenge.currentDay / 7) + 1)) of \(challenge.durationDays / 7)")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.6))
                 }
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white.opacity(0.6))
+                // Gold progress text
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(completedDays)/\(challenge.durationDays)")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(goldAccent)
+
+                    Text("workouts")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
             }
         }
         .buttonStyle(.plain)
@@ -1639,9 +1827,9 @@ struct ActiveWorkoutCard: View {
     @State private var selectedWorkout: Workout?
     @State private var isPressed = false
 
-    // Pine green gradient
-    private let gradientStart = Color(hex: "2d6a4f")
-    private let gradientEnd = Color(hex: "1b4332")
+    // Vibrant cyan/blue gradient
+    private let gradientStart = Color(hex: "54a0ff")
+    private let gradientEnd = Color(hex: "2e86de")
 
     private var activeSession: WorkoutSession? {
         workoutManager.currentSession
