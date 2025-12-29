@@ -123,6 +123,21 @@ class WorkoutManager: ObservableObject {
         return String(format: "%d:%02d", minutes, seconds)
     }
 
+    /// Whether the workout is currently paused
+    var isPaused: Bool {
+        currentPhase == .paused
+    }
+
+    /// Total sets across all exercises in the workout
+    var totalSets: Int {
+        currentWorkout?.sortedExercises.reduce(0) { $0 + $1.targetSets } ?? 0
+    }
+
+    /// Count of all completed sets in current session
+    var completedSetsCount: Int {
+        currentSession?.completedSets?.count ?? 0
+    }
+
     // MARK: - Initialization
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
@@ -190,6 +205,10 @@ class WorkoutManager: ObservableObject {
         let session = WorkoutSession(startedAt: Date(), status: .inProgress)
         session.workout = workout
         modelContext?.insert(session)
+
+        // Update workout status to in progress
+        workout.isActive = true
+        workout.status = .inProgress
 
         currentSession = session
         currentExerciseIndex = 0
@@ -682,6 +701,12 @@ class WorkoutManager: ObservableObject {
         currentSession?.status = .completed
         currentSession?.totalDuration = elapsedTime
 
+        // Update workout status
+        if let workout = currentWorkout {
+            workout.isActive = false
+            workout.status = .completed
+        }
+
         try? modelContext?.save()
 
         currentPhase = .completed
@@ -726,6 +751,13 @@ class WorkoutManager: ObservableObject {
         countdownTimer?.invalidate()
 
         currentSession?.status = .cancelled
+
+        // Update workout status - reset to created so it can be started again
+        if let workout = currentWorkout {
+            workout.isActive = false
+            workout.status = .created
+        }
+
         try? modelContext?.save()
 
         // Stop HealthKit workout session
@@ -738,6 +770,63 @@ class WorkoutManager: ObservableObject {
         liveActivityManager.endActivity()
 
         resetState()
+    }
+
+    /// Save current workout progress and cancel (for starting a different workout)
+    /// Preserves all completed sets for later resumption
+    func saveAndCancelWorkout() {
+        timer?.invalidate()
+        restTimer?.invalidate()
+        countdownTimer?.invalidate()
+
+        // Mark as cancelled but save all progress
+        currentSession?.status = .cancelled
+        currentSession?.completedAt = Date()
+        currentSession?.totalDuration = elapsedTime
+
+        // Update workout status - mark as saved in middle for resumption
+        if let workout = currentWorkout {
+            workout.isActive = false
+            workout.status = .savedInMiddle
+        }
+
+        // Save notes about progress for later resumption
+        let exercisesCompleted = currentExerciseIndex
+        let setsCompletedInCurrentExercise = completedSetsForCurrentExercise.count
+        let totalExercisesInWorkout = totalExercises
+
+        currentSession?.notes = "Saved at exercise \(exercisesCompleted + 1)/\(totalExercisesInWorkout), set \(setsCompletedInCurrentExercise)"
+
+        try? modelContext?.save()
+
+        // Stop HealthKit workout session
+        stopHealthKitWorkout()
+
+        // Remove Watch prompt notification
+        removeWatchAppNotification()
+
+        // End Live Activity
+        liveActivityManager.endActivity()
+
+        // Post notification for UI updates
+        NotificationCenter.default.post(name: .workoutSaved, object: nil, userInfo: [
+            "sessionId": currentSession?.id as Any,
+            "workoutId": currentWorkout?.id as Any
+        ])
+
+        resetState()
+    }
+
+    /// Check if there's an active workout in progress
+    var hasActiveWorkout: Bool {
+        guard let session = currentSession else { return false }
+        return session.status == .inProgress || session.status == .paused
+    }
+
+    /// Get the name of the current active workout (if any)
+    var activeWorkoutName: String? {
+        guard hasActiveWorkout else { return nil }
+        return currentWorkout?.name
     }
 
     /// Reset all state

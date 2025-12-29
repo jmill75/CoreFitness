@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
+// MARK: - Programs View (Redesigned)
 struct ProgramsView: View {
 
     // MARK: - Environment
@@ -18,6 +19,7 @@ struct ProgramsView: View {
     @Query(sort: \Challenge.startDate, order: .reverse) private var challenges: [Challenge]
 
     // MARK: - State
+    @State private var selectedSegment: ProgramSegment = .dashboard
     @State private var showCreateProgram = false
     @State private var showAIWorkoutCreation = false
     @State private var showImportWorkout = false
@@ -25,133 +27,73 @@ struct ProgramsView: View {
     @State private var showChallenges = false
     @State private var showSavedPrograms = false
     @State private var showProgramBrowser = false
+    @State private var showCreateMenu = false
     @State private var animationStage = 0
+
+    // Segment options
+    enum ProgramSegment: String, CaseIterable {
+        case dashboard = "Dashboard"
+        case discover = "Discover"
+        case library = "Library"
+    }
 
     // Get active challenge
     private var activeChallenge: Challenge? {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
 
-    // Get current workout (active one from program or most recent)
+    // Get current workout (active one)
     private var currentWorkout: Workout? {
-        workouts.first { $0.isActive } ?? workouts.first
+        workouts.first { $0.isActive }
     }
+
+    // True black background
+    private let backgroundColor = Color.black
 
     var body: some View {
         NavigationStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // MARK: - Header
-                        ProgramsHeader()
-                            .id("top")
-                            .opacity(animationStage >= 1 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
+            ZStack {
+                // Pure black background
+                backgroundColor.ignoresSafeArea()
 
-                    // MARK: - Quick Create Actions
-                    QuickCreateActions(
-                        onCreateProgram: { showCreateProgram = true },
-                        onAICreate: { showAIWorkoutCreation = true },
-                        onImport: { showImportWorkout = true }
-                    )
-                    .opacity(animationStage >= 2 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.05), value: animationStage)
+                VStack(spacing: 0) {
+                    // MARK: - Refined Header
+                    programsHeader
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 20)
 
-                    // MARK: - Workout Dashboard
-                    VStack(alignment: .leading, spacing: 12) {
-                        LibrarySectionHeader(title: "Workout Dashboard")
-                        WorkoutDashboardView()
-                    }
-                    .opacity(animationStage >= 3 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.1), value: animationStage)
+                    // MARK: - Segmented Control
+                    segmentedPicker
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 24)
 
-                    // MARK: - Active Workout Hero Card
-                    if let workout = currentWorkout {
-                        VStack(alignment: .leading, spacing: 12) {
-                            LibrarySectionHeader(title: "Current Workout")
-                            ActiveWorkoutHeroCard(workout: workout)
-                        }
-                        .opacity(animationStage >= 4 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.15), value: animationStage)
-                    }
-
-                    // MARK: - Active Challenge Card
-                    if let challenge = activeChallenge {
-                        VStack(alignment: .leading, spacing: 12) {
-                            LibrarySectionHeader(title: "Active Challenge")
-                            ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
-                        }
-                        .opacity(animationStage >= 5 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 5 ? 0 : 15))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.2), value: animationStage)
-                    }
-
-                    // MARK: - Browse Programs Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        LibrarySectionHeader(title: "Browse Programs")
-                        BrowseProgramsCard {
-                            showProgramBrowser = true
-                        }
-                    }
-                    .opacity(animationStage >= 6 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 6 ? 0 : 10))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.25), value: animationStage)
-
-                    // MARK: - Challenges Section
-                    VStack(alignment: .leading, spacing: 12) {
-                        LibrarySectionHeader(title: "Challenges")
-                        ChallengesSectionCard(
-                            challengeCount: challenges.count,
-                            onTap: { showChallenges = true }
-                        )
-                    }
-                    .opacity(animationStage >= 7 ? 1 : 0)
-                    .offset(y: reduceMotion ? 0 : (animationStage >= 7 ? 0 : 10))
-                    .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.3), value: animationStage)
-
-                    // MARK: - Library Section
-                    VStack(spacing: 12) {
-                        LibrarySectionHeader(title: "Library")
-                            .opacity(animationStage >= 8 ? 1 : 0)
-                            .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.35), value: animationStage)
-
-                        LibraryGrid(
-                            workoutCount: workouts.count,
-                            onMyPrograms: { showSavedPrograms = true },
-                            onExercises: { showExerciseLibrary = true }
-                        )
-                        .opacity(animationStage >= 8 ? 1 : 0)
-                        .offset(y: reduceMotion ? 0 : (animationStage >= 8 ? 0 : 10))
-                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.75).delay(0.4), value: animationStage)
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 100)
-            }
-                .scrollIndicators(.hidden)
-                .background(Color(.systemGroupedBackground))
-                .toolbar(.hidden, for: .navigationBar)
-                .onAppear {
-                    proxy.scrollTo("top", anchor: .top)
-                    if reduceMotion {
-                        animationStage = 8
-                    } else {
-                        for stage in 1...8 {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
-                                animationStage = stage
+                    // MARK: - Content
+                    ScrollView {
+                        VStack(spacing: 28) {
+                            switch selectedSegment {
+                            case .dashboard:
+                                dashboardContent
+                            case .discover:
+                                discoverContent
+                            case .library:
+                                libraryContent
                             }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 120)
                     }
+                    .scrollIndicators(.hidden)
                 }
-                .onChange(of: selectedTab) { _, newTab in
-                    if newTab == .programs {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            proxy.scrollTo("top", anchor: .top)
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                if reduceMotion {
+                    animationStage = 5
+                } else {
+                    for stage in 1...5 {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.08) {
+                            animationStage = stage
                         }
                     }
                 }
@@ -189,11 +131,556 @@ struct ProgramsView: View {
                     navigationState.showExercises = false
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .showSavedWorkouts)) { _ in
+                // Switch to Library tab and show saved workouts
+                selectedSegment = .library
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showSavedPrograms = true
+                }
+            }
+        }
+    }
+
+    // MARK: - Header
+    private var programsHeader: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Programs")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+
+            Spacer()
+
+            // Create Menu Button
+            Menu {
+                Button {
+                    showCreateProgram = true
+                } label: {
+                    Label("Create Workout", systemImage: "plus")
+                }
+
+                Button {
+                    showAIWorkoutCreation = true
+                } label: {
+                    Label("AI Generate", systemImage: "sparkles")
+                }
+
+                Button {
+                    showImportWorkout = true
+                } label: {
+                    Label("Import", systemImage: "square.and.arrow.down")
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+        }
+        .opacity(animationStage >= 1 ? 1 : 0)
+        .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : -10))
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: animationStage)
+    }
+
+    // MARK: - Segmented Picker
+    private var segmentedPicker: some View {
+        HStack(spacing: 4) {
+            ForEach(ProgramSegment.allCases, id: \.self) { segment in
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        selectedSegment = segment
+                    }
+                    themeManager.lightImpact()
+                } label: {
+                    Text(segment.rawValue)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(selectedSegment == segment ? .black : .white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(
+                            selectedSegment == segment
+                                ? Color.white
+                                : Color.clear
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .opacity(animationStage >= 2 ? 1 : 0)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: animationStage)
+    }
+
+    // MARK: - Dashboard Content
+    private var dashboardContent: some View {
+        VStack(spacing: 24) {
+            // Workout Dashboard
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Workout Dashboard")
+                WorkoutDashboardView()
+            }
+            .opacity(animationStage >= 3 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: animationStage)
+
+            // Active Workout
+            if let workout = currentWorkout {
+                VStack(alignment: .leading, spacing: 16) {
+                    sectionHeader("Active Workout")
+                    ActiveWorkoutHeroCard(workout: workout)
+                }
+                .opacity(animationStage >= 4 ? 1 : 0)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
+            } else {
+                // Empty state for no active workout
+                VStack(alignment: .leading, spacing: 16) {
+                    sectionHeader("Active Workout")
+                    emptyWorkoutCard
+                }
+                .opacity(animationStage >= 4 ? 1 : 0)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
+            }
+
+            // Active Challenge
+            if let challenge = activeChallenge {
+                VStack(alignment: .leading, spacing: 16) {
+                    sectionHeader("Active Challenge")
+                    ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
+                }
+                .opacity(animationStage >= 5 ? 1 : 0)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: animationStage)
+            }
+        }
+    }
+
+    // MARK: - Discover Content
+    private var discoverContent: some View {
+        VStack(spacing: 24) {
+            // Quick Create Row (moved to top)
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Create")
+                quickCreateRow
+            }
+            .opacity(animationStage >= 3 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: animationStage)
+
+            // Browse Programs
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Find Your Program")
+                DiscoverProgramsCard { showProgramBrowser = true }
+            }
+            .opacity(animationStage >= 4 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
+
+            // Challenges
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Challenges")
+                DiscoverChallengesCard(challengeCount: challenges.count) { showChallenges = true }
+            }
+            .opacity(animationStage >= 5 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: animationStage)
+        }
+    }
+
+    // MARK: - Library Content
+    private var libraryContent: some View {
+        VStack(spacing: 24) {
+            // My Programs
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    sectionHeader("My Workouts")
+                    Spacer()
+                    Text("\(workouts.count)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Capsule())
+                }
+                LibraryRowCard(
+                    icon: "folder.fill",
+                    title: "Saved Workouts",
+                    subtitle: "View all your programs",
+                    accentColor: Color(hex: "6366f1")
+                ) { showSavedPrograms = true }
+            }
+            .opacity(animationStage >= 3 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: animationStage)
+
+            // Exercises
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Exercise Library")
+                LibraryRowCard(
+                    icon: "dumbbell.fill",
+                    title: "Browse Exercises",
+                    subtitle: "1300+ exercises with demos",
+                    accentColor: Color(hex: "22c55e")
+                ) { showExerciseLibrary = true }
+            }
+            .opacity(animationStage >= 4 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
+        }
+    }
+
+    // MARK: - Section Header
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(.white.opacity(0.5))
+            .textCase(.uppercase)
+            .tracking(1)
+    }
+
+    // MARK: - Empty Workout Card
+    private var emptyWorkoutCard: some View {
+        Button {
+            showProgramBrowser = true
+        } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.06))
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "plus")
+                        .font(.system(size: 22, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("No Active Workout")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+
+                    Text("Browse programs to get started")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.35))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Quick Create Row
+    private var quickCreateRow: some View {
+        HStack(spacing: 12) {
+            QuickCreatePill(icon: "plus", title: "Create", color: Color(hex: "2d6a4f")) {
+                showCreateProgram = true
+            }
+
+            QuickCreatePill(icon: "sparkles", title: "AI", color: Color(hex: "8b5cf6")) {
+                showAIWorkoutCreation = true
+            }
+
+            QuickCreatePill(icon: "square.and.arrow.down", title: "Import", color: Color(hex: "0ea5e9")) {
+                showImportWorkout = true
+            }
         }
     }
 }
 
-// MARK: - Programs Header
+// MARK: - Discover Programs Card (Refined)
+private struct DiscoverProgramsCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                // Top section with gradient
+                HStack(spacing: 16) {
+                    // Icon with glow
+                    ZStack {
+                        // Ambient glow
+                        Circle()
+                            .fill(Color(hex: "6366f1").opacity(0.3))
+                            .frame(width: 70, height: 70)
+                            .blur(radius: 20)
+
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "6366f1"), Color(hex: "8b5cf6")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+
+                        Image(systemName: "square.grid.2x2.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("100+ Programs")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.white)
+
+                        Text("Strength • Cardio • Yoga • HIIT")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+
+                    Spacer()
+
+                    // Arrow
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.1))
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                }
+                .padding(24)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.white.opacity(0.06))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color(hex: "6366f1").opacity(0.3), Color.clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Discover Challenges Card (Refined)
+private struct DiscoverChallengesCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let challengeCount: Int
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            HStack(spacing: 16) {
+                // Icon with glow
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "f97316").opacity(0.25))
+                        .frame(width: 60, height: 60)
+                        .blur(radius: 15)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Challenges")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    Text("\(challengeCount) available")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.4))
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Quick Create Pill (Professional)
+private struct QuickCreatePill: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let icon: String
+    let title: String
+    let color: Color
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            VStack(spacing: 12) {
+                // Icon with gradient background
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [color, color.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 48, height: 48)
+                        .shadow(color: color.opacity(0.4), radius: 8, y: 4)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Library Row Card (Refined)
+private struct LibraryRowCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    let icon: String
+    let title: String
+    let subtitle: String
+    let accentColor: Color
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            HStack(spacing: 16) {
+                // Icon with subtle glow
+                ZStack {
+                    Circle()
+                        .fill(accentColor.opacity(0.15))
+                        .frame(width: 48, height: 48)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+
+                    Text(subtitle)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.3))
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white.opacity(0.04))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Programs Header (Legacy - kept for compatibility)
 private struct ProgramsHeader: View {
     var body: some View {
         HStack {

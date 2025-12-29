@@ -1032,10 +1032,28 @@ struct WeekCalendarStrip: View {
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: sunday) }
     }
 
+    private var monthYearText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: Date())
+    }
+
     var body: some View {
-        HStack(spacing: 6) {
-            ForEach(weekDates, id: \.self) { date in
-                DayScoreCell(date: date)
+        VStack(spacing: 12) {
+            // Month header
+            HStack {
+                Text(monthYearText)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+
+            // Week days
+            HStack(spacing: 6) {
+                ForEach(weekDates, id: \.self) { date in
+                    DayScoreCell(date: date)
+                }
             }
         }
     }
@@ -1269,51 +1287,86 @@ struct ActiveWorkoutCard: View {
                 }
             }
         } else {
-            // Empty state
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(width: 50, height: 50)
+            // Empty state - Professional design
+            VStack(spacing: 0) {
+                // Main content area
+                VStack(spacing: 16) {
+                    // Icon with subtle glow
+                    ZStack {
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [gradientStart.opacity(0.3), Color.clear],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 50
+                                )
+                            )
+                            .frame(width: 100, height: 100)
 
-                    Text("💪")
-                        .font(.system(size: 24))
-                        .opacity(0.5)
+                        Circle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 72, height: 72)
+
+                        Image(systemName: "figure.run")
+                            .font(.system(size: 28, weight: .medium))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [gradientStart, gradientEnd],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+
+                    // Text content
+                    VStack(spacing: 6) {
+                        Text("No Active Workout")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+
+                        Text("Start a program or create a custom workout to get moving")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                    .padding(.horizontal, 20)
                 }
+                .padding(.top, 24)
+                .padding(.bottom, 20)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("No Workout")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.6))
+                // Divider
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 1)
 
-                    Text("Tap to create one")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.4))
-                }
-
-                Spacer()
-
+                // Action button
                 Button {
+                    themeManager.mediumImpact()
                     selectedTab = .programs
                 } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.6))
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.15))
-                        .clipShape(Circle())
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 16, weight: .medium))
+
+                        Text("Browse Programs")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundStyle(gradientStart)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
                 }
             }
-            .padding(14)
             .background(
-                LinearGradient(
-                    colors: [gradientStart.opacity(0.4), gradientEnd.opacity(0.4)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         }
     }
 
