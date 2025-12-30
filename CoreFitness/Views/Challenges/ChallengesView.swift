@@ -6,14 +6,27 @@ import ContactsUI
 struct ChallengesView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var themeManager: ThemeManager
     @Query(sort: \Challenge.startDate, order: .reverse) private var challenges: [Challenge]
 
     @State private var showCreateChallenge = false
     @State private var showJoinChallenge = false
     @State private var selectedChallenge: Challenge?
-    @State private var selectedTab = 0
+    @State private var searchText = ""
+    @State private var selectedCategory = "All"
 
-    // Only one active challenge at a time
+    // Colors matching HTML design
+    private let bgPrimary = Color(hex: "0a0a0a")
+    private let bgCard = Color(hex: "161616")
+    private let coral = Color(hex: "ff6b6b")
+    private let cyan = Color(hex: "54a0ff")
+    private let gold = Color(hex: "feca57")
+    private let teal = Color(hex: "00d2d3")
+    private let lime = Color(hex: "1dd1a1")
+    private let purple = Color(hex: "a55eea")
+
+    private let categories = ["All", "Running", "Cycling", "Strength", "Swimming", "Yoga", "HIIT"]
+
     private var activeChallenge: Challenge? {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
@@ -22,1136 +35,739 @@ struct ChallengesView: View {
         challenges.filter { $0.isCompleted }
     }
 
-    // Stats
-    private var completedCount: Int {
-        completedChallenges.count
-    }
-
-    private var bestFinish: String {
-        guard completedCount > 0 else { return "--" }
-        var bestRank = Int.max
-        for challenge in completedChallenges {
-            if let rank = challenge.sortedParticipants.firstIndex(where: { $0.ownerId == "current_user" }) {
-                bestRank = min(bestRank, rank + 1)
-            }
-        }
-        if bestRank == Int.max { return "--" }
-        switch bestRank {
-        case 1: return "1st"
-        case 2: return "2nd"
-        case 3: return "3rd"
-        default: return "\(bestRank)th"
-        }
-    }
-
-    private var daysLeft: Int {
-        activeChallenge?.daysRemaining ?? 0
-    }
-
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    // Active Challenge Hero Section
+                    // Header
+                    challengeHeader
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+
+                    // Search Bar
+                    searchBar
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+
+                    // Category Pills
+                    categoryPills
+                        .padding(.top, 20)
+
+                    // Active Challenge Section
                     if let challenge = activeChallenge {
-                        ActiveChallengeHero(challenge: challenge) {
+                        sectionHeader("Active Challenge", icon: "flame.fill", color: coral)
+                            .padding(.top, 24)
+
+                        RefinedActiveChallengeCard(challenge: challenge) {
                             selectedChallenge = challenge
                         }
-                    } else {
-                        // No Active Challenge - Prompt to start
-                        NoActiveChallengeCard {
+                        .padding(.horizontal, 20)
+                    }
+
+                    // Popular Challenges Section
+                    sectionHeader("Popular Now", icon: "flame.fill", color: coral)
+                        .padding(.top, 24)
+
+                    VStack(spacing: 16) {
+                        PopularChallengeCard(
+                            type: "Running",
+                            typeColor: coral,
+                            duration: "30-Day Challenge",
+                            title: "5K Every Day",
+                            description: "Run 5 kilometers daily for 30 days. Build endurance and mental toughness.",
+                            participantCount: 847
+                        ) {
                             showCreateChallenge = true
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-                    }
 
-                    // Stats Row
-                    HStack(spacing: 0) {
-                        StatItem(value: "\(completedCount)", label: "Completed", icon: "checkmark.circle.fill", color: .accentGreen)
-                        Divider().frame(height: 40)
-                        StatItem(value: bestFinish, label: "Best Finish", icon: "trophy.fill", color: .accentOrange)
-                        Divider().frame(height: 40)
-                        StatItem(value: "\(daysLeft)", label: "Days Left", icon: "calendar", color: .accentBlue)
-                    }
-                    .padding(.vertical, 16)
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 20)
-
-                    // Action Buttons - Only show Join when active challenge exists
-                    HStack(spacing: 12) {
-                        if activeChallenge == nil {
-                            ActionButton(
-                                title: "Create",
-                                icon: "plus",
-                                color: Color(hex: "22c55e")
-                            ) {
-                                showCreateChallenge = true
-                            }
-                        }
-
-                        ActionButton(
-                            title: "Join",
-                            icon: "person.badge.plus",
-                            color: Color(hex: "3b82f6")
+                        PopularChallengeCard(
+                            type: "Cycling",
+                            typeColor: cyan,
+                            duration: "14-Day Challenge",
+                            title: "200 Mile Sprint",
+                            description: "Cycle 200 miles in 2 weeks. Perfect for intermediate riders.",
+                            participantCount: 312
                         ) {
-                            showJoinChallenge = true
+                            showCreateChallenge = true
+                        }
+
+                        PopularChallengeCard(
+                            type: "Strength",
+                            typeColor: gold,
+                            duration: "21-Day Challenge",
+                            title: "100 Push-ups",
+                            description: "Work up to 100 push-ups in a single set. Progressive training plan included.",
+                            participantCount: 1200
+                        ) {
+                            showCreateChallenge = true
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    .padding(.horizontal, 20)
 
-                    // Challenge Details Section (when active challenge exists)
-                    if let challenge = activeChallenge {
-                        // Leaderboard Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            SectionHeader(title: "Leaderboard", action: nil) {}
-
-                            LeaderboardCard(
-                                participants: challenge.sortedParticipants,
-                                totalDays: challenge.durationDays
-                            )
-                            .padding(.horizontal, 16)
-                        }
-                        .padding(.top, 24)
-
-                        // Your Stats Section
-                        if let userParticipant = challenge.participants?.first(where: { $0.ownerId == "current_user" }) {
-                            VStack(alignment: .leading, spacing: 12) {
-                                SectionHeader(title: "Challenge Progress", action: nil) {}
-
-                                YourProgressCard(participant: userParticipant, challenge: challenge)
-                                    .padding(.horizontal, 16)
-                            }
-                            .padding(.top, 24)
-                        }
-
-                        // Challenge Info Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            SectionHeader(title: "Challenge Info", action: nil) {}
-
-                            ChallengeInfoCard(challenge: challenge)
-                                .padding(.horizontal, 16)
-                        }
-                        .padding(.top, 24)
+                    // Friends Activity Section
+                    HStack {
+                        sectionHeader("Friends Activity", icon: "person.2.fill", color: cyan)
+                        Spacer()
+                        Text("See All")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(cyan)
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 24)
 
-                    // Completed Challenges Section
+                    FriendsActivityCard()
+                        .padding(.horizontal, 20)
+
+                    // Completed Challenges
                     if !completedChallenges.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            SectionHeader(title: "History", action: nil) {}
+                        sectionHeader("History", icon: "clock.fill", color: gold)
+                            .padding(.top, 24)
 
-                            VStack(spacing: 12) {
-                                ForEach(completedChallenges.prefix(5)) { challenge in
-                                    CompletedChallengeRow(challenge: challenge)
-                                }
+                        VStack(spacing: 12) {
+                            ForEach(completedChallenges.prefix(5)) { challenge in
+                                RefinedCompletedChallengeRow(challenge: challenge)
                             }
-                            .padding(.horizontal, 16)
                         }
-                        .padding(.top, 24)
+                        .padding(.horizontal, 20)
                     }
                 }
                 .padding(.bottom, 100)
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Challenges")
-            .navigationBarTitleDisplayMode(.large)
+            .background(bgPrimary.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button {
                         dismiss()
+                    } label: {
+                        Text("Done")
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
                     }
-                    .fontWeight(.semibold)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCreateChallenge = true
+                    } label: {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(
+                                LinearGradient(
+                                    colors: [coral, coral.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+                    }
                 }
             }
         }
         .fullScreenCover(isPresented: $showCreateChallenge) {
             CreateChallengeView()
-                .background(.ultraThinMaterial)
         }
         .fullScreenCover(isPresented: $showJoinChallenge) {
             JoinChallengeView()
-                .background(.ultraThinMaterial)
         }
         .fullScreenCover(item: $selectedChallenge) { challenge in
             ChallengeDetailView(challenge: challenge)
-                .background(.ultraThinMaterial)
         }
     }
 
-    private func createChallengeFromTemplate(_ template: ChallengeTemplate) {
-        if activeChallenge != nil { return }
+    // MARK: - Header
+    private var challengeHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Challenges")
+                .font(.system(size: 34, weight: .heavy))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, gold],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
 
-        let challenge = Challenge(
-            name: template.name,
-            description: template.description,
-            durationDays: template.durationDays,
-            goalType: template.goalType,
-            location: template.location,
-            creatorId: "current_user"
-        )
-
-        let participant = ChallengeParticipant(
-            ownerId: "current_user",
-            displayName: "You",
-            avatarEmoji: "💪",
-            isOwner: true
-        )
-        participant.challenge = challenge
-
-        modelContext.insert(challenge)
-        modelContext.insert(participant)
-        try? modelContext.save()
-
-        selectedChallenge = challenge
+            Text("Push your limits with friends")
+                .font(.system(size: 15))
+                .foregroundStyle(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
 
-// MARK: - Section Header
-private struct SectionHeader: View {
-    let title: String
-    let action: String?
-    let onAction: () -> Void
+    // MARK: - Search Bar
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16))
+                .foregroundStyle(.white.opacity(0.3))
 
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.title3)
-                .fontWeight(.bold)
+            TextField("Search challenges...", text: $searchText)
+                .font(.system(size: 15))
+                .foregroundStyle(.white)
 
-            Spacer()
-
-            if let action = action {
-                Button(action: onAction) {
-                    Text(action)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.accentBlue)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.white.opacity(0.3))
                 }
             }
         }
-        .padding(.horizontal, 16)
+        .padding(14)
+        .background(Color(hex: "222222"))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
-}
 
-// MARK: - Stat Item
-private struct StatItem: View {
-    let value: String
-    let label: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(color)
-                Text(value)
-                    .font(.title3)
-                    .fontWeight(.bold)
+    // MARK: - Category Pills
+    private var categoryPills: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(categories, id: \.self) { category in
+                    CategoryPill(
+                        title: category,
+                        isSelected: selectedCategory == category,
+                        color: coral
+                    ) {
+                        withAnimation(.spring(response: 0.3)) {
+                            selectedCategory = category
+                        }
+                    }
+                }
             }
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .padding(.horizontal, 20)
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Section Header
+    private func sectionHeader(_ title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 8)
+                .fill(
+                    LinearGradient(
+                        colors: [color, color.opacity(0.7)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 28, height: 28)
+                .overlay(
+                    Image(systemName: icon)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white)
+                )
+
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.white.opacity(0.7))
+                .tracking(1.5)
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 12)
     }
 }
 
-// MARK: - Action Button
-private struct ActionButton: View {
+// MARK: - Category Pill
+private struct CategoryPill: View {
     let title: String
-    let icon: String
+    let isSelected: Bool
     let color: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.headline)
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(color)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-}
-
-// MARK: - No Active Challenge Card
-private struct NoActiveChallengeCard: View {
-    let onCreate: () -> Void
-
-    var body: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.accentOrange.opacity(0.15))
-                    .frame(width: 80, height: 80)
-
-                Image(systemName: "trophy.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(Color.accentOrange)
-            }
-
-            Text("No Active Challenge")
-                .font(.headline)
-                .fontWeight(.semibold)
-
-            Text("Start a challenge to compete with friends and stay motivated")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button(action: onCreate) {
-                Text("Start Challenge")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.accentOrange)
-                    .clipShape(Capsule())
-            }
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-    }
-}
-
-// MARK: - Active Challenge Hero
-private struct ActiveChallengeHero: View {
-    let challenge: Challenge
-    let onTap: () -> Void
-
-    private var progress: Double {
-        let elapsed = Date().timeIntervalSince(challenge.startDate)
-        let total = Double(challenge.durationDays) * 86400
-        return min(max(elapsed / total, 0), 1)
-    }
-
-    private var daysRemaining: Int {
-        let endDate = challenge.startDate.addingTimeInterval(Double(challenge.durationDays) * 86400)
-        let remaining = endDate.timeIntervalSince(Date())
-        return max(0, Int(remaining / 86400))
-    }
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 16) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("ACTIVE CHALLENGE")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white.opacity(0.7))
-
-                        Text(challenge.name)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(daysRemaining)")
-                            .font(.title)
-                            .fontWeight(.heavy)
-                            .foregroundStyle(.white)
-                        Text("days left")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                }
-
-                // Segmented Progress Indicator
-                SegmentedProgressIndicator(
-                    currentDay: challenge.currentDay,
-                    totalDays: challenge.durationDays,
-                    completedDays: challenge.participants?.first(where: { $0.ownerId == "current_user" })?.completedDays ?? 0
-                )
-
-                // Participants
-                HStack {
-                    HStack(spacing: -8) {
-                        ForEach(challenge.sortedParticipants.prefix(4)) { participant in
-                            Text(participant.avatarEmoji)
-                                .font(.caption)
-                                .frame(width: 28, height: 28)
-                                .background(.white.opacity(0.2))
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(.white.opacity(0.3), lineWidth: 1))
-                        }
-                    }
-
-                    Text("\(challenge.sortedParticipants.count) participants")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-            }
-            .padding(20)
-            .background(
-                LinearGradient(
-                    colors: [Color(hex: "f97316"), Color(hex: "ea580c")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 16)
-        .padding(.top, 8)
-    }
-}
-
-// MARK: - Template Card
-private struct TemplateCard: View {
-    let template: ChallengeTemplate
-    let onSelect: () -> Void
-
-    private var iconColor: Color {
-        switch template.goalType {
-        case .fitness: return Color(hex: "3b82f6")
-        case .strength, .muscle: return Color(hex: "f97316")
-        case .cardio: return Color(hex: "ef4444")
-        case .flexibility: return Color(hex: "06b6d4") // Teal instead of purple
-        case .weightLoss, .wellness: return Color(hex: "22c55e")
-        case .endurance: return Color(hex: "eab308")
-        }
-    }
-
-    var body: some View {
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(iconColor.opacity(0.15))
-                            .frame(width: 36, height: 36)
-
-                        Image(systemName: template.goalType.icon)
-                            .font(.subheadline)
-                            .foregroundStyle(iconColor)
-                    }
-
-                    Spacer()
-
-                    Text("\(template.durationDays)d")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(Color(.tertiarySystemGroupedBackground))
-                        .clipShape(Capsule())
-                }
-
-                Text(template.name)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .frame(height: 32, alignment: .topLeading)
-
-                Text(template.difficulty.displayName)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Completed Challenge Row
-private struct CompletedChallengeRow: View {
-    let challenge: Challenge
-
-    private var resultColor: Color {
-        // Check if user won (finished first)
-        if challenge.sortedParticipants.first?.ownerId == "current_user" {
-            return Color(hex: "22c55e")
-        }
-        return .secondary
-    }
-
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(resultColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
-
-                Image(systemName: challenge.sortedParticipants.first?.ownerId == "current_user" ? "trophy.fill" : "flag.checkered")
-                    .font(.headline)
-                    .foregroundStyle(resultColor)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(challenge.name)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-
-                Text("\(challenge.durationDays) days • \(challenge.sortedParticipants.count) participants")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Text(challenge.startDate.formatted(.dateTime.month().day()))
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        }
-        .padding(14)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-}
-
-// MARK: - Challenge Stat Card
-struct ChallengeStatCard: View {
-    let value: String
-    let label: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.title)
-                .fontWeight(.heavy)
-
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.6))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .background(
-            LinearGradient(
-                colors: [color.opacity(0.2), color.opacity(0.1)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(color.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-}
-
-// MARK: - Active Challenge Card Redesigned
-struct ActiveChallengeCardRedesigned: View {
-    let challenge: Challenge
-    let onTap: () -> Void
-
-    private var goalColor: Color {
-        switch challenge.goalType {
-        case .fitness: return Color(hex: "3b82f6")
-        case .strength, .muscle: return Color(hex: "f97316")
-        case .cardio: return Color(hex: "ef4444")
-        case .flexibility: return .purple
-        case .weightLoss, .wellness: return Color(hex: "22c55e")
-        case .endurance: return Color(hex: "eab308")
-        }
-    }
-
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 16) {
-                // Header
-                HStack(spacing: 14) {
-                    // Icon
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(
-                                LinearGradient(
-                                    colors: [goalColor, goalColor.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
+                .background(
+                    Group {
+                        if isSelected {
+                            LinearGradient(
+                                colors: [color, color.opacity(0.8)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                            .frame(width: 50, height: 50)
-
-                        Image(systemName: challenge.goalType.icon)
-                            .font(.title2)
-                            .foregroundStyle(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(challenge.name)
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-
-                        Text("Started \(challenge.startDate.formatted(date: .abbreviated, time: .omitted))")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    Spacer()
-
-                    // Day counter
-                    VStack(spacing: 2) {
-                        Text("\(challenge.currentDay)")
-                            .font(.title)
-                            .fontWeight(.heavy)
-                            .foregroundStyle(goalColor)
-
-                        Text("of \(challenge.durationDays)")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
-
-                // Progress bar
-                VStack(spacing: 8) {
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(.white.opacity(0.1))
-                                .frame(height: 8)
-
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [goalColor, goalColor.opacity(0.8)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geometry.size.width * challenge.progress, height: 8)
+                        } else {
+                            Color(hex: "161616")
                         }
                     }
-                    .frame(height: 8)
+                )
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.06), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
 
-                    HStack {
-                        Text("\(Int(challenge.progress * 100))% complete")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.5))
+// MARK: - Popular Challenge Card
+private struct PopularChallengeCard: View {
+    let type: String
+    let typeColor: Color
+    let duration: String
+    let title: String
+    let description: String
+    let participantCount: Int
+    let onJoin: () -> Void
 
-                        Spacer()
+    @State private var isPressed = false
 
-                        Text("\(challenge.daysRemaining) days left")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
+    private let bgCard = Color(hex: "161616")
 
-                // Participants
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Accent bar
+            typeColor
+                .frame(height: 3)
+
+            VStack(alignment: .leading, spacing: 14) {
+                // Meta row
                 HStack(spacing: 8) {
-                    HStack(spacing: -8) {
-                        ForEach(Array(challenge.sortedParticipants.prefix(4).enumerated()), id: \.offset) { _, participant in
-                            Text(participant.avatarEmoji)
-                                .font(.headline)
-                                .frame(width: 32, height: 32)
-                                .background(Color(hex: "2a2a3e"))
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color(hex: "1a1a2e"), lineWidth: 2))
-                        }
-                    }
+                    Text(type.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(typeColor)
+                        .tracking(0.5)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(typeColor.opacity(0.2))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                    Text("\(challenge.participants?.count ?? 0) participants")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
+                    Text(duration)
+                        .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.3))
                 }
-            }
-            .padding(20)
-            .background(
-                ZStack {
-                    Color(hex: "1a1a2e")
 
-                    // Glow effect
-                    Circle()
-                        .fill(goalColor.opacity(0.2))
-                        .frame(width: 200, height: 200)
-                        .blur(radius: 60)
-                        .offset(x: 100, y: -50)
-                }
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-        }
-        .buttonStyle(.plain)
-    }
-}
+                // Title
+                Text(title)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(.white)
 
-// MARK: - Challenge Template Card Redesigned
-struct ChallengeTemplateCardRedesigned: View {
-    let template: ChallengeTemplate
-    let onSelect: () -> Void
+                // Description
+                Text(description)
+                    .font(.system(size: 13))
+                    .foregroundStyle(.white.opacity(0.5))
+                    .lineSpacing(2)
 
-    private var goalColor: Color {
-        switch template.goalType {
-        case .fitness: return Color(hex: "3b82f6")
-        case .strength, .muscle: return Color(hex: "f97316")
-        case .cardio: return Color(hex: "ef4444")
-        case .flexibility: return .purple
-        case .weightLoss, .wellness: return Color(hex: "22c55e")
-        case .endurance: return Color(hex: "eab308")
-        }
-    }
-
-    var body: some View {
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 12) {
+                // Bottom row
                 HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
+                    // Participants preview
+                    HStack(spacing: -8) {
+                        ForEach(0..<4, id: \.self) { i in
+                            Circle()
+                                .fill(participantColors[i % participantColors.count])
+                                .frame(width: 28, height: 28)
+                                .overlay(
+                                    Circle()
+                                        .stroke(bgCard, lineWidth: 2)
+                                )
+                        }
+                    }
+
+                    Text("+\(participantCount) joined")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(.leading, 8)
+
+                    Spacer()
+
+                    // Join button
+                    Button(action: onJoin) {
+                        Text("Join")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                            .background(
                                 LinearGradient(
-                                    colors: [goalColor, goalColor.opacity(0.8)],
+                                    colors: [Color(hex: "ff6b6b"), Color(hex: "e55555")],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                            .frame(width: 40, height: 40)
-
-                        Image(systemName: template.icon)
-                            .font(.headline)
-                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-
-                    Spacer()
-
-                    Text("\(template.durationDays) days")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color(hex: "22c55e"))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color(hex: "22c55e").opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
-
-                Text(template.name)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-
-                Text("\(template.difficulty.displayName) • \(template.location.displayName)")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.5))
             }
             .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(hex: "1a1a2e"))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .buttonStyle(.plain)
+        .background(bgCard)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+
+    private var participantColors: [LinearGradient] {
+        [
+            LinearGradient(colors: [Color(hex: "ff6b6b"), Color(hex: "ee5a5a")], startPoint: .topLeading, endPoint: .bottomTrailing),
+            LinearGradient(colors: [Color(hex: "54a0ff"), Color(hex: "4494f0")], startPoint: .topLeading, endPoint: .bottomTrailing),
+            LinearGradient(colors: [Color(hex: "feca57"), Color(hex: "f5b041")], startPoint: .topLeading, endPoint: .bottomTrailing),
+            LinearGradient(colors: [Color(hex: "1dd1a1"), Color(hex: "17b38a")], startPoint: .topLeading, endPoint: .bottomTrailing)
+        ]
     }
 }
 
-// MARK: - Leaderboard Preview Card
-struct LeaderboardPreviewCard: View {
-    let challenge: Challenge
+// MARK: - Friends Activity Card
+private struct FriendsActivityCard: View {
+    private let bgCard = Color(hex: "161616")
+    private let cyan = Color(hex: "54a0ff")
+    private let lime = Color(hex: "1dd1a1")
+    private let gold = Color(hex: "feca57")
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("Leaderboard")
-                    .font(.headline)
-                    .fontWeight(.bold)
-
-                Spacer()
-
-                Text("View All")
-                    .font(.caption)
-                    .foregroundStyle(Color(hex: "22c55e"))
-            }
+        VStack(spacing: 0) {
+            // Accent bar
+            cyan
+                .frame(height: 3)
 
             VStack(spacing: 0) {
-                ForEach(Array(challenge.sortedParticipants.prefix(3).enumerated()), id: \.element.id) { index, participant in
-                    LeaderboardRow(
-                        rank: index + 1,
-                        participant: participant,
-                        totalDays: challenge.durationDays
-                    )
+                FriendActivityRow(
+                    name: "Sarah M.",
+                    challenge: "5K Every Day • Day 12",
+                    status: "Active",
+                    statusColor: lime,
+                    avatarColor: Color(hex: "feca57")
+                )
 
-                    if index < min(2, challenge.sortedParticipants.count - 1) {
-                        Divider()
-                            .background(.white.opacity(0.05))
-                    }
-                }
+                Divider()
+                    .background(Color.white.opacity(0.06))
+
+                FriendActivityRow(
+                    name: "Mike T.",
+                    challenge: "200 Mile Sprint • Day 8",
+                    status: "Active",
+                    statusColor: lime,
+                    avatarColor: Color(hex: "a55eea")
+                )
+
+                Divider()
+                    .background(Color.white.opacity(0.06))
+
+                FriendActivityRow(
+                    name: "Emma K.",
+                    challenge: "Yoga Flow • Completed!",
+                    status: "Winner",
+                    statusColor: gold,
+                    avatarColor: Color(hex: "ff6b6b"),
+                    showTrophy: true
+                )
             }
+            .padding(16)
         }
-        .padding(20)
-        .background(Color(hex: "1a1a2e"))
+        .background(bgCard)
         .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
     }
 }
 
-// MARK: - Leaderboard Row
-struct LeaderboardRow: View {
-    let rank: Int
-    let participant: ChallengeParticipant
-    let totalDays: Int
-
-    private var rankColor: Color {
-        switch rank {
-        case 1: return Color(hex: "eab308")
-        case 2: return Color(hex: "9ca3af")
-        case 3: return Color(hex: "f97316")
-        default: return .clear
-        }
-    }
+// MARK: - Friend Activity Row
+private struct FriendActivityRow: View {
+    let name: String
+    let challenge: String
+    let status: String
+    let statusColor: Color
+    let avatarColor: Color
+    var showTrophy: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
-            // Rank
-            ZStack {
-                if rank <= 3 {
-                    Circle()
-                        .fill(rankColor.opacity(0.2))
-                        .frame(width: 24, height: 24)
-                }
-
-                Text("\(rank)")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(rank <= 3 ? rankColor : .white.opacity(0.5))
-            }
-            .frame(width: 24)
-
             // Avatar
-            Text(participant.avatarEmoji)
-                .font(.title2)
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [avatarColor, avatarColor.opacity(0.7)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 40, height: 40)
 
             // Info
             VStack(alignment: .leading, spacing: 2) {
-                Text(participant.displayName)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                Text(name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
 
-                if participant.currentStreak > 0 {
-                    HStack(spacing: 4) {
-                        Image(systemName: "flame.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
-                        Text("\(participant.currentStreak) day streak")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
+                Text(challenge)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.5))
             }
 
             Spacer()
 
-            // Percentage
-            Text("\(Int(participant.completionPercentage * 100))%")
-                .font(.headline)
-                .fontWeight(.bold)
-                .foregroundStyle(Color(hex: "22c55e"))
+            // Status badge
+            HStack(spacing: 4) {
+                if showTrophy {
+                    Text("🏆")
+                        .font(.system(size: 12))
+                }
+                Text(status)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(statusColor)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(statusColor.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .padding(.vertical, 12)
     }
 }
 
-// MARK: - Completed Challenge Card Redesigned
-struct CompletedChallengeCardRedesigned: View {
-    let challenge: Challenge
-
-    var body: some View {
-        HStack(spacing: 14) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title2)
-                .foregroundStyle(Color(hex: "22c55e"))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(challenge.name)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-
-                Text("\(challenge.durationDays) days • \(challenge.participants?.count ?? 0) participants")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-
-            Spacer()
-        }
-        .padding(16)
-        .background(Color(hex: "1a1a2e"))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-    }
-}
-
-// MARK: - Active Challenge Card
-struct ActiveChallengeCard: View {
+// MARK: - Refined Active Challenge Card
+private struct RefinedActiveChallengeCard: View {
     let challenge: Challenge
     let onTap: () -> Void
 
-    private var goalColor: Color {
-        switch challenge.goalType {
-        case .fitness: return .accentBlue
-        case .strength, .muscle: return .accentOrange
-        case .cardio: return .accentRed
-        case .flexibility: return .purple
-        case .weightLoss, .wellness: return .accentGreen
-        case .endurance: return .accentYellow
-        }
+    @State private var isPressed = false
+
+    private let bgCard = Color(hex: "161616")
+    private let coral = Color(hex: "ff6b6b")
+    private let coralDark = Color(hex: "e55555")
+
+    private var progress: Double {
+        Double(challenge.currentDay - 1) / Double(challenge.durationDays)
     }
 
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 16) {
-                // Header
-                HStack {
-                    // Goal icon
-                    Image(systemName: challenge.goalType.icon)
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(goalColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(spacing: 0) {
+                // Accent bar
+                LinearGradient(
+                    colors: [coral, coralDark],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(challenge.name)
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
+                VStack(alignment: .leading, spacing: 16) {
+                    // Header
+                    HStack(spacing: 16) {
+                        // Icon
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [coral, coralDark],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+                            .overlay(
+                                Image(systemName: challenge.goalType.icon)
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+                            .shadow(color: coral.opacity(0.3), radius: 8, y: 4)
 
-                        Text("Day \(challenge.currentDay) of \(challenge.durationDays)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    // Participants count
-                    HStack(spacing: -8) {
-                        ForEach(Array(challenge.sortedParticipants.prefix(3).enumerated()), id: \.offset) { index, participant in
-                            Text(participant.avatarEmoji)
-                                .font(.title3)
-                                .frame(width: 28, height: 28)
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
-                        }
-
-                        if (challenge.participants?.count ?? 0) > 3 {
-                            Text("+\((challenge.participants?.count ?? 0) - 3)")
-                                .font(.caption2)
-                                .fontWeight(.bold)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(challenge.name.uppercased())
+                                .font(.system(size: 20, weight: .bold))
+                                .tracking(1)
                                 .foregroundStyle(.white)
-                                .frame(width: 28, height: 28)
-                                .background(Color.gray)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+                                .lineLimit(1)
+
+                            Text("\(challenge.durationDays)-Day Challenge • \(challenge.sortedParticipants.count) participants")
+                                .font(.system(size: 14))
+                                .foregroundStyle(.white.opacity(0.7))
                         }
-                    }
-                }
-
-                // Progress bar
-                VStack(spacing: 4) {
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(goalColor.opacity(0.2))
-                                .frame(height: 8)
-
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(goalColor)
-                                .frame(width: geometry.size.width * challenge.progress, height: 8)
-                        }
-                    }
-                    .frame(height: 8)
-
-                    HStack {
-                        Text("\(Int(challenge.progress * 100))% complete")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
 
                         Spacer()
-
-                        Text("\(challenge.daysRemaining) days left")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
                     }
+
+                    // Progress section
+                    VStack(spacing: 12) {
+                        HStack {
+                            Text("Your Progress")
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.7))
+
+                            Spacer()
+
+                            Text("\(challenge.currentDay) of \(challenge.durationDays) days")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(coral)
+                        }
+
+                        // Progress bar
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color(hex: "222222"))
+                                    .frame(height: 8)
+
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [coral, Color(hex: "feca57")],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: geo.size.width * progress, height: 8)
+                            }
+                        }
+                        .frame(height: 8)
+
+                        // Stats row
+                        HStack(spacing: 12) {
+                            ProgressStatItem(value: "\(challenge.currentDay)", label: "Days Done", color: coral)
+                            ProgressStatItem(value: "\(challenge.participants?.first(where: { $0.ownerId == "current_user" })?.currentStreak ?? 0)", label: "Day Streak", color: Color(hex: "feca57"))
+                            ProgressStatItem(value: "\(challenge.daysRemaining)", label: "Remaining", color: Color(hex: "1dd1a1"))
+                        }
+                    }
+                    .padding(16)
+                    .background(Color(hex: "111111"))
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
+                .padding(20)
             }
-            .padding()
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .background(bgCard)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            // Radial glow
+            .overlay(
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [coral.opacity(0.15), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 150, height: 150)
+                    .offset(x: 60, y: -60)
+                , alignment: .topTrailing
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
         }
         .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
     }
 }
 
-// MARK: - Challenge Action Button
-struct ChallengeActionButton: View {
-    let title: String
-    let icon: String
+// MARK: - Progress Stat Item
+private struct ProgressStatItem: View {
+    var icon: String? = nil
+    let value: String
+    let label: String
     let color: Color
-    let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
+        VStack(spacing: 2) {
+            if let icon = icon {
                 Image(systemName: icon)
-                    .font(.title3)
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
             }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(color)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            Text(value)
+                .font(.system(size: 20, weight: .heavy))
+                .foregroundStyle(color)
+
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.white.opacity(0.3))
+                .tracking(0.5)
         }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Challenge Template Card
-struct ChallengeTemplateCard: View {
-    let template: ChallengeTemplate
-    let onSelect: () -> Void
-
-    private var goalColor: Color {
-        switch template.goalType {
-        case .fitness: return .accentBlue
-        case .strength, .muscle: return .accentOrange
-        case .cardio: return .accentRed
-        case .flexibility: return .purple
-        case .weightLoss, .wellness: return .accentGreen
-        case .endurance: return .accentYellow
-        }
-    }
-
-    private var difficultyColor: Color {
-        switch template.difficulty {
-        case .beginner: return .accentGreen
-        case .intermediate: return .accentOrange
-        case .advanced: return .accentRed
-        }
-    }
-
-    var body: some View {
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 10) {
-                // Icon and duration
-                HStack {
-                    Image(systemName: template.icon)
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(goalColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    Spacer()
-
-                    Text("\(template.durationDays)d")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(goalColor)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(goalColor.opacity(0.15))
-                        .clipShape(Capsule())
-                }
-
-                // Title - fixed height area
-                Text(template.name)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .frame(height: 40, alignment: .topLeading)
-
-                Spacer(minLength: 0)
-
-                // Badges at bottom
-                HStack(spacing: 4) {
-                    Text(template.difficulty.displayName)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundStyle(difficultyColor)
-
-                    Text("•")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-
-                    Image(systemName: template.location.icon)
-                        .font(.caption2)
-                    Text(template.location.displayName)
-                        .font(.caption2)
-                }
-                .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 140)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Completed Challenge Card
-struct CompletedChallengeCard: View {
-    let challenge: Challenge
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title2)
-                .foregroundStyle(Color.accentGreen)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(challenge.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-
-                Text("Completed • \(challenge.participants?.count ?? 0) participants")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-        }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color(hex: "222222"))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
-// MARK: - Create Challenge View
+// MARK: - Refined Completed Challenge Row
+private struct RefinedCompletedChallengeRow: View {
+    let challenge: Challenge
+
+    private let bgCard = Color(hex: "161616")
+    private let gold = Color(hex: "feca57")
+    private let lime = Color(hex: "1dd1a1")
+
+    private var didWin: Bool {
+        challenge.sortedParticipants.first?.ownerId == "current_user"
+    }
+
+    var body: some View {
+        HStack(spacing: 14) {
+            // Icon
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        colors: didWin ? [gold, gold.opacity(0.7)] : [lime, lime.opacity(0.7)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Image(systemName: didWin ? "trophy.fill" : "flag.checkered")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(challenge.name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+
+                Text("\(challenge.durationDays) days • \(challenge.sortedParticipants.count) participants")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+
+            Spacer()
+
+            Text(challenge.startDate.formatted(.dateTime.month().day()))
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.3))
+        }
+        .padding(14)
+        .background(bgCard)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+}
+
+#Preview {
+    ChallengesView()
+        .environmentObject(ThemeManager())
+}
 struct CreateChallengeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -3348,31 +2964,6 @@ private struct YourProgressCard: View {
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-}
-
-// MARK: - Progress Stat Item
-private struct ProgressStatItem: View {
-    let icon: String
-    let value: String
-    let label: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(color)
-
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
-
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 
