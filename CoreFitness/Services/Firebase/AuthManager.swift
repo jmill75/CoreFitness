@@ -74,9 +74,15 @@ class AuthManager: ObservableObject {
 
     // MARK: - Init
     init() {
+        // Immediately set up local user for simulator/fallback
+        // This ensures the app is usable even if iCloud check hangs
+        #if targetEnvironment(simulator)
+        setupLocalUser()
+        #else
         Task {
             await checkiCloudStatus()
         }
+        #endif
     }
 
     // MARK: - iCloud Status Check

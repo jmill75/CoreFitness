@@ -3,6 +3,23 @@ import SwiftData
 import UniformTypeIdentifiers
 import PDFKit
 
+// MARK: - Parsed Workout Models (for AI Generation)
+struct ParsedWorkout {
+    let name: String
+    let description: String
+    let estimatedDuration: Int
+    let difficulty: String
+    let exercises: [ParsedExercise]
+}
+
+struct ParsedExercise {
+    let name: String
+    let sets: Int
+    let reps: String
+    let weight: String?
+    let restSeconds: Int?
+}
+
 // MARK: - Programs View (Redesigned)
 struct ProgramsView: View {
 
@@ -4521,6 +4538,68 @@ struct ExerciseStatCard: View {
         .padding(.vertical, 14)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// MARK: - Exercise Image Viewer
+
+struct ExerciseImageViewer: View {
+    let startImageName: String?
+    let endImageName: String?
+    let exerciseName: String
+    @Binding var selectedIndex: Int
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                TabView(selection: $selectedIndex) {
+                    if let startImage = startImageName {
+                        imageView(named: startImage, label: "Start Position")
+                            .tag(0)
+                    }
+                    if let endImage = endImageName {
+                        imageView(named: endImage, label: "End Position")
+                            .tag(1)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+            }
+            .navigationTitle(exerciseName)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarBackground(Color.black.opacity(0.8), for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+
+    @ViewBuilder
+    private func imageView(named imageName: String, label: String) -> some View {
+        VStack(spacing: 16) {
+            if let uiImage = UIImage(named: imageName) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .padding()
+            } else {
+                Image(systemName: "figure.strengthtraining.traditional")
+                    .font(.system(size: 80))
+                    .foregroundStyle(.secondary)
+            }
+
+            Text(label)
+                .font(.headline)
+                .foregroundStyle(.white)
+        }
     }
 }
 

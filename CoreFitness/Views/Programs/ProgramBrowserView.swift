@@ -16,6 +16,15 @@ struct ProgramBrowserView: View {
     @State private var showFilters = false
     @State private var selectedProgram: ProgramTemplate?
 
+    // Design system colors
+    private let pageBg = Color(hex: "050505")
+    private let cardBg = Color(hex: "111111")
+    private let coral = Color(hex: "ff6b6b")
+    private let cyan = Color(hex: "54a0ff")
+    private let gold = Color(hex: "feca57")
+    private let teal = Color(hex: "00d2d3")
+    private let lime = Color(hex: "1dd1a1")
+
     private var activeProgram: UserProgram? {
         userPrograms.first { $0.status == .active }
     }
@@ -51,7 +60,7 @@ struct ProgramBrowserView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.black.ignoresSafeArea()
+                pageBg.ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -72,18 +81,65 @@ struct ProgramBrowserView: View {
                                 }
                             }
                             .padding(12)
-                            .background(Color.white.opacity(0.1))
+                            .background(cardBg)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                            )
 
                             Button {
                                 showFilters.toggle()
                             } label: {
-                                Image(systemName: hasActiveFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                                    .font(.title2)
-                                    .foregroundStyle(hasActiveFilters ? .cyan : .gray)
+                                ZStack {
+                                    Image(systemName: "slider.horizontal.3")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundStyle(hasActiveFilters ? cyan : .white.opacity(0.6))
+
+                                    if hasActiveFilters {
+                                        Text("\(activeFilterCount)")
+                                            .font(.system(size: 10, weight: .bold))
+                                            .foregroundStyle(.white)
+                                            .frame(width: 16, height: 16)
+                                            .background(coral)
+                                            .clipShape(Circle())
+                                            .offset(x: 10, y: -10)
+                                    }
+                                }
+                                .frame(width: 44, height: 44)
+                                .background(cardBg)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                                )
                             }
                         }
                         .padding(.horizontal)
+
+                        // Quick Filter Pills
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                QuickFilterPill(
+                                    label: "All",
+                                    isSelected: selectedCategory == nil,
+                                    color: cyan
+                                ) {
+                                    selectedCategory = nil
+                                }
+
+                                ForEach(ExerciseCategory.allCases, id: \.self) { category in
+                                    QuickFilterPill(
+                                        label: category.displayName,
+                                        isSelected: selectedCategory == category,
+                                        color: categoryColor(category)
+                                    ) {
+                                        selectedCategory = selectedCategory == category ? nil : category
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
 
                         // Active Filters
                         if hasActiveFilters {
@@ -219,6 +275,14 @@ struct ProgramBrowserView: View {
         selectedCategory != nil || selectedDifficulty != nil || selectedGoal != nil
     }
 
+    private var activeFilterCount: Int {
+        var count = 0
+        if selectedCategory != nil { count += 1 }
+        if selectedDifficulty != nil { count += 1 }
+        if selectedGoal != nil { count += 1 }
+        return count
+    }
+
     private func clearFilters() {
         selectedCategory = nil
         selectedDifficulty = nil
@@ -227,24 +291,49 @@ struct ProgramBrowserView: View {
 
     private func categoryColor(_ category: ExerciseCategory) -> Color {
         switch category {
-        case .strength: return .blue
-        case .cardio: return .red
-        case .yoga: return .purple
-        case .pilates: return .teal
-        case .hiit: return .orange
-        case .stretching: return .green
-        case .running: return .yellow
-        case .cycling: return .blue
-        case .swimming: return .cyan
-        case .calisthenics: return .orange
+        case .strength: return cyan
+        case .cardio: return coral
+        case .yoga: return Color(hex: "a55eea")
+        case .pilates: return teal
+        case .hiit: return Color(hex: "ff9f43")
+        case .stretching: return lime
+        case .running: return gold
+        case .cycling: return cyan
+        case .swimming: return teal
+        case .calisthenics: return Color(hex: "ff9f43")
         }
     }
 
     private func difficultyColor(_ difficulty: Difficulty) -> Color {
         switch difficulty {
-        case .beginner: return .green
-        case .intermediate: return .orange
-        case .advanced: return .red
+        case .beginner: return lime
+        case .intermediate: return gold
+        case .advanced: return coral
+        }
+    }
+}
+
+// MARK: - Quick Filter Pill
+struct QuickFilterPill: View {
+    let label: String
+    let isSelected: Bool
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(isSelected ? .white : .white.opacity(0.6))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(isSelected ? color : Color(hex: "111111"))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(isSelected ? color : Color.white.opacity(0.06), lineWidth: 1)
+                )
         }
     }
 }
@@ -280,6 +369,14 @@ struct FeaturedProgramCard: View {
     let program: ProgramTemplate
     let onTap: () -> Void
 
+    // Design colors
+    private let cardBg = Color(hex: "111111")
+    private let coral = Color(hex: "ff6b6b")
+    private let cyan = Color(hex: "54a0ff")
+    private let gold = Color(hex: "feca57")
+    private let teal = Color(hex: "00d2d3")
+    private let lime = Color(hex: "1dd1a1")
+
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
@@ -293,16 +390,16 @@ struct FeaturedProgramCard: View {
 
                     Text(program.difficulty.displayName)
                         .font(.caption)
-                        .fontWeight(.semibold)
+                        .fontWeight(.bold)
                         .foregroundStyle(difficultyColor)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
                         .background(difficultyColor.opacity(0.2))
                         .clipShape(Capsule())
                 }
 
                 Text(program.name)
-                    .font(.headline)
+                    .font(.title3)
                     .fontWeight(.bold)
                     .foregroundStyle(.white)
                     .lineLimit(2)
@@ -310,57 +407,88 @@ struct FeaturedProgramCard: View {
 
                 Text(program.programDescription)
                     .font(.caption)
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.white.opacity(0.7))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
                 Spacer()
 
-                // Stats row
-                HStack(spacing: 16) {
-                    Label("\(program.durationWeeks)w", systemImage: "calendar")
-                    Label("\(program.workoutsPerWeek)/wk", systemImage: "figure.run")
+                // Stats badges
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "calendar")
+                            .font(.caption2)
+                        Text("\(program.durationWeeks) weeks")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(.white.opacity(0.8))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Capsule())
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "figure.run")
+                            .font(.caption2)
+                        Text("\(program.workoutsPerWeek)x/wk")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundStyle(.white.opacity(0.8))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Capsule())
                 }
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.7))
+
+                // Start Program button
+                Text("Start Program →")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(categoryColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
             }
-            .padding()
-            .frame(width: 240, height: 180)
+            .padding(20)
+            .frame(width: 280, height: 260)
             .background(
                 LinearGradient(
-                    colors: [categoryColor.opacity(0.3), categoryColor.opacity(0.1)],
+                    colors: [categoryColor.opacity(0.25), cardBg],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
             )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(categoryColor.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
             )
         }
     }
 
     private var categoryColor: Color {
         switch program.category {
-        case .strength: return .blue
-        case .cardio: return .red
-        case .yoga: return .purple
-        case .pilates: return .teal
-        case .hiit: return .orange
-        case .stretching: return .green
-        case .running: return .yellow
-        case .cycling: return .blue
-        case .swimming: return .cyan
-        case .calisthenics: return .orange
+        case .strength: return cyan
+        case .cardio: return coral
+        case .yoga: return Color(hex: "a55eea")
+        case .pilates: return teal
+        case .hiit: return Color(hex: "ff9f43")
+        case .stretching: return lime
+        case .running: return gold
+        case .cycling: return cyan
+        case .swimming: return teal
+        case .calisthenics: return Color(hex: "ff9f43")
         }
     }
 
     private var difficultyColor: Color {
         switch program.difficulty {
-        case .beginner: return .green
-        case .intermediate: return .orange
-        case .advanced: return .red
+        case .beginner: return lime
+        case .intermediate: return gold
+        case .advanced: return coral
         }
     }
 }
@@ -371,10 +499,18 @@ struct CategorySection: View {
     let programs: [ProgramTemplate]
     let onSelect: (ProgramTemplate) -> Void
 
+    // Design colors
+    private let coral = Color(hex: "ff6b6b")
+    private let cyan = Color(hex: "54a0ff")
+    private let gold = Color(hex: "feca57")
+    private let teal = Color(hex: "00d2d3")
+    private let lime = Color(hex: "1dd1a1")
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: category.icon)
+                    .font(.headline)
                     .foregroundStyle(categoryColor)
                 Text(category.displayName)
                     .font(.title3)
@@ -383,14 +519,14 @@ struct CategorySection: View {
                 Spacer()
                 Text("\(programs.count) programs")
                     .font(.caption)
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(.white.opacity(0.5))
             }
             .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(programs) { program in
-                        ProgramCard(program: program) {
+                        ProgramCard(program: program, categoryColor: categoryColor) {
                             onSelect(program)
                         }
                     }
@@ -402,16 +538,16 @@ struct CategorySection: View {
 
     private var categoryColor: Color {
         switch category {
-        case .strength: return .blue
-        case .cardio: return .red
-        case .yoga: return .purple
-        case .pilates: return .teal
-        case .hiit: return .orange
-        case .stretching: return .green
-        case .running: return .yellow
-        case .cycling: return .blue
-        case .swimming: return .cyan
-        case .calisthenics: return .orange
+        case .strength: return cyan
+        case .cardio: return coral
+        case .yoga: return Color(hex: "a55eea")
+        case .pilates: return teal
+        case .hiit: return Color(hex: "ff9f43")
+        case .stretching: return lime
+        case .running: return gold
+        case .cycling: return cyan
+        case .swimming: return teal
+        case .calisthenics: return Color(hex: "ff9f43")
         }
     }
 }
@@ -419,7 +555,14 @@ struct CategorySection: View {
 // MARK: - Program Card
 struct ProgramCard: View {
     let program: ProgramTemplate
+    var categoryColor: Color = .cyan
     let onTap: () -> Void
+
+    // Design colors
+    private let cardBg = Color(hex: "111111")
+    private let coral = Color(hex: "ff6b6b")
+    private let gold = Color(hex: "feca57")
+    private let lime = Color(hex: "1dd1a1")
 
     var body: some View {
         Button(action: onTap) {
@@ -432,7 +575,7 @@ struct ProgramCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(difficultyColor)
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.vertical, 4)
                         .background(difficultyColor.opacity(0.2))
                         .clipShape(Capsule())
                 }
@@ -446,27 +589,40 @@ struct ProgramCard: View {
 
                 Spacer()
 
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Text("\(program.durationWeeks)w")
                         .font(.caption2)
                     Text("•")
+                        .font(.caption2)
                     Text("\(program.workoutsPerWeek)x/wk")
                         .font(.caption2)
                 }
-                .foregroundStyle(.gray)
+                .foregroundStyle(.white.opacity(0.5))
             }
-            .padding(12)
-            .frame(width: 150, height: 110)
-            .background(Color.white.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(14)
+            .frame(width: 160, height: 120)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                VStack {
+                    categoryColor
+                        .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
         }
     }
 
     private var difficultyColor: Color {
         switch program.difficulty {
-        case .beginner: return .green
-        case .intermediate: return .orange
-        case .advanced: return .red
+        case .beginner: return lime
+        case .intermediate: return gold
+        case .advanced: return coral
         }
     }
 }
@@ -475,6 +631,14 @@ struct ProgramCard: View {
 struct ProgramGridCard: View {
     let program: ProgramTemplate
     let onTap: () -> Void
+
+    // Design colors
+    private let cardBg = Color(hex: "111111")
+    private let coral = Color(hex: "ff6b6b")
+    private let cyan = Color(hex: "54a0ff")
+    private let gold = Color(hex: "feca57")
+    private let teal = Color(hex: "00d2d3")
+    private let lime = Color(hex: "1dd1a1")
 
     var body: some View {
         Button(action: onTap) {
@@ -489,7 +653,7 @@ struct ProgramGridCard: View {
                         .fontWeight(.bold)
                         .foregroundStyle(difficultyColor)
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.vertical, 4)
                         .background(difficultyColor.opacity(0.2))
                         .clipShape(Capsule())
                 }
@@ -509,35 +673,39 @@ struct ProgramGridCard: View {
                     Label("\(program.workoutsPerWeek)x", systemImage: "figure.run")
                 }
                 .font(.caption2)
-                .foregroundStyle(.gray)
+                .foregroundStyle(.white.opacity(0.5))
             }
-            .padding(12)
-            .frame(height: 130)
-            .background(Color.white.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(14)
+            .frame(height: 140)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
         }
     }
 
     private var categoryColor: Color {
         switch program.category {
-        case .strength: return .blue
-        case .cardio: return .red
-        case .yoga: return .purple
-        case .pilates: return .teal
-        case .hiit: return .orange
-        case .stretching: return .green
-        case .running: return .yellow
-        case .cycling: return .blue
-        case .swimming: return .cyan
-        case .calisthenics: return .orange
+        case .strength: return cyan
+        case .cardio: return coral
+        case .yoga: return Color(hex: "a55eea")
+        case .pilates: return teal
+        case .hiit: return Color(hex: "ff9f43")
+        case .stretching: return lime
+        case .running: return gold
+        case .cycling: return cyan
+        case .swimming: return teal
+        case .calisthenics: return Color(hex: "ff9f43")
         }
     }
 
     private var difficultyColor: Color {
         switch program.difficulty {
-        case .beginner: return .green
-        case .intermediate: return .orange
-        case .advanced: return .red
+        case .beginner: return lime
+        case .intermediate: return gold
+        case .advanced: return coral
         }
     }
 }

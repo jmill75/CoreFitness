@@ -81,6 +81,52 @@ class AIProxyService: ObservableObject {
         return try await sendRequest(request, endpoint: "/tip")
     }
 
+    /// Parse a workout from file content (PDF, CSV, text, etc.)
+    func parseWorkout(fileContent: String, fileName: String, fileType: String, provider: AIProviderType? = nil) async throws -> WorkoutParseResult {
+        let activeProvider = provider ?? AIConfigManager.shared.currentProvider
+
+        let prompt = """
+            Parse the following \(fileType) workout file named "\(fileName)":
+
+            \(fileContent)
+            """
+
+        let request = AIRequest(
+            type: .workoutGeneration,
+            prompt: prompt,
+            systemPrompt: AISystemPrompts.workoutParsing,
+            provider: activeProvider
+        )
+        let response = try await sendRequest(request, endpoint: "/parse")
+
+        guard let data = response.content.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return WorkoutParseResult(parsed: nil, parseError: "Failed to parse workout response")
+        }
+
+        let parsed = ParsedWorkout(
+            name: json["name"] as? String ?? fileName.replacingOccurrences(of: ".\(fileType)", with: ""),
+            description: json["description"] as? String ?? "",
+            estimatedDuration: json["estimatedDuration"] as? Int ?? 45,
+            difficulty: json["difficulty"] as? String ?? "Intermediate",
+            exercises: parseExercisesFromJSON(json["exercises"] as? [[String: Any]] ?? [])
+        )
+
+        return WorkoutParseResult(parsed: parsed, parseError: nil)
+    }
+
+    private func parseExercisesFromJSON(_ jsonArray: [[String: Any]]) -> [ParsedExercise] {
+        return jsonArray.map { dict in
+            ParsedExercise(
+                name: dict["name"] as? String ?? "Unknown Exercise",
+                sets: dict["sets"] as? Int ?? 3,
+                reps: dict["reps"] as? String ?? "10",
+                weight: dict["weight"] as? String,
+                restSeconds: dict["restSeconds"] as? Int
+            )
+        }
+    }
+
     // MARK: - Private Methods
 
     private func sendRequest(_ aiRequest: AIRequest, endpoint: String) async throws -> AIResponse {
@@ -162,4 +208,11 @@ struct ProxyResponse: Codable {
 struct ProxyError: Codable {
     let code: String
     let message: String
+}
+
+// MARK: - Workout Parse Response Types
+
+struct WorkoutParseResult {
+    let parsed: ParsedWorkout?
+    let parseError: String?
 }

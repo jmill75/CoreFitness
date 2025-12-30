@@ -4,6 +4,12 @@ import Combine
 import HealthKit
 import UserNotifications
 
+// MARK: - Notification Names
+extension Notification.Name {
+    static let workoutSaved = Notification.Name("workoutSaved")
+    static let showSavedWorkouts = Notification.Name("showSavedWorkouts")
+}
+
 // MARK: - Workout Execution Phase
 enum WorkoutPhase: Equatable {
     case idle

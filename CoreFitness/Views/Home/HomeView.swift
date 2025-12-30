@@ -257,14 +257,14 @@ struct WelcomeHeader: View {
 
             Spacer()
 
-            // Notification Bell - dark style
+            // AI Insights Button - dark style
             Button {
                 showNotifications = true
             } label: {
                 ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell.fill")
+                    Image(systemName: "sparkles")
                         .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .foregroundStyle(Color(hex: "feca57"))
 
                     // Coral notification badge
                     if hasNotifications {
@@ -286,7 +286,7 @@ struct WelcomeHeader: View {
                         .stroke(Color.white.opacity(0.06), lineWidth: 1)
                 )
             }
-            .accessibilityLabel("Notifications")
+            .accessibilityLabel("AI Insights")
             .accessibilityHint(hasNotifications ? "You have unread notifications" : "No new notifications")
         }
         .padding(.top, 16)
@@ -1432,21 +1432,10 @@ struct WeekCalendarStrip: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Month header
-            HStack {
-                Text(monthYearText)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-
-            // Week days
-            HStack(spacing: 6) {
-                ForEach(weekDates, id: \.self) { date in
-                    DayScoreCell(date: date)
-                }
+        // Week days
+        HStack(spacing: 6) {
+            ForEach(weekDates, id: \.self) { date in
+                DayScoreCell(date: date)
             }
         }
     }

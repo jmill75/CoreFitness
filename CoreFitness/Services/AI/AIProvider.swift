@@ -135,4 +135,21 @@ struct AISystemPrompts {
         Keep responses brief (1-2 sentences), practical, and encouraging.
         Focus on actionable advice the user can apply immediately.
         """
+
+    static let workoutParsing = """
+        You are an expert at parsing workout routines from text.
+        Extract the workout name, description, estimated duration, difficulty level, and exercises.
+        For each exercise, extract: name, sets, reps, weight (if mentioned), and rest time.
+        Return the result as valid JSON with this structure:
+        {
+            "name": "Workout Name",
+            "description": "Brief description",
+            "estimatedDuration": 45,
+            "difficulty": "Beginner|Intermediate|Advanced",
+            "exercises": [
+                {"name": "Exercise Name", "sets": 3, "reps": "10", "weight": "135 lbs", "restSeconds": 60}
+            ]
+        }
+        Keep exercise names simple and standardized.
+        """
 }
