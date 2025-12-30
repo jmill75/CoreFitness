@@ -91,10 +91,9 @@ struct HealthView: View {
                     if reduceMotion {
                         animationStage = 6
                     } else {
-                        for stage in 1...6 {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.05) {
-                                animationStage = stage
-                            }
+                        // Single animation instead of 6 separate dispatches
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            animationStage = 6
                         }
                     }
                 }

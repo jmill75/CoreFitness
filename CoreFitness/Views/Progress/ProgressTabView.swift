@@ -69,26 +69,34 @@ private struct ProgressHeader: View {
     private let goldStart = Color(hex: "feca57")
     private let goldEnd = Color(hex: "ff9f43")
 
+    // MARK: - Cached Computed Properties (Performance Optimized)
+
     private var completedSessions: [WorkoutSession] {
         workoutSessions.filter { $0.status == .completed }
     }
 
+    // Optimized: Build Set of workout dates once, then check streak
     private var currentStreak: Int {
         let calendar = Calendar.current
+
+        // Build a Set of dates with workouts - O(n) once
+        let workoutDates: Set<Date> = Set(
+            completedSessions.compactMap { session in
+                guard let completed = session.completedAt else { return nil }
+                return calendar.startOfDay(for: completed)
+            }
+        )
+
+        guard !workoutDates.isEmpty else { return 0 }
+
         var streak = 0
         var checkDate = calendar.startOfDay(for: Date())
 
-        while true {
-            let hasWorkout = completedSessions.contains {
-                guard let completed = $0.completedAt else { return false }
-                return calendar.isDate(completed, inSameDayAs: checkDate)
-            }
-            if hasWorkout {
-                streak += 1
-                checkDate = calendar.date(byAdding: .day, value: -1, to: checkDate) ?? checkDate
-            } else {
-                break
-            }
+        // Now each lookup is O(1) instead of O(n)
+        while workoutDates.contains(checkDate) {
+            streak += 1
+            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
+            checkDate = previousDay
         }
         return streak
     }
@@ -97,12 +105,15 @@ private struct ProgressHeader: View {
         userAchievements.filter { $0.isComplete }.count
     }
 
+    // Optimized: Build dictionary lookup once - O(n) instead of O(n²)
     private var totalPoints: Int {
-        userAchievements
+        // Use reduce to safely handle duplicate keys (takes last value)
+        let pointsById = achievements.reduce(into: [String: Int]()) { dict, achievement in
+            dict[achievement.id] = achievement.points
+        }
+        return userAchievements
             .filter { $0.isComplete }
-            .compactMap { userAchievement in
-                achievements.first { $0.id == userAchievement.achievementId }?.points
-            }
+            .compactMap { pointsById[$0.achievementId] }
             .reduce(0, +)
     }
 
@@ -111,7 +122,7 @@ private struct ProgressHeader: View {
             // Title with gradient
             HStack {
                 Text("PROGRESS")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.white, goldStart],
@@ -466,17 +477,23 @@ private struct FeaturedAchievementSection: View {
     private let goldColor = Color(hex: "feca57")
     private let cyanColor = Color(hex: "54a0ff")
 
+    // Optimized: Build lookup dictionary once - O(n) instead of O(n²)
     private var nextAchievement: (achievement: Achievement, progress: Double)? {
+        // Build lookup dictionaries O(n) once - use reduce to safely handle duplicates
+        let userAchievementById = userAchievements.reduce(into: [String: UserAchievement]()) { dict, ua in
+            dict[ua.achievementId] = ua
+        }
+
         // Find the closest-to-complete unearned achievement
         let unearned = achievements.filter { achievement in
-            !achievement.isSecret && !isEarned(achievement.id)
+            !achievement.isSecret && !(userAchievementById[achievement.id]?.isComplete ?? false)
         }
 
         var closest: (Achievement, Double)? = nil
         var highestProgress: Double = -1
 
         for achievement in unearned {
-            let userProgress = userAchievements.first { $0.achievementId == achievement.id }?.progress ?? 0
+            let userProgress = userAchievementById[achievement.id]?.progress ?? 0  // O(1) lookup
             let progress = achievement.requirement > 0 ? Double(userProgress) / Double(achievement.requirement) : 0
 
             if progress > highestProgress {

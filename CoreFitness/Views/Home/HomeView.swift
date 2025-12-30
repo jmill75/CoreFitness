@@ -115,10 +115,9 @@ struct HomeView: View {
                         if reduceMotion {
                             animationStage = 5
                         } else {
-                            for stage in 1...5 {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.06) {
-                                    animationStage = stage
-                                }
+                            // Single animation instead of 5 separate dispatches
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                animationStage = 5
                             }
                         }
                     }
@@ -1342,6 +1341,7 @@ struct TodaysFocusCard: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var navigationState: NavigationState
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
+    @Query private var userPrograms: [UserProgram]
 
     let activeChallenges: [Challenge]
     let currentUserParticipant: (Challenge) -> ChallengeParticipant?
@@ -1349,13 +1349,30 @@ struct TodaysFocusCard: View {
     var onShowWorkoutPopup: ((Workout) -> Void)?
 
     @State private var showWorkoutExecution = false
+    @State private var workoutRefreshTrigger = UUID()
 
     private var activeSession: WorkoutSession? {
         workoutManager.currentSession
     }
 
+    // Get active program if any
+    private var activeUserProgram: UserProgram? {
+        userPrograms.first { $0.status == .active }
+    }
+
     private var currentWorkout: Workout? {
-        activeSession?.workout ?? workouts.first { $0.isActive }
+        // Priority: active session > explicitly active workout > first available workout if there's an active program
+        if let sessionWorkout = activeSession?.workout {
+            return sessionWorkout
+        }
+        if let activeWorkout = workouts.first(where: { $0.isActive }) {
+            return activeWorkout
+        }
+        // If there's an active program but no active workout, show the most recent workout
+        if activeUserProgram != nil {
+            return workouts.first
+        }
+        return nil
     }
 
     private var isWorkoutInProgress: Bool {
@@ -1417,6 +1434,13 @@ struct TodaysFocusCard: View {
                 .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
+        .id(workoutRefreshTrigger)
+        .onReceive(NotificationCenter.default.publisher(for: .workoutStarted)) { _ in
+            workoutRefreshTrigger = UUID()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .workoutCompleted)) { _ in
+            workoutRefreshTrigger = UUID()
+        }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = currentWorkout {
                 WorkoutExecutionView(workout: workout)

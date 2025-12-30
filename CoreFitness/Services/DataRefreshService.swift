@@ -6,6 +6,7 @@ import SwiftUI
 extension Notification.Name {
     static let dailyCheckInSaved = Notification.Name("dailyCheckInSaved")
     static let waterIntakeUpdated = Notification.Name("waterIntakeUpdated")
+    static let workoutStarted = Notification.Name("workoutStarted")
     static let workoutCompleted = Notification.Name("workoutCompleted")
     static let healthDataUpdated = Notification.Name("healthDataUpdated")
     static let challengeDataUpdated = Notification.Name("challengeDataUpdated")
@@ -42,6 +43,13 @@ class DataRefreshService: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.lastWaterUpdate = Date()
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: .workoutStarted)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.lastWorkoutUpdate = Date()
             }
             .store(in: &cancellables)
 

@@ -6,10 +6,14 @@ struct DailyCheckInView: View {
     // MARK: - Environment
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userProfileManager: UserProfileManager
+    @EnvironmentObject var authManager: AuthManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
 
+    // MARK: - Queries
+    @Query(filter: #Predicate<Challenge> { $0.isActive && !$0.isCompleted })
+    private var activeChallenges: [Challenge]
 
     // MARK: - State
     @State private var currentStep = 0
@@ -20,8 +24,10 @@ struct DailyCheckInView: View {
     @State private var isSaving = false
     @State private var showSuccess = false
     @State private var direction: TransitionDirection = .forward
+    @State private var shareToChallenge = false
+    @State private var shareWithFriends = false
 
-    private let totalSteps = 4
+    private let totalSteps = 5
 
     private var todayString: String {
         let formatter = DateFormatter()
@@ -127,6 +133,10 @@ struct DailyCheckInView: View {
                         // Step 3: Today's Focus
                         focusStep
                             .tag(3)
+
+                        // Step 4: Share
+                        shareStep
+                            .tag(4)
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentStep)
@@ -241,26 +251,62 @@ struct DailyCheckInView: View {
         }
     }
 
+    // MARK: - Step 4: Share
+    private var shareStep: some View {
+        CheckInStepView(
+            title: "Share your check-in?",
+            subtitle: "Let others know you're staying consistent"
+        ) {
+            VStack(spacing: 16) {
+                // Share to Challenge option (if active challenge exists)
+                if let challenge = activeChallenges.first {
+                    ShareOptionCard(
+                        isSelected: $shareToChallenge,
+                        icon: "trophy.fill",
+                        title: "Share to Challenge",
+                        subtitle: challenge.name,
+                        accentColor: Color(hex: "fbbf24")
+                    )
+                }
+
+                // Share with Friends option
+                ShareOptionCard(
+                    isSelected: $shareWithFriends,
+                    icon: "person.2.fill",
+                    title: "Share with Friends",
+                    subtitle: "Post to your activity feed",
+                    accentColor: Color(hex: "3b82f6")
+                )
+
+                // Skip hint
+                Text("You can skip this step if you prefer")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 8)
+            }
+        }
+    }
+
     // MARK: - Navigation Buttons
     private var navigationButtons: some View {
         HStack(spacing: 16) {
-            // Back button (hidden on first step)
-            Button {
-                themeManager.lightImpact()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    direction = .backward
-                    currentStep -= 1
+            // Back button (only shown after first step)
+            if currentStep > 0 {
+                Button {
+                    themeManager.lightImpact()
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        direction = .backward
+                        currentStep -= 1
+                    }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 56, height: 56)
+                        .background(Color(.systemGray5))
+                        .clipShape(Circle())
                 }
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(currentStep == 0 ? .clear : .primary)
-                    .frame(width: 56, height: 56)
-                    .background(currentStep == 0 ? .clear : Color(.systemGray5))
-                    .clipShape(Circle())
             }
-            .disabled(currentStep == 0)
-            .opacity(currentStep == 0 ? 0 : 1)
 
             // Next/Complete button
             Button {
@@ -286,7 +332,7 @@ struct DailyCheckInView: View {
                     }
                 }
                 .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: currentStep == 0 ? 200 : .infinity)
                 .frame(height: 56)
                 .background(
                     LinearGradient(
@@ -300,6 +346,7 @@ struct DailyCheckInView: View {
             .disabled(isSaving)
         }
         .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
         .padding(.bottom, 32)
         .padding(.top, 16)
     }
@@ -341,6 +388,16 @@ struct DailyCheckInView: View {
         // Save DailyHealthData
         saveDailyHealthData()
 
+        // Share to Challenge if selected
+        if shareToChallenge, let challenge = activeChallenges.first {
+            shareCheckInToChallenge(challenge)
+        }
+
+        // Share with Friends if selected
+        if shareWithFriends {
+            shareCheckInWithFriends()
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             isSaving = false
             themeManager.notifySuccess()
@@ -351,6 +408,72 @@ struct DailyCheckInView: View {
 
             NotificationCenter.default.post(name: .dailyCheckInSaved, object: nil)
         }
+    }
+
+    private func shareCheckInToChallenge(_ challenge: Challenge) {
+        guard let userId = authManager.currentUser?.id,
+              let participant = challenge.participants?.first(where: { $0.ownerId == userId }) else {
+            return
+        }
+
+        // Calculate day number in challenge
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let startDate = calendar.startOfDay(for: challenge.startDate)
+        let dayNumber = calendar.dateComponents([.day], from: startDate, to: today).day ?? 0
+
+        // Check if already logged today
+        if let existingLog = participant.dayLogs?.first(where: { $0.dayNumber == dayNumber }) {
+            // Update existing log with check-in data
+            existingLog.notes = "Check-in: \(moodFromValue(mood).rawValue), Energy: \(energy)/5, Focus: \(todayFocus.rawValue)"
+            if existingLog.activityData == nil {
+                let activityData = ChallengeActivityData()
+                activityData.stressLevel = (5 - mood) * 2
+                activityData.dayLog = existingLog
+                existingLog.activityData = activityData
+                modelContext.insert(activityData)
+            } else {
+                existingLog.activityData?.stressLevel = (5 - mood) * 2
+            }
+        } else {
+            // Create new day log
+            let dayLog = ChallengeDayLog(dayNumber: dayNumber, isCompleted: true)
+            dayLog.notes = "Check-in: \(moodFromValue(mood).rawValue), Energy: \(energy)/5, Focus: \(todayFocus.rawValue)"
+            dayLog.participant = participant
+
+            // Create activity data with wellness stats
+            let activityData = ChallengeActivityData()
+            activityData.stressLevel = (5 - mood) * 2
+            activityData.dayLog = dayLog
+            dayLog.activityData = activityData
+
+            modelContext.insert(dayLog)
+            modelContext.insert(activityData)
+
+            // Update participant stats
+            participant.logDay(day: dayNumber, completed: true, activityData: activityData)
+        }
+
+        try? modelContext.save()
+
+        // Post notification for challenge updates
+        NotificationCenter.default.post(name: .challengeDataUpdated, object: nil)
+    }
+
+    private func shareCheckInWithFriends() {
+        // Post a notification that the check-in was shared
+        // This could be picked up by an activity feed or social features
+        NotificationCenter.default.post(
+            name: .dailyCheckInSaved,
+            object: nil,
+            userInfo: [
+                "shared": true,
+                "mood": mood,
+                "energy": energy,
+                "focus": todayFocus.rawValue,
+                "streak": userProfileManager.checkInStreak
+            ]
+        )
     }
 
     private func moodFromValue(_ value: Int) -> Mood {
@@ -987,7 +1110,6 @@ enum TodayFocus: String, CaseIterable {
     case cardio = "Cardio"
     case recovery = "Recovery"
     case flexibility = "Flexibility"
-    case rest = "Rest"
 
     var icon: String {
         switch self {
@@ -995,7 +1117,6 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return "figure.run"
         case .recovery: return "bed.double.fill"
         case .flexibility: return "figure.yoga"
-        case .rest: return "moon.zzz.fill"
         }
     }
 
@@ -1005,7 +1126,6 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return Color(hex: "10b981")
         case .recovery: return Color(hex: "6366f1")
         case .flexibility: return Color(hex: "ec4899")
-        case .rest: return Color(hex: "8b5cf6")
         }
     }
 
@@ -1015,7 +1135,6 @@ enum TodayFocus: String, CaseIterable {
         case .cardio: return "Heart health & endurance"
         case .recovery: return "Rest & rejuvenate"
         case .flexibility: return "Stretch & mobility"
-        case .rest: return "Take the day off"
         }
     }
 }
@@ -1079,6 +1198,77 @@ struct FocusSelector: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+}
+
+// MARK: - Share Option Card
+struct ShareOptionCard: View {
+    @Binding var isSelected: Bool
+    let icon: String
+    let title: String
+    let subtitle: String
+    let accentColor: Color
+    @EnvironmentObject var themeManager: ThemeManager
+
+    var body: some View {
+        Button {
+            themeManager.lightImpact()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isSelected.toggle()
+            }
+        } label: {
+            HStack(spacing: 16) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(accentColor.opacity(isSelected ? 1 : 0.15))
+                        .frame(width: 50, height: 50)
+
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(isSelected ? .white : accentColor)
+                }
+
+                // Labels
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                // Checkbox
+                ZStack {
+                    Circle()
+                        .strokeBorder(isSelected ? accentColor : Color(.systemGray3), lineWidth: 2)
+                        .frame(width: 26, height: 26)
+
+                    if isSelected {
+                        Circle()
+                            .fill(accentColor)
+                            .frame(width: 26, height: 26)
+
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+                }
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(isSelected ? accentColor : .clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

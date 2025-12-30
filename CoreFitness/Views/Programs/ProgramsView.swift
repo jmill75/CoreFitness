@@ -51,6 +51,7 @@ struct ProgramsView: View {
     @State private var animationStage = 0
     @State private var selectedProgram: ProgramTemplate?
     @State private var showWorkoutExecution = false
+    @State private var workoutRefreshTrigger = UUID()
 
     // Segment options
     enum ProgramSegment: String, CaseIterable {
@@ -64,9 +65,20 @@ struct ProgramsView: View {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
 
-    // Get current workout - prioritize workoutManager's active session, then fallback to isActive flag
+    // Get current workout - prioritize workoutManager's active session, then fallback to isActive flag, then active program
     private var currentWorkout: Workout? {
-        workoutManager.currentSession?.workout ?? workouts.first { $0.isActive }
+        // Priority: active session > explicitly active workout > first available workout if there's an active program
+        if let sessionWorkout = workoutManager.currentSession?.workout {
+            return sessionWorkout
+        }
+        if let activeWorkout = workouts.first(where: { $0.isActive }) {
+            return activeWorkout
+        }
+        // If there's an active program but no active workout, show the most recent workout
+        if activeUserProgram != nil {
+            return workouts.first
+        }
+        return nil
     }
 
     // Check if workout is in progress
@@ -149,10 +161,9 @@ struct ProgramsView: View {
                 if reduceMotion {
                     animationStage = 5
                 } else {
-                    for stage in 1...5 {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + Double(stage) * 0.08) {
-                            animationStage = stage
-                        }
+                    // Single animation instead of 5 separate dispatches
+                    withAnimation(.easeOut(duration: 0.4)) {
+                        animationStage = 5
                     }
                 }
             }
@@ -206,6 +217,13 @@ struct ProgramsView: View {
                     showSavedPrograms = true
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .workoutStarted)) { _ in
+                workoutRefreshTrigger = UUID()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .workoutCompleted)) { _ in
+                workoutRefreshTrigger = UUID()
+            }
+            .id(workoutRefreshTrigger)
         }
     }
 
@@ -213,7 +231,7 @@ struct ProgramsView: View {
     private var cleanHeader: some View {
         HStack(alignment: .center) {
             Text("PROGRAMS")
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: 34, weight: .bold))
                 .tracking(-0.5)
                 .foregroundStyle(
                     LinearGradient(

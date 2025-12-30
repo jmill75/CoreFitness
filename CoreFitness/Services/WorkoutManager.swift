@@ -249,6 +249,12 @@ class WorkoutManager: ObservableObject {
             totalSets: totalSets
         )
 
+        // Post notification for UI updates across views
+        NotificationCenter.default.post(name: .workoutStarted, object: nil, userInfo: [
+            "sessionId": session.id,
+            "workoutId": workout.id
+        ])
+
         // Start countdown
         startCountdown()
     }
