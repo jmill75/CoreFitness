@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "Frog_Hops_1.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

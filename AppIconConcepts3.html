@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreFitness - CORE Pulse Variations</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@700;800;900&family=Bebas+Neue&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 40px;
+            color: white;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #007AFF, #34C759);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .icon-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .icon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 122, 255, 0.15);
+        }
+
+        .icon-wrapper {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .icon-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .icon-desc {
+            font-size: 0.9rem;
+            color: #888;
+            line-height: 1.4;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORE + Pulse Variations</h1>
+    <p class="subtitle">Variations of concept 18 with different colors and barbell options</p>
+
+    <div class="grid">
+        <!-- V1: Original Red/Orange -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF3B30"/>
+                            <stop offset="100%" style="stop-color:#FF9500"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#150a0a"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA1)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A1. Red/Orange Pulse</div>
+            <div class="icon-desc">Original warm gradient</div>
+        </div>
+
+        <!-- V2: Blue/Cyan -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#00C2FF"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f15"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA2)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA2)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A2. Blue/Cyan Pulse</div>
+            <div class="icon-desc">Cool blue gradient</div>
+        </div>
+
+        <!-- V3: Green/Teal -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA3" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#34C759"/>
+                            <stop offset="100%" style="stop-color:#00C2FF"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a1510"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA3)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA3)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A3. Green/Teal Pulse</div>
+            <div class="icon-desc">Fresh green gradient</div>
+        </div>
+
+        <!-- V4: Blue to Green -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA4" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f12"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA4)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA4)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A4. Blue→Green Pulse</div>
+            <div class="icon-desc">Brand colors gradient</div>
+        </div>
+
+        <!-- V5: Purple/Pink -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA5" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#AF52DE"/>
+                            <stop offset="100%" style="stop-color:#FF2D55"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#120a15"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA5)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA5)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A5. Purple/Pink Pulse</div>
+            <div class="icon-desc">Vibrant purple gradient</div>
+        </div>
+
+        <!-- V6: White/Silver -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradA6" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FFFFFF"/>
+                            <stop offset="100%" style="stop-color:#A0A0A0"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0a0a"/>
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradA6)">CORE</text>
+                    <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradA6)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">A6. Silver Pulse</div>
+            <div class="icon-desc">Clean monochrome</div>
+        </div>
+
+        <!-- B1: Blue/Green + Barbell Top -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f12"/>
+                    <!-- Barbell -->
+                    <rect x="45" y="35" width="110" height="12" rx="2" fill="url(#gradB1)"/>
+                    <rect x="30" y="28" width="22" height="26" rx="4" fill="url(#gradB1)"/>
+                    <rect x="148" y="28" width="22" height="26" rx="4" fill="url(#gradB1)"/>
+                    <!-- Text -->
+                    <text x="100" y="105" text-anchor="middle" font-family="Outfit, sans-serif" font-size="48" font-weight="800" fill="url(#gradB1)">CORE</text>
+                    <!-- Pulse -->
+                    <path d="M 30 145 L 55 145 L 70 125 L 85 165 L 100 135 L 115 155 L 130 145 L 170 145" fill="none" stroke="url(#gradB1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B1. Barbell Top</div>
+            <div class="icon-desc">Blue→Green with barbell above</div>
+        </div>
+
+        <!-- B2: Red/Orange + Barbell Top -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF3B30"/>
+                            <stop offset="100%" style="stop-color:#FF9500"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#150a0a"/>
+                    <!-- Barbell -->
+                    <rect x="45" y="35" width="110" height="12" rx="2" fill="url(#gradB2)"/>
+                    <rect x="30" y="28" width="22" height="26" rx="4" fill="url(#gradB2)"/>
+                    <rect x="148" y="28" width="22" height="26" rx="4" fill="url(#gradB2)"/>
+                    <!-- Text -->
+                    <text x="100" y="105" text-anchor="middle" font-family="Outfit, sans-serif" font-size="48" font-weight="800" fill="url(#gradB2)">CORE</text>
+                    <!-- Pulse -->
+                    <path d="M 30 145 L 55 145 L 70 125 L 85 165 L 100 135 L 115 155 L 130 145 L 170 145" fill="none" stroke="url(#gradB2)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B2. Barbell Top</div>
+            <div class="icon-desc">Red→Orange with barbell above</div>
+        </div>
+
+        <!-- B3: Green + Barbell Behind O -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB3" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#34C759"/>
+                            <stop offset="100%" style="stop-color:#00C2FF"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a1510"/>
+                    <!-- Barbell behind text -->
+                    <rect x="25" y="72" width="150" height="10" rx="2" fill="url(#gradB3)" opacity="0.3"/>
+                    <rect x="12" y="62" width="20" height="30" rx="4" fill="url(#gradB3)" opacity="0.3"/>
+                    <rect x="168" y="62" width="20" height="30" rx="4" fill="url(#gradB3)" opacity="0.3"/>
+                    <!-- Text -->
+                    <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradB3)">CORE</text>
+                    <!-- Pulse -->
+                    <path d="M 30 140 L 55 140 L 70 120 L 85 160 L 100 130 L 115 150 L 130 140 L 170 140" fill="none" stroke="url(#gradB3)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B3. Barbell Behind</div>
+            <div class="icon-desc">Subtle barbell watermark</div>
+        </div>
+
+        <!-- B4: Blue + Small Barbell Accent -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB4" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#5AC8FA"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f15"/>
+                    <!-- Text -->
+                    <text x="100" y="85" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradB4)">CORE</text>
+                    <!-- Small barbell icon -->
+                    <g transform="translate(100, 115)">
+                        <rect x="-30" y="-4" width="60" height="8" rx="2" fill="url(#gradB4)"/>
+                        <rect x="-38" y="-8" width="12" height="16" rx="3" fill="url(#gradB4)"/>
+                        <rect x="26" y="-8" width="12" height="16" rx="3" fill="url(#gradB4)"/>
+                    </g>
+                    <!-- Pulse -->
+                    <path d="M 30 155 L 55 155 L 70 138 L 85 172 L 100 148 L 115 165 L 130 155 L 170 155" fill="none" stroke="url(#gradB4)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B4. Mini Barbell</div>
+            <div class="icon-desc">Small barbell between text and pulse</div>
+        </div>
+
+        <!-- B5: Integrated Barbell in O -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB5" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f12"/>
+                    <!-- C -->
+                    <text x="42" y="95" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradB5)">C</text>
+                    <!-- O as barbell weight -->
+                    <circle cx="82" cy="75" r="20" fill="none" stroke="url(#gradB5)" stroke-width="8"/>
+                    <rect x="82" y="71" width="25" height="8" fill="url(#gradB5)"/>
+                    <!-- RE -->
+                    <text x="135" y="95" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradB5)">RE</text>
+                    <!-- Pulse -->
+                    <path d="M 30 145 L 55 145 L 70 125 L 85 165 L 100 135 L 115 155 L 130 145 L 170 145" fill="none" stroke="url(#gradB5)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B5. O = Weight</div>
+            <div class="icon-desc">O styled as barbell plate</div>
+        </div>
+
+        <!-- B6: Barbell Underline -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradB6" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#FF9500"/>
+                            <stop offset="100%" style="stop-color:#FF3B30"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#151008"/>
+                    <!-- Text -->
+                    <text x="100" y="80" text-anchor="middle" font-family="Outfit, sans-serif" font-size="50" font-weight="800" fill="url(#gradB6)">CORE</text>
+                    <!-- Barbell as underline -->
+                    <rect x="40" y="95" width="120" height="8" rx="2" fill="url(#gradB6)"/>
+                    <rect x="25" y="88" width="20" height="22" rx="4" fill="url(#gradB6)"/>
+                    <rect x="155" y="88" width="20" height="22" rx="4" fill="url(#gradB6)"/>
+                    <!-- Pulse -->
+                    <path d="M 30 150 L 55 150 L 70 130 L 85 170 L 100 140 L 115 160 L 130 150 L 170 150" fill="none" stroke="url(#gradB6)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">B6. Barbell Underline</div>
+            <div class="icon-desc">Barbell as text underline</div>
+        </div>
+
+        <!-- C1: Minimal with glow -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradC1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                        <filter id="glow1">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge>
+                                <feMergeNode in="blur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <rect width="200" height="200" fill="#050608"/>
+                    <g filter="url(#glow1)">
+                        <text x="100" y="90" text-anchor="middle" font-family="Outfit, sans-serif" font-size="52" font-weight="800" fill="url(#gradC1)">CORE</text>
+                        <path d="M 30 135 L 55 135 L 70 115 L 85 155 L 100 125 L 115 145 L 130 135 L 170 135" fill="none" stroke="url(#gradC1)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </g>
+                </svg>
+            </div>
+            <div class="icon-name">C1. Neon Glow</div>
+            <div class="icon-desc">Blue→Green with glow effect</div>
+        </div>
+
+        <!-- C2: Different font style -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradC2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#0a0f12"/>
+                    <text x="100" y="95" text-anchor="middle" font-family="Bebas Neue, sans-serif" font-size="68" font-weight="400" fill="url(#gradC2)">CORE</text>
+                    <path d="M 30 140 L 55 140 L 70 120 L 85 160 L 100 130 L 115 150 L 130 140 L 170 140" fill="none" stroke="url(#gradC2)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">C2. Bebas Font</div>
+            <div class="icon-desc">Tall condensed typography</div>
+        </div>
+
+        <!-- C3: Thicker pulse, bolder -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradC3" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#34C759"/>
+                            <stop offset="100%" style="stop-color:#007AFF"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="#081210"/>
+                    <text x="100" y="85" text-anchor="middle" font-family="Inter, sans-serif" font-size="50" font-weight="900" fill="url(#gradC3)">CORE</text>
+                    <path d="M 25 145 L 50 145 L 68 118 L 88 172 L 108 130 L 128 158 L 145 145 L 175 145" fill="none" stroke="url(#gradC3)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">C3. Bold Pulse</div>
+            <div class="icon-desc">Extra thick heartbeat line</div>
+        </div>
+
+        <!-- C4: Rounded friendly -->
+        <div class="icon-card">
+            <div class="icon-wrapper">
+                <svg viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="gradC4" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#5AC8FA"/>
+                            <stop offset="100%" style="stop-color:#34C759"/>
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" rx="0" fill="#0a1215"/>
+                    <!-- Rounded background shape -->
+                    <rect x="20" y="45" width="160" height="110" rx="20" fill="url(#gradC4)" opacity="0.1"/>
+                    <text x="100" y="95" text-anchor="middle" font-family="Outfit, sans-serif" font-size="48" font-weight="700" fill="url(#gradC4)">CORE</text>
+                    <path d="M 35 135 L 55 135 L 70 118 L 85 152 L 100 128 L 115 145 L 130 135 L 165 135" fill="none" stroke="url(#gradC4)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="icon-name">C4. Soft Container</div>
+            <div class="icon-desc">Subtle rounded background</div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.icon-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const name = card.querySelector('.icon-name').textContent;
+                alert(`Selected: ${name}\n\nLet me know and I'll generate the final 1024x1024 version!`);
+            });
+        });
+    </script>
+</body>
+</html>

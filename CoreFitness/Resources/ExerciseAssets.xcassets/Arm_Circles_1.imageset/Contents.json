@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "Arm_Circles_1.jpg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

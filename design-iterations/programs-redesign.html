@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Programs - Refined Layout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Core palette */
+            --bg-page: #050505;
+            --bg-card: #111111;
+            --bg-elevated: #1a1a1a;
+            --bg-subtle: #0d0d0d;
+
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.55);
+            --text-tertiary: rgba(255, 255, 255, 0.35);
+            --text-muted: rgba(255, 255, 255, 0.2);
+
+            /* Accents */
+            --coral: #ff6b6b;
+            --cyan: #54a0ff;
+            --gold: #feca57;
+            --teal: #00d2d3;
+            --lime: #1dd1a1;
+            --purple: #a55eea;
+
+            /* Spacing */
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 24px;
+            --space-xl: 32px;
+            --space-2xl: 48px;
+
+            /* Radius */
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Phone frame */
+        .phone-frame {
+            width: 393px;
+            min-height: 852px;
+            margin: 40px auto;
+            background: var(--bg-page);
+            border-radius: 50px;
+            border: 12px solid #1a1a1a;
+            overflow: hidden;
+            position: relative;
+            box-shadow:
+                0 50px 100px rgba(0,0,0,0.5),
+                inset 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        /* Dynamic Island */
+        .dynamic-island {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 126px;
+            height: 36px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 100;
+        }
+
+        /* Screen content */
+        .screen {
+            padding: 70px 0 100px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        /* ================================
+           HEADER - Clean & Minimal
+        ================================ */
+        .header {
+            padding: 0 var(--space-lg);
+            margin-bottom: var(--space-xl);
+        }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .page-title {
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-elevated);
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-secondary);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .icon-btn.primary {
+            background: var(--cyan);
+            border: none;
+        }
+
+        .icon-btn.primary svg {
+            stroke: #fff;
+        }
+
+        /* ================================
+           ACTIVE WORKOUT HERO
+           The star of the show
+        ================================ */
+        .active-hero {
+            margin: 0 var(--space-lg) var(--space-2xl);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .hero-accent {
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan) 0%, var(--lime) 100%);
+        }
+
+        .hero-content {
+            padding: var(--space-lg);
+        }
+
+        .hero-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--cyan);
+            margin-bottom: var(--space-md);
+        }
+
+        .hero-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-bottom: var(--space-xs);
+        }
+
+        .hero-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* Progress bar */
+        .progress-container {
+            margin-bottom: var(--space-lg);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: var(--space-sm);
+        }
+
+        .progress-label {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .progress-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan), var(--lime));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Hero stats */
+        .hero-stats {
+            display: flex;
+            gap: var(--space-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .hero-stat {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* Hero actions */
+        .hero-actions {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .btn-start {
+            flex: 1;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--lime) 0%, var(--teal) 100%);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-start:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* ================================
+           EMPTY STATE
+           When no active workout
+        ================================ */
+        .empty-hero {
+            margin: 0 var(--space-lg) var(--space-2xl);
+            padding: var(--space-2xl) var(--space-lg);
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .empty-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--space-md);
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .empty-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--text-tertiary);
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: var(--space-xs);
+            color: var(--text-secondary);
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: var(--text-tertiary);
+            margin-bottom: var(--space-lg);
+        }
+
+        .btn-browse {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--cyan);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        /* ================================
+           SECTION HEADERS
+           Minimal & clean
+        ================================ */
+        .section {
+            margin-bottom: var(--space-2xl);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--space-lg);
+            margin-bottom: var(--space-md);
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+        }
+
+        .section-action {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--cyan);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ================================
+           MY PROGRAMS
+           Clean minimal cards
+        ================================ */
+        .programs-scroll {
+            display: flex;
+            gap: var(--space-md);
+            padding: 0 var(--space-lg);
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .programs-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .program-card {
+            flex-shrink: 0;
+            width: 260px;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .program-card:hover {
+            border-color: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+
+        .program-accent {
+            height: 2px;
+        }
+
+        .program-accent.coral { background: var(--coral); }
+        .program-accent.gold { background: var(--gold); }
+        .program-accent.purple { background: var(--purple); }
+        .program-accent.teal { background: var(--teal); }
+
+        .program-content {
+            padding: var(--space-md);
+        }
+
+        .program-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: var(--space-xs);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .program-meta {
+            display: flex;
+            gap: var(--space-md);
+            font-size: 13px;
+            color: var(--text-tertiary);
+            margin-bottom: var(--space-md);
+        }
+
+        .program-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Muscle tags */
+        .muscle-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .muscle-tag {
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* Progress mini bar */
+        .program-progress {
+            margin-top: var(--space-md);
+            padding-top: var(--space-md);
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .program-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .program-progress-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .program-progress-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--lime);
+        }
+
+        .program-progress-bar {
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .program-progress-fill {
+            height: 100%;
+            background: var(--lime);
+            border-radius: 2px;
+        }
+
+        /* ================================
+           QUICK ACTIONS
+           Simple icon grid
+        ================================ */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-md);
+            padding: 0 var(--space-lg);
+        }
+
+        .quick-action {
+            aspect-ratio: 1;
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action:hover {
+            border-color: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quick-action-icon.cyan { background: linear-gradient(135deg, var(--cyan), #3d8bff); }
+        .quick-action-icon.purple { background: linear-gradient(135deg, var(--purple), #8854d0); }
+        .quick-action-icon.teal { background: linear-gradient(135deg, var(--teal), #00a8a8); }
+        .quick-action-icon.gold { background: linear-gradient(135deg, var(--gold), var(--coral)); }
+
+        .quick-action-icon svg {
+            width: 18px;
+            height: 18px;
+            stroke: #fff;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .quick-action-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        /* ================================
+           DISCOVER SECTION
+           Browse programs & challenges
+        ================================ */
+        .discover-cards {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-md);
+            padding: 0 var(--space-lg);
+        }
+
+        .discover-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .discover-card:hover {
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        .discover-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .discover-icon.lime { background: linear-gradient(135deg, var(--lime), var(--teal)); }
+        .discover-icon.gold { background: linear-gradient(135deg, var(--gold), var(--coral)); }
+
+        .discover-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #fff;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .discover-content {
+            flex: 1;
+        }
+
+        .discover-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .discover-subtitle {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .discover-arrow {
+            width: 32px;
+            height: 32px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .discover-arrow svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--text-tertiary);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* ================================
+           TAB BAR
+        ================================ */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 369px;
+            height: 85px;
+            padding: 0 24px 25px;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.2s ease;
+        }
+
+        .tab-item.active {
+            opacity: 1;
+        }
+
+        .tab-item svg {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+        }
+
+        .tab-item.active svg {
+            stroke: var(--cyan);
+        }
+
+        .tab-label {
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .tab-item.active .tab-label {
+            color: var(--cyan);
+        }
+
+        /* ================================
+           PAGE 2: EMPTY STATE VIEW
+        ================================ */
+        .page-divider {
+            margin: 80px 0;
+            padding: 40px 0;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .divider-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* ================================
+           ALTERNATE: LIST VIEW
+        ================================ */
+        .programs-list {
+            padding: 0 var(--space-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .program-row {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .program-row:hover {
+            border-color: rgba(255,255,255,0.08);
+        }
+
+        .row-accent {
+            width: 4px;
+            height: 44px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .row-accent.coral { background: var(--coral); }
+        .row-accent.gold { background: var(--gold); }
+        .row-accent.purple { background: var(--purple); }
+
+        .row-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .row-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .row-meta {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .row-chevron {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .row-chevron svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.05s; opacity: 0; }
+        .delay-2 { animation-delay: 0.1s; opacity: 0; }
+        .delay-3 { animation-delay: 0.15s; opacity: 0; }
+        .delay-4 { animation-delay: 0.2s; opacity: 0; }
+        .delay-5 { animation-delay: 0.25s; opacity: 0; }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+         VIEW 1: WITH ACTIVE WORKOUT
+    ======================================== -->
+    <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="screen">
+
+            <!-- Header -->
+            <header class="header animate-in delay-1">
+                <div class="header-row">
+                    <h1 class="page-title">Programs</h1>
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        </button>
+                        <button class="icon-btn primary">
+                            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Active Workout Hero -->
+            <div class="active-hero animate-in delay-2">
+                <div class="hero-accent"></div>
+                <div class="hero-content">
+                    <div class="hero-label">Active Workout</div>
+                    <h2 class="hero-title">Push Pull Legs</h2>
+                    <p class="hero-subtitle">Week 3 of 8 &bull; Day 2 &bull; Pull Day</p>
+
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span class="progress-label">Overall Progress</span>
+                            <span class="progress-value">31%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 31%"></div>
+                        </div>
+                    </div>
+
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <div class="stat-value">14</div>
+                            <div class="stat-label">Workouts Done</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="stat-value">6:42</div>
+                            <div class="stat-label">Total Hours</div>
+                        </div>
+                        <div class="hero-stat">
+                            <div class="stat-value">5</div>
+                            <div class="stat-label">Day Streak</div>
+                        </div>
+                    </div>
+
+                    <div class="hero-actions">
+                        <button class="btn-start">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            Start Workout
+                        </button>
+                        <button class="btn-secondary">Schedule</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Programs -->
+            <section class="section animate-in delay-3">
+                <div class="section-header">
+                    <span class="section-title">My Programs</span>
+                    <span class="section-action">See All <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span>
+                </div>
+                <div class="programs-scroll">
+                    <!-- Program Card 1 -->
+                    <div class="program-card">
+                        <div class="program-accent coral"></div>
+                        <div class="program-content">
+                            <div class="program-name">Upper Lower Split</div>
+                            <div class="program-meta">
+                                <span>6 weeks</span>
+                                <span>4x/week</span>
+                            </div>
+                            <div class="muscle-tags">
+                                <span class="muscle-tag">Chest</span>
+                                <span class="muscle-tag">Back</span>
+                                <span class="muscle-tag">Legs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Card 2 -->
+                    <div class="program-card">
+                        <div class="program-accent gold"></div>
+                        <div class="program-content">
+                            <div class="program-name">5x5 Strength</div>
+                            <div class="program-meta">
+                                <span>12 weeks</span>
+                                <span>3x/week</span>
+                            </div>
+                            <div class="muscle-tags">
+                                <span class="muscle-tag">Compound</span>
+                                <span class="muscle-tag">Strength</span>
+                            </div>
+                            <div class="program-progress">
+                                <div class="program-progress-header">
+                                    <span class="program-progress-label">Week 4/12</span>
+                                    <span class="program-progress-value">33%</span>
+                                </div>
+                                <div class="program-progress-bar">
+                                    <div class="program-progress-fill" style="width: 33%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Card 3 -->
+                    <div class="program-card">
+                        <div class="program-accent purple"></div>
+                        <div class="program-content">
+                            <div class="program-name">HIIT & Core</div>
+                            <div class="program-meta">
+                                <span>4 weeks</span>
+                                <span>5x/week</span>
+                            </div>
+                            <div class="muscle-tags">
+                                <span class="muscle-tag">Cardio</span>
+                                <span class="muscle-tag">Core</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="section animate-in delay-4">
+                <div class="section-header">
+                    <span class="section-title">Quick Actions</span>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action">
+                        <div class="quick-action-icon cyan">
+                            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                        </div>
+                        <span class="quick-action-label">Create</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon purple">
+                            <svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3m-3.5-6.5L16 7m-8 10-1.5 1.5M7 7l1.5 1.5m8 8L18 18"/></svg>
+                        </div>
+                        <span class="quick-action-label">AI Gen</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon teal">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </div>
+                        <span class="quick-action-label">Import</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon gold">
+                            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                        <span class="quick-action-label">Challenges</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Discover -->
+            <section class="section animate-in delay-5">
+                <div class="section-header">
+                    <span class="section-title">Discover</span>
+                </div>
+                <div class="discover-cards">
+                    <div class="discover-card">
+                        <div class="discover-icon lime">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                        </div>
+                        <div class="discover-content">
+                            <div class="discover-title">Browse Programs</div>
+                            <div class="discover-subtitle">100+ templates for every goal</div>
+                        </div>
+                        <div class="discover-arrow">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="discover-card">
+                        <div class="discover-icon gold">
+                            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                        <div class="discover-content">
+                            <div class="discover-title">Challenges</div>
+                            <div class="discover-subtitle">Compete with friends</div>
+                        </div>
+                        <div class="discover-arrow">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Tab Bar -->
+        <nav class="tab-bar">
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span class="tab-label">Home</span>
+            </div>
+            <div class="tab-item active">
+                <svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                <span class="tab-label">Programs</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <span class="tab-label">Progress</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <span class="tab-label">Health</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span class="tab-label">Settings</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Divider between views -->
+    <div class="page-divider">
+        <span class="divider-text">Empty State View</span>
+    </div>
+
+    <!-- ========================================
+         VIEW 2: EMPTY STATE (No Active Workout)
+    ======================================== -->
+    <div class="phone-frame">
+        <div class="dynamic-island"></div>
+        <div class="screen">
+
+            <!-- Header -->
+            <header class="header animate-in delay-1">
+                <div class="header-row">
+                    <h1 class="page-title">Programs</h1>
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        </button>
+                        <button class="icon-btn primary">
+                            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Empty State -->
+            <div class="empty-hero animate-in delay-2">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                </div>
+                <h3 class="empty-title">No Active Workout</h3>
+                <p class="empty-text">Start a program or create your own to begin tracking</p>
+                <button class="btn-browse">
+                    Browse Programs
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+            </div>
+
+            <!-- My Programs (List View) -->
+            <section class="section animate-in delay-3">
+                <div class="section-header">
+                    <span class="section-title">My Programs</span>
+                    <span class="section-action">3 saved</span>
+                </div>
+                <div class="programs-list">
+                    <div class="program-row">
+                        <div class="row-accent coral"></div>
+                        <div class="row-content">
+                            <div class="row-title">Upper Lower Split</div>
+                            <div class="row-meta">6 weeks &bull; 4x per week</div>
+                        </div>
+                        <div class="row-chevron">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="program-row">
+                        <div class="row-accent gold"></div>
+                        <div class="row-content">
+                            <div class="row-title">5x5 Strength</div>
+                            <div class="row-meta">12 weeks &bull; 3x per week</div>
+                        </div>
+                        <div class="row-chevron">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="program-row">
+                        <div class="row-accent purple"></div>
+                        <div class="row-content">
+                            <div class="row-title">HIIT & Core</div>
+                            <div class="row-meta">4 weeks &bull; 5x per week</div>
+                        </div>
+                        <div class="row-chevron">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="section animate-in delay-4">
+                <div class="section-header">
+                    <span class="section-title">Quick Actions</span>
+                </div>
+                <div class="quick-actions">
+                    <div class="quick-action">
+                        <div class="quick-action-icon cyan">
+                            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                        </div>
+                        <span class="quick-action-label">Create</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon purple">
+                            <svg viewBox="0 0 24 24"><path d="M12 3v3m0 12v3M3 12h3m12 0h3m-3.5-6.5L16 7m-8 10-1.5 1.5M7 7l1.5 1.5m8 8L18 18"/></svg>
+                        </div>
+                        <span class="quick-action-label">AI Gen</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon teal">
+                            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </div>
+                        <span class="quick-action-label">Import</span>
+                    </div>
+                    <div class="quick-action">
+                        <div class="quick-action-icon gold">
+                            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                        <span class="quick-action-label">Challenges</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Discover -->
+            <section class="section animate-in delay-5">
+                <div class="section-header">
+                    <span class="section-title">Discover</span>
+                </div>
+                <div class="discover-cards">
+                    <div class="discover-card">
+                        <div class="discover-icon lime">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                        </div>
+                        <div class="discover-content">
+                            <div class="discover-title">Browse Programs</div>
+                            <div class="discover-subtitle">100+ templates for every goal</div>
+                        </div>
+                        <div class="discover-arrow">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="discover-card">
+                        <div class="discover-icon gold">
+                            <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                        </div>
+                        <div class="discover-content">
+                            <div class="discover-title">Challenges</div>
+                            <div class="discover-subtitle">Compete with friends</div>
+                        </div>
+                        <div class="discover-arrow">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                    <div class="discover-card">
+                        <div class="discover-icon" style="background: linear-gradient(135deg, #00d2d3, #00a8a8);">
+                            <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11v11h-11z"/><path d="M6.5 6.5 3 10v9a2 2 0 0 0 2 2h9l3.5-3.5"/><path d="M6.5 6.5 10 3h9a2 2 0 0 1 2 2v9l-3.5 3.5"/></svg>
+                        </div>
+                        <div class="discover-content">
+                            <div class="discover-title">Exercise Library</div>
+                            <div class="discover-subtitle">1300+ exercises with demos</div>
+                        </div>
+                        <div class="discover-arrow">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Tab Bar -->
+        <nav class="tab-bar">
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span class="tab-label">Home</span>
+            </div>
+            <div class="tab-item active">
+                <svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                <span class="tab-label">Programs</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <span class="tab-label">Progress</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <span class="tab-label">Health</span>
+            </div>
+            <div class="tab-item">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span class="tab-label">Settings</span>
+            </div>
+        </nav>
+    </div>
+
+</body>
+</html>

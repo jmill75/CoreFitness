@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liquid Glass Quick Actions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-ambient: #0a0a0c;
+            --cyan: #54a0ff;
+            --cyan-glow: rgba(84, 160, 255, 0.4);
+            --purple: #a855f7;
+            --purple-glow: rgba(168, 85, 247, 0.4);
+            --teal: #00d2d3;
+            --teal-glow: rgba(0, 210, 211, 0.4);
+            --gold: #feca57;
+            --coral: #ff6b6b;
+            --gold-glow: rgba(254, 202, 87, 0.4);
+
+            /* Glass properties */
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-bg-hover: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --glass-shine: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: var(--bg-deep);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background effects */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(84, 160, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(168, 85, 247, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 210, 211, 0.02) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .page-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%;
+            max-width: 380px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quick-actions-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            max-width: 380px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .glass-action {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        /* Main glass panel */
+        .glass-action::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            background:
+                linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.08) 0%,
+                    rgba(255, 255, 255, 0.02) 50%,
+                    rgba(255, 255, 255, 0.04) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s ease;
+        }
+
+        /* Top shine edge */
+        .glass-action::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.25) 50%,
+                transparent 100%);
+            border-radius: 50%;
+            opacity: 0.8;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-action:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .glass-action:hover::before {
+            background:
+                linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.12) 0%,
+                    rgba(255, 255, 255, 0.04) 50%,
+                    rgba(255, 255, 255, 0.06) 100%);
+            border-color: var(--glass-border-hover);
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                0 0 60px var(--action-glow);
+        }
+
+        .glass-action:hover::after {
+            opacity: 1;
+        }
+
+        .glass-action:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
+        /* Inner content wrapper */
+        .action-inner {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 16px 8px;
+            gap: 10px;
+        }
+
+        /* Icon container with liquid effect */
+        .icon-orb {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Icon orb glass layer */
+        .icon-orb::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: linear-gradient(135deg,
+                var(--action-color-light) 0%,
+                var(--action-color) 100%);
+            opacity: 0.15;
+            transition: opacity 0.4s ease;
+        }
+
+        /* Icon orb inner glow */
+        .icon-orb::after {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            border-radius: 11px;
+            background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.2) 0%,
+                transparent 60%);
+            pointer-events: none;
+        }
+
+        .glass-action:hover .icon-orb {
+            transform: scale(1.1);
+        }
+
+        .glass-action:hover .icon-orb::before {
+            opacity: 0.25;
+        }
+
+        /* SVG Icons */
+        .icon-orb svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: var(--action-color);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            filter: drop-shadow(0 0 8px var(--action-glow));
+            transition: all 0.4s ease;
+        }
+
+        .glass-action:hover .icon-orb svg {
+            filter: drop-shadow(0 0 12px var(--action-color));
+        }
+
+        /* Filled icons */
+        .icon-orb svg.filled {
+            fill: var(--action-color);
+            stroke: none;
+        }
+
+        /* Label */
+        .action-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.3px;
+            transition: color 0.3s ease;
+        }
+
+        .glass-action:hover .action-label {
+            color: rgba(255, 255, 255, 0.75);
+        }
+
+        /* Color variants */
+        .glass-action.cyan {
+            --action-color: var(--cyan);
+            --action-color-light: rgba(84, 160, 255, 0.8);
+            --action-glow: var(--cyan-glow);
+        }
+
+        .glass-action.purple {
+            --action-color: var(--purple);
+            --action-color-light: rgba(168, 85, 247, 0.8);
+            --action-glow: var(--purple-glow);
+        }
+
+        .glass-action.teal {
+            --action-color: var(--teal);
+            --action-color-light: rgba(0, 210, 211, 0.8);
+            --action-glow: var(--teal-glow);
+        }
+
+        .glass-action.gold {
+            --action-color: var(--gold);
+            --action-color-light: rgba(254, 202, 87, 0.8);
+            --action-glow: var(--gold-glow);
+        }
+
+        /* Iridescent shimmer on hover */
+        .shimmer-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .shimmer-layer::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(255, 255, 255, 0.03) 60deg,
+                rgba(168, 85, 247, 0.05) 120deg,
+                rgba(84, 160, 255, 0.05) 180deg,
+                rgba(0, 210, 211, 0.05) 240deg,
+                rgba(254, 202, 87, 0.05) 300deg,
+                transparent 360deg
+            );
+            animation: shimmerRotate 8s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .glass-action:hover .shimmer-layer {
+            opacity: 1;
+        }
+
+        .glass-action:hover .shimmer-layer::before {
+            animation-play-state: running;
+        }
+
+        @keyframes shimmerRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Entrance animations */
+        .glass-action {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .glass-action:nth-child(1) { animation-delay: 0.1s; }
+        .glass-action:nth-child(2) { animation-delay: 0.2s; }
+        .glass-action:nth-child(3) { animation-delay: 0.3s; }
+        .glass-action:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Comparison section */
+        .comparison-section {
+            margin-top: 80px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.25);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        /* Alternative style - more frosted */
+        .style-variant {
+            margin-bottom: 60px;
+        }
+
+        .variant-label {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        /* Style 2: Deep frost */
+        .quick-actions-frost .glass-action::before {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.06) 0%,
+                    rgba(255, 255, 255, 0.01) 100%);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+        }
+
+        .quick-actions-frost .glass-action:hover::before {
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, 0.1) 0%,
+                    rgba(255, 255, 255, 0.03) 100%);
+        }
+
+        /* Style 3: Prismatic */
+        .quick-actions-prismatic .glass-action::before {
+            background:
+                linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.05) 0%,
+                    rgba(84, 160, 255, 0.03) 25%,
+                    rgba(168, 85, 247, 0.03) 50%,
+                    rgba(0, 210, 211, 0.03) 75%,
+                    rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+
+        .quick-actions-prismatic .glass-action:hover::before {
+            background:
+                linear-gradient(135deg,
+                    rgba(255, 255, 255, 0.08) 0%,
+                    rgba(84, 160, 255, 0.05) 25%,
+                    rgba(168, 85, 247, 0.05) 50%,
+                    rgba(0, 210, 211, 0.05) 75%,
+                    rgba(255, 255, 255, 0.08) 100%);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 420px) {
+            .quick-actions-container {
+                gap: 12px;
+            }
+
+            .glass-action {
+                border-radius: 16px;
+            }
+
+            .icon-orb {
+                width: 36px;
+                height: 36px;
+            }
+
+            .icon-orb svg {
+                width: 18px;
+                height: 18px;
+            }
+
+            .action-label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-title">Quick Actions</div>
+
+    <div class="quick-actions-container">
+        <!-- Create -->
+        <div class="glass-action cyan">
+            <div class="shimmer-layer"></div>
+            <div class="action-inner">
+                <div class="icon-orb">
+                    <svg viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
+                <span class="action-label">Create</span>
+            </div>
+        </div>
+
+        <!-- AI Gen -->
+        <div class="glass-action purple">
+            <div class="shimmer-layer"></div>
+            <div class="action-inner">
+                <div class="icon-orb">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"></path>
+                        <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"></path>
+                        <path d="M5 17l0.5 1.5L7 19l-1.5 0.5L5 21l-0.5-1.5L3 19l1.5-0.5L5 17z"></path>
+                    </svg>
+                </div>
+                <span class="action-label">AI Gen</span>
+            </div>
+        </div>
+
+        <!-- Import -->
+        <div class="glass-action teal">
+            <div class="shimmer-layer"></div>
+            <div class="action-inner">
+                <div class="icon-orb">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </div>
+                <span class="action-label">Import</span>
+            </div>
+        </div>
+
+        <!-- Challenges -->
+        <div class="glass-action gold">
+            <div class="shimmer-layer"></div>
+            <div class="action-inner">
+                <div class="icon-orb">
+                    <svg viewBox="0 0 24 24" class="filled">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 22V8a4 4 0 0 1 4 0v14"></path>
+                        <path d="M8 6h8a4 4 0 0 1-4 4 4 4 0 0 1-4-4z"></path>
+                        <path d="M12 10v4"></path>
+                    </svg>
+                </div>
+                <span class="action-label">Challenges</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alternative Styles -->
+    <div class="comparison-section">
+        <div class="section-title">Style Variations</div>
+
+        <!-- Deep Frost Style -->
+        <div class="style-variant">
+            <div class="variant-label">Deep Frost</div>
+            <div class="quick-actions-container quick-actions-frost">
+                <div class="glass-action cyan">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Create</span>
+                    </div>
+                </div>
+                <div class="glass-action purple">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"></path>
+                                <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">AI Gen</span>
+                    </div>
+                </div>
+                <div class="glass-action teal">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Import</span>
+                    </div>
+                </div>
+                <div class="glass-action gold">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24" class="filled">
+                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                                <path d="M4 22h16"></path>
+                                <path d="M10 22V8"></path>
+                                <path d="M14 22V8"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">Challenges</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prismatic Style -->
+        <div class="style-variant">
+            <div class="variant-label">Prismatic</div>
+            <div class="quick-actions-container quick-actions-prismatic">
+                <div class="glass-action cyan">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Create</span>
+                    </div>
+                </div>
+                <div class="glass-action purple">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"></path>
+                                <path d="M18 14l1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3z"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">AI Gen</span>
+                    </div>
+                </div>
+                <div class="glass-action teal">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <span class="action-label">Import</span>
+                    </div>
+                </div>
+                <div class="glass-action gold">
+                    <div class="shimmer-layer"></div>
+                    <div class="action-inner">
+                        <div class="icon-orb">
+                            <svg viewBox="0 0 24 24" class="filled">
+                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                                <path d="M4 22h16"></path>
+                                <path d="M10 22V8"></path>
+                                <path d="M14 22V8"></path>
+                            </svg>
+                        </div>
+                        <span class="action-label">Challenges</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

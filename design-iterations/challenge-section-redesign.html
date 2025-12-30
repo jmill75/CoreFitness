@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenge Section Redesign</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #050505;
+            --bg-card: #111111;
+            --bg-elevated: #161616;
+
+            --gold: #feca57;
+            --gold-deep: #e8b339;
+            --orange: #ff9f43;
+            --orange-deep: #e8893a;
+            --coral: #ff6b6b;
+            --cyan: #54a0ff;
+            --lime: #1dd1a1;
+
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-tertiary: rgba(255, 255, 255, 0.4);
+
+            --border-subtle: rgba(255, 255, 255, 0.04);
+
+            --font-display: 'Bebas Neue', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 60px;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 24px;
+            letter-spacing: 3px;
+            color: var(--text-tertiary);
+            text-align: center;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .option-label {
+            font-family: var(--font-display);
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 12px;
+        }
+
+        /* ============================================
+           BASE FOCUS CARD CONTAINER
+           ============================================ */
+        .focus-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .focus-workout {
+            padding: 24px;
+            position: relative;
+        }
+
+        .workout-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(84, 160, 255, 0.15);
+            border-radius: 20px;
+            font-size: 11px;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .workout-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .workout-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .workout-details {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2e86de 0%, var(--cyan) 100%);
+            border: none;
+            border-radius: 16px;
+            font-family: var(--font-display);
+            font-size: 18px;
+            letter-spacing: 2px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* ============================================
+           OPTION 1: GLOWING EMBER CARD
+           Gold gradient border with inner glow
+           ============================================ */
+        .challenge-ember {
+            margin: 0 16px 16px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(254, 202, 87, 0.08) 0%, rgba(255, 159, 67, 0.04) 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(254, 202, 87, 0.25);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .challenge-ember::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--orange));
+        }
+
+        .challenge-ember::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(254, 202, 87, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .challenge-ember:hover {
+            border-color: rgba(254, 202, 87, 0.4);
+            box-shadow: 0 0 30px rgba(254, 202, 87, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .challenge-ember-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .challenge-ember-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--gold-deep) 0%, var(--orange) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(254, 202, 87, 0.3);
+        }
+
+        .challenge-ember-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: white;
+        }
+
+        .challenge-ember-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .challenge-ember-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .challenge-ember-week {
+            font-size: 12px;
+            color: var(--gold);
+            font-weight: 500;
+        }
+
+        .challenge-ember-progress {
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .challenge-ember-value {
+            font-family: var(--font-display);
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .challenge-ember-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Progress bar for ember */
+        .challenge-ember-bar {
+            margin-top: 12px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        .challenge-ember-bar-fill {
+            height: 100%;
+            width: 90%;
+            background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--orange));
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .challenge-ember-bar-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -2px;
+            bottom: -2px;
+            width: 8px;
+            background: var(--orange);
+            border-radius: 4px;
+            box-shadow: 0 0 8px var(--orange);
+        }
+
+        /* ============================================
+           OPTION 2: BANNER STRIP
+           Full-width accent strip with gradient
+           ============================================ */
+        .challenge-banner {
+            background: linear-gradient(135deg, var(--gold-deep) 0%, var(--orange) 100%);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .challenge-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .challenge-banner:hover {
+            filter: brightness(1.1);
+        }
+
+        .challenge-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .challenge-banner-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .challenge-banner-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .challenge-banner-text h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1px;
+        }
+
+        .challenge-banner-text p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
+
+        .challenge-banner-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .challenge-banner-progress {
+            text-align: right;
+        }
+
+        .challenge-banner-progress strong {
+            font-family: var(--font-display);
+            font-size: 22px;
+            color: white;
+        }
+
+        .challenge-banner-progress span {
+            display: block;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .challenge-banner-arrow {
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .challenge-banner-arrow svg {
+            width: 14px;
+            height: 14px;
+            fill: white;
+        }
+
+        /* ============================================
+           OPTION 3: FLOATING PILL
+           Detached, floating element with ring progress
+           ============================================ */
+        .challenge-pill-container {
+            padding: 0 16px 16px;
+        }
+
+        .challenge-pill {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--bg-elevated);
+            border-radius: 50px;
+            border: 2px solid transparent;
+            background-image: linear-gradient(var(--bg-elevated), var(--bg-elevated)),
+                              linear-gradient(135deg, var(--gold), var(--orange));
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .challenge-pill:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(254, 202, 87, 0.2);
+        }
+
+        .challenge-pill-ring {
+            width: 42px;
+            height: 42px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .challenge-pill-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .challenge-pill-ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 4;
+        }
+
+        .challenge-pill-ring-progress {
+            fill: none;
+            stroke: url(#gold-gradient);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 113;
+            stroke-dashoffset: 11.3;
+        }
+
+        .challenge-pill-ring-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .challenge-pill-ring-center svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--gold);
+            transform: rotate(0deg);
+        }
+
+        .challenge-pill-info {
+            flex: 1;
+        }
+
+        .challenge-pill-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .challenge-pill-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .challenge-pill-meta strong {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .challenge-pill-arrow {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--gold-deep), var(--orange));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .challenge-pill-arrow svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.12);
+            margin: 0 20px;
+        }
+
+        /* SVG Defs */
+        .svg-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Gradient Definitions -->
+    <svg class="svg-defs">
+        <defs>
+            <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#e8b339"/>
+                <stop offset="50%" style="stop-color:#feca57"/>
+                <stop offset="100%" style="stop-color:#ff9f43"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <h1>CHALLENGE SECTION REDESIGN OPTIONS</h1>
+
+    <div class="options-grid">
+
+        <!-- OPTION 1: Glowing Ember Card -->
+        <div>
+            <div class="option-label">OPTION 1: GLOWING EMBER CARD</div>
+            <div class="focus-card">
+                <div class="focus-workout">
+                    <span class="workout-badge">Scheduled</span>
+                    <h3 class="workout-title">UPPER BODY POWER</h3>
+                    <div class="workout-details">
+                        <span>45 min</span>
+                        <span>8 exercises</span>
+                    </div>
+                    <button class="start-btn">START WORKOUT</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Challenge Section - Ember Style -->
+                <div class="challenge-ember">
+                    <div class="challenge-ember-content">
+                        <div class="challenge-ember-icon">
+                            <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/></svg>
+                        </div>
+                        <div class="challenge-ember-info">
+                            <div class="challenge-ember-name">December Strength</div>
+                            <div class="challenge-ember-week">Week 4 of 4</div>
+                        </div>
+                        <div class="challenge-ember-progress">
+                            <div class="challenge-ember-value">18/20</div>
+                            <div class="challenge-ember-label">workouts</div>
+                        </div>
+                    </div>
+                    <div class="challenge-ember-bar">
+                        <div class="challenge-ember-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTION 2: Banner Strip -->
+        <div>
+            <div class="option-label">OPTION 2: BOLD BANNER STRIP</div>
+            <div class="focus-card">
+                <div class="focus-workout">
+                    <span class="workout-badge">Scheduled</span>
+                    <h3 class="workout-title">UPPER BODY POWER</h3>
+                    <div class="workout-details">
+                        <span>45 min</span>
+                        <span>8 exercises</span>
+                    </div>
+                    <button class="start-btn">START WORKOUT</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Challenge Section - Banner Style -->
+                <div class="challenge-banner">
+                    <div class="challenge-banner-left">
+                        <div class="challenge-banner-icon">
+                            <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/></svg>
+                        </div>
+                        <div class="challenge-banner-text">
+                            <h4>December Strength</h4>
+                            <p>Week 4 of 4 - Almost there!</p>
+                        </div>
+                    </div>
+                    <div class="challenge-banner-right">
+                        <div class="challenge-banner-progress">
+                            <strong>18/20</strong>
+                            <span>workouts</span>
+                        </div>
+                        <div class="challenge-banner-arrow">
+                            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPTION 3: Floating Pill -->
+        <div>
+            <div class="option-label">OPTION 3: FLOATING PILL WITH RING</div>
+            <div class="focus-card">
+                <div class="focus-workout">
+                    <span class="workout-badge">Scheduled</span>
+                    <h3 class="workout-title">UPPER BODY POWER</h3>
+                    <div class="workout-details">
+                        <span>45 min</span>
+                        <span>8 exercises</span>
+                    </div>
+                    <button class="start-btn">START WORKOUT</button>
+                </div>
+
+                <div class="divider"></div>
+
+                <!-- Challenge Section - Pill Style -->
+                <div class="challenge-pill-container">
+                    <div class="challenge-pill">
+                        <div class="challenge-pill-ring">
+                            <svg width="42" height="42" viewBox="0 0 42 42">
+                                <circle class="challenge-pill-ring-bg" cx="21" cy="21" r="18"/>
+                                <circle class="challenge-pill-ring-progress" cx="21" cy="21" r="18"/>
+                            </svg>
+                            <div class="challenge-pill-ring-center">
+                                <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/></svg>
+                            </div>
+                        </div>
+                        <div class="challenge-pill-info">
+                            <div class="challenge-pill-name">December Strength</div>
+                            <div class="challenge-pill-meta">Week 4 of 4 &bull; <strong>18/20</strong> workouts</div>
+                        </div>
+                        <div class="challenge-pill-arrow">
+                            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Heart gradient - red top to darker red bottom -->
+    <linearGradient id="heartGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF4D6A"/>
+      <stop offset="100%" style="stop-color:#DC143C"/>
+    </linearGradient>
+
+    <!-- Dumbbell gradient - white/silver -->
+    <linearGradient id="dumbbellGradient" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#D4D4D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Black background with iOS rounded corners -->
+  <rect width="1024" height="1024" rx="230" fill="#1C1C1E"/>
+
+  <!-- Heart shape - centered, behind dumbbell -->
+  <path d="M 512 300
+           C 512 220, 620 180, 700 250
+           C 780 180, 888 220, 888 320
+           C 888 480, 640 680, 512 800
+           C 384 680, 136 480, 136 320
+           C 136 220, 244 180, 324 250
+           C 404 180, 512 220, 512 300"
+        fill="url(#heartGradient)"/>
+
+  <!-- Dumbbell -->
+  <!-- Left outer weight (small) -->
+  <rect x="148" y="430" width="50" height="140" rx="14" fill="url(#dumbbellGradient)"/>
+
+  <!-- Left inner weight (large) -->
+  <rect x="210" y="400" width="70" height="200" rx="16" fill="url(#dumbbellGradient)"/>
+
+  <!-- Bar (center) -->
+  <rect x="290" y="475" width="444" height="50" rx="10" fill="url(#dumbbellGradient)"/>
+
+  <!-- Right inner weight (large) -->
+  <rect x="744" y="400" width="70" height="200" rx="16" fill="url(#dumbbellGradient)"/>
+
+  <!-- Right outer weight (small) -->
+  <rect x="826" y="430" width="50" height="140" rx="14" fill="url(#dumbbellGradient)"/>
+</svg>

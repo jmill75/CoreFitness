@@ -12,8 +12,12 @@ struct DailyCheckInView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     // MARK: - Queries
-    @Query(filter: #Predicate<Challenge> { $0.isActive && !$0.isCompleted })
-    private var activeChallenges: [Challenge]
+    @Query(filter: #Predicate<Challenge> { $0.isActive })
+    private var allActiveChallenges: [Challenge]
+
+    private var activeChallenges: [Challenge] {
+        allActiveChallenges.filter { !$0.isCompleted }
+    }
 
     // MARK: - State
     @State private var currentStep = 0
