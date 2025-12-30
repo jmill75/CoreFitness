@@ -2232,24 +2232,28 @@ struct QuickWaterIntakeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Today's Progress Hero
-                    ZStack {
-                        // Background gradient
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.accentBlue, Color.accentTeal],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+            ZStack {
+                // Background droplets falling continuously
+                WaterDropletBackground()
 
-                        // Celebration water droplets
-                        if showCelebration {
-                            WaterDropletCelebration()
-                        }
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Today's Progress Hero
+                        ZStack {
+                            // Background gradient
+                            RoundedRectangle(cornerRadius: 28)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.accentBlue, Color.accentTeal],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+
+                            // Celebration water droplets
+                            if showCelebration {
+                                WaterDropletCelebration()
+                            }
 
                         VStack(spacing: 20) {
                             // Large progress ring
@@ -2431,6 +2435,7 @@ struct QuickWaterIntakeView: View {
                     .padding(.horizontal)
                 }
                 .padding(.vertical)
+                }
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Water Intake")
@@ -3027,6 +3032,83 @@ struct WaterDropletCelebration: View {
                 opacity: Double.random(in: 0.5...0.9)
             )
         }
+    }
+}
+
+// MARK: - Water Droplet Background (Continuous)
+struct WaterDropletBackground: View {
+    @State private var droplets: [ContinuousWaterDroplet] = []
+    @State private var dropletCounter = 0
+    let timer = Timer.publish(every: 0.3, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                ForEach(droplets) { droplet in
+                    ContinuousDropletView(droplet: droplet, screenHeight: geometry.size.height)
+                }
+            }
+            .onAppear {
+                // Create initial batch of droplets
+                for i in 0..<15 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2) {
+                        addDroplet(in: geometry.size)
+                    }
+                }
+            }
+            .onReceive(timer) { _ in
+                addDroplet(in: geometry.size)
+                // Clean up old droplets
+                droplets.removeAll { $0.createdAt.timeIntervalSinceNow < -5 }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func addDroplet(in size: CGSize) {
+        dropletCounter += 1
+        let droplet = ContinuousWaterDroplet(
+            id: dropletCounter,
+            x: CGFloat.random(in: 20...(size.width - 20)),
+            size: CGFloat.random(in: 6...14),
+            duration: Double.random(in: 3.0...5.0),
+            opacity: Double.random(in: 0.15...0.35),
+            createdAt: Date()
+        )
+        droplets.append(droplet)
+    }
+}
+
+struct ContinuousWaterDroplet: Identifiable {
+    let id: Int
+    let x: CGFloat
+    let size: CGFloat
+    let duration: Double
+    let opacity: Double
+    let createdAt: Date
+}
+
+struct ContinuousDropletView: View {
+    let droplet: ContinuousWaterDroplet
+    let screenHeight: CGFloat
+    @State private var yOffset: CGFloat = -50
+
+    var body: some View {
+        Image(systemName: "drop.fill")
+            .font(.system(size: droplet.size))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [Color.accentBlue.opacity(droplet.opacity), Color.accentTeal.opacity(droplet.opacity * 0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .position(x: droplet.x, y: yOffset)
+            .onAppear {
+                withAnimation(.linear(duration: droplet.duration)) {
+                    yOffset = screenHeight + 50
+                }
+            }
     }
 }
 
