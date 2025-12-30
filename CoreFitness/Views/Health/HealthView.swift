@@ -1485,7 +1485,7 @@ struct HealthMetricDetailView: View {
 
     @State private var historicalData: [Double] = []
     @State private var isLoading = true
-    @State private var selectedPeriod: TimePeriod = .week
+    @State private var selectedPeriod: TimePeriod = .day
 
     private let chartHeight: CGFloat = 200
 
