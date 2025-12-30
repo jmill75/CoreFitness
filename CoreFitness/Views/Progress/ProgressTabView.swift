@@ -64,10 +64,18 @@ private struct ProgressHeader: View {
     @Query private var workoutSessions: [WorkoutSession]
     @Query private var userAchievements: [UserAchievement]
     @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
+    @Query private var userPrograms: [UserProgram]
+
+    @State private var selectedSummary: SummaryTab = .allTime
 
     private let cardBg = Color(hex: "161616")
     private let goldStart = Color(hex: "feca57")
     private let goldEnd = Color(hex: "ff9f43")
+
+    private enum SummaryTab: String, CaseIterable {
+        case allTime = "All Time"
+        case currentProgram = "Current Program"
+    }
 
     // MARK: - Cached Computed Properties (Performance Optimized)
 
@@ -75,13 +83,26 @@ private struct ProgressHeader: View {
         workoutSessions.filter { $0.status == .completed }
     }
 
+    private var activeProgram: UserProgram? {
+        userPrograms.first { $0.status == .active }
+    }
+
+    // Program-specific sessions
+    private var programSessions: [WorkoutSession] {
+        guard let program = activeProgram else { return [] }
+        return completedSessions.filter { session in
+            guard let completedAt = session.completedAt else { return false }
+            return completedAt >= program.startDate
+        }
+    }
+
     // Optimized: Build Set of workout dates once, then check streak
     private var currentStreak: Int {
         let calendar = Calendar.current
+        let sessions = selectedSummary == .allTime ? completedSessions : programSessions
 
-        // Build a Set of dates with workouts - O(n) once
         let workoutDates: Set<Date> = Set(
-            completedSessions.compactMap { session in
+            sessions.compactMap { session in
                 guard let completed = session.completedAt else { return nil }
                 return calendar.startOfDay(for: completed)
             }
@@ -92,7 +113,6 @@ private struct ProgressHeader: View {
         var streak = 0
         var checkDate = calendar.startOfDay(for: Date())
 
-        // Now each lookup is O(1) instead of O(n)
         while workoutDates.contains(checkDate) {
             streak += 1
             guard let previousDay = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
@@ -107,7 +127,6 @@ private struct ProgressHeader: View {
 
     // Optimized: Build dictionary lookup once - O(n) instead of O(n²)
     private var totalPoints: Int {
-        // Use reduce to safely handle duplicate keys (takes last value)
         let pointsById = achievements.reduce(into: [String: Int]()) { dict, achievement in
             dict[achievement.id] = achievement.points
         }
@@ -117,8 +136,12 @@ private struct ProgressHeader: View {
             .reduce(0, +)
     }
 
+    private var workoutCount: Int {
+        selectedSummary == .allTime ? completedSessions.count : programSessions.count
+    }
+
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // Title with gradient
             HStack {
                 Text("PROGRESS")
@@ -135,93 +158,118 @@ private struct ProgressHeader: View {
             .padding(.horizontal)
             .padding(.top, 8)
 
-            // Stats Strip with accent bar
-            HStack(spacing: 0) {
-                StatStripItem(
-                    value: "\(currentStreak)",
-                    label: "Day Streak",
-                    icon: "flame.fill",
-                    color: Color(hex: "ff6b6b")
-                )
+            // Summary Section
+            VStack(spacing: 16) {
+                // Section Header with Segmented Control
+                HStack {
+                    Text("SUMMARY")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .tracking(1.5)
+                        .foregroundStyle(.white.opacity(0.5))
 
-                Divider()
-                    .frame(height: 32)
-                    .background(Color.white.opacity(0.15))
-
-                StatStripItem(
-                    value: "\(earnedCount)",
-                    label: "Trophies",
-                    icon: "trophy.fill",
-                    color: goldStart
-                )
-
-                Divider()
-                    .frame(height: 32)
-                    .background(Color.white.opacity(0.15))
-
-                StatStripItem(
-                    value: "\(totalPoints)",
-                    label: "Points",
-                    icon: "star.fill",
-                    color: Color(hex: "54a0ff")
-                )
-
-                Divider()
-                    .frame(height: 32)
-                    .background(Color.white.opacity(0.15))
-
-                StatStripItem(
-                    value: "\(completedSessions.count)",
-                    label: "Workouts",
-                    icon: "figure.strengthtraining.traditional",
-                    color: Color(hex: "1dd1a1")
-                )
-            }
-            .padding(.vertical, 16)
-            .background(cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(
-                VStack {
-                    LinearGradient(
-                        colors: [goldStart, goldEnd],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 3)
                     Spacer()
+
+                    // Segmented Picker
+                    HStack(spacing: 0) {
+                        ForEach(SummaryTab.allCases, id: \.self) { tab in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedSummary = tab
+                                }
+                            } label: {
+                                Text(tab.rawValue)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(selectedSummary == tab ? .white : .white.opacity(0.5))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        selectedSummary == tab ?
+                                        Color.white.opacity(0.15) : Color.clear
+                                    )
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                    .background(Color.white.opacity(0.08))
+                    .clipShape(Capsule())
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
-            )
-            .padding(.horizontal)
+                .padding(.horizontal)
+
+                // Stats Grid - 2x2 with bigger cards
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ], spacing: 12) {
+                    ProgressStatCard(
+                        value: "\(currentStreak)",
+                        label: "Day Streak",
+                        icon: "flame.fill",
+                        color: Color(hex: "ff6b6b")
+                    )
+
+                    ProgressStatCard(
+                        value: "\(earnedCount)",
+                        label: "Trophies",
+                        icon: "trophy.fill",
+                        color: goldStart
+                    )
+
+                    ProgressStatCard(
+                        value: "\(totalPoints)",
+                        label: "Points",
+                        icon: "star.fill",
+                        color: Color(hex: "54a0ff")
+                    )
+
+                    ProgressStatCard(
+                        value: "\(workoutCount)",
+                        label: "Workouts",
+                        icon: "figure.strengthtraining.traditional",
+                        color: Color(hex: "1dd1a1")
+                    )
+                }
+                .padding(.horizontal)
+            }
         }
     }
 }
 
-private struct StatStripItem: View {
+// MARK: - Progress Stat Card (Bigger)
+private struct ProgressStatCard: View {
     let value: String
     let label: String
     let icon: String
     let color: Color
 
+    private let cardBg = Color(hex: "161616")
+
     var body: some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(color)
-                Text(value)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-            }
+        VStack(spacing: 12) {
+            // Icon
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundStyle(color)
+
+            // Value
+            Text(value)
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+
+            // Label
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(color.opacity(0.3), lineWidth: 1)
+        )
     }
 }
 
