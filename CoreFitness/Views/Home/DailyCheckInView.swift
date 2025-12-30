@@ -10,6 +10,7 @@ struct DailyCheckInView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
 
+
     // MARK: - State
     @State private var currentStep = 0
     @State private var mood: Int = 3
@@ -468,12 +469,12 @@ struct MoodSelector: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.colorScheme) private var colorScheme
 
-    private let moods: [(emoji: String, label: String, color: Color, gradient: [Color])] = [
-        ("😫", "Rough", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")]),
-        ("😕", "Meh", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
-        ("😐", "Okay", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
-        ("😊", "Good", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
-        ("🤩", "Amazing", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")])
+    private let moods: [(icon: String, label: String, color: Color, gradient: [Color])] = [
+        ("cloud.rain.fill", "Rough", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")]),
+        ("cloud.fill", "Meh", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("cloud.sun.fill", "Okay", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
+        ("sun.max.fill", "Good", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("sparkles", "Amazing", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")])
     ]
 
     var body: some View {
@@ -523,9 +524,16 @@ struct MoodSelector: View {
                             )
                     )
 
-                // Emoji
-                Text(moods[selected - 1].emoji)
-                    .font(.system(size: 72))
+                // Icon
+                Image(systemName: moods[selected - 1].icon)
+                    .font(.system(size: 56, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: moods[selected - 1].gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .shadow(color: moods[selected - 1].color.opacity(0.5), radius: 10, x: 0, y: 0)
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
@@ -539,8 +547,8 @@ struct MoodSelector: View {
             // Mood selector pills
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { index in
-                    MoodPill(
-                        emoji: moods[index - 1].emoji,
+                    MoodIconPill(
+                        icon: moods[index - 1].icon,
                         color: moods[index - 1].color,
                         gradient: moods[index - 1].gradient,
                         isSelected: selected == index,
@@ -558,9 +566,9 @@ struct MoodSelector: View {
     }
 }
 
-// MARK: - Mood Pill Button
-struct MoodPill: View {
-    let emoji: String
+// MARK: - Mood Icon Pill Button (Professional, no emoji)
+struct MoodIconPill: View {
+    let icon: String
     let color: Color
     let gradient: [Color]
     let isSelected: Bool
@@ -607,9 +615,10 @@ struct MoodPill: View {
                         y: isSelected ? 4 : 0
                     )
 
-                // Emoji
-                Text(emoji)
-                    .font(.system(size: isSelected ? 32 : 28))
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: isSelected ? 24 : 20, weight: .medium))
+                    .foregroundStyle(isSelected ? .white : color)
                     .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
             }
             .frame(maxWidth: .infinity)
@@ -806,12 +815,12 @@ struct SorenessSelector: View {
     @EnvironmentObject var themeManager: ThemeManager
     @Environment(\.colorScheme) private var colorScheme
 
-    private let levels: [(emoji: String, label: String, description: String, color: Color, gradient: [Color])] = [
-        ("💪", "None", "Fresh and ready", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")]),
-        ("👍", "Mild", "Slight tightness", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
-        ("😐", "Moderate", "Manageable", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
-        ("😣", "Sore", "Needs attention", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
-        ("🤕", "Very Sore", "Recovery mode", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")])
+    private let levels: [(icon: String, label: String, description: String, color: Color, gradient: [Color])] = [
+        ("figure.strengthtraining.traditional", "None", "Fresh and ready", Color(hex: "10b981"), [Color(hex: "10b981"), Color(hex: "059669")]),
+        ("hand.thumbsup.fill", "Mild", "Slight tightness", Color(hex: "22c55e"), [Color(hex: "22c55e"), Color(hex: "16a34a")]),
+        ("minus.circle.fill", "Moderate", "Manageable", Color(hex: "eab308"), [Color(hex: "eab308"), Color(hex: "ca8a04")]),
+        ("exclamationmark.triangle.fill", "Sore", "Needs attention", Color(hex: "f97316"), [Color(hex: "f97316"), Color(hex: "ea580c")]),
+        ("bandage.fill", "Very Sore", "Recovery mode", Color(hex: "ef4444"), [Color(hex: "ef4444"), Color(hex: "dc2626")])
     ]
 
     var body: some View {
@@ -861,9 +870,16 @@ struct SorenessSelector: View {
                             )
                     )
 
-                // Emoji
-                Text(levels[selected - 1].emoji)
-                    .font(.system(size: 72))
+                // Icon
+                Image(systemName: levels[selected - 1].icon)
+                    .font(.system(size: 56, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: levels[selected - 1].gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .shadow(color: levels[selected - 1].color.opacity(0.5), radius: 10, x: 0, y: 0)
             }
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: selected)
@@ -883,8 +899,8 @@ struct SorenessSelector: View {
             // Soreness level pills
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { index in
-                    SorenessPill(
-                        emoji: levels[index - 1].emoji,
+                    SorenessIconPill(
+                        icon: levels[index - 1].icon,
                         color: levels[index - 1].color,
                         gradient: levels[index - 1].gradient,
                         isSelected: selected == index,
@@ -902,9 +918,9 @@ struct SorenessSelector: View {
     }
 }
 
-// MARK: - Soreness Pill Button
-struct SorenessPill: View {
-    let emoji: String
+// MARK: - Soreness Icon Pill Button (Professional, no emoji)
+struct SorenessIconPill: View {
+    let icon: String
     let color: Color
     let gradient: [Color]
     let isSelected: Bool
@@ -950,8 +966,9 @@ struct SorenessPill: View {
                         y: isSelected ? 4 : 0
                     )
 
-                Text(emoji)
-                    .font(.system(size: isSelected ? 32 : 28))
+                Image(systemName: icon)
+                    .font(.system(size: isSelected ? 24 : 20, weight: .medium))
+                    .foregroundStyle(isSelected ? .white : color)
                     .shadow(color: isSelected ? .black.opacity(0.3) : .clear, radius: 2, x: 0, y: 1)
             }
             .frame(maxWidth: .infinity)
@@ -1226,9 +1243,11 @@ struct AlreadyCheckedInView: View {
     let streak: Int
     let onDismiss: () -> Void
 
-    private let moodEmojis = ["", "😫", "😕", "😐", "😊", "🤩"]
+    private let moodIcons = ["", "cloud.rain.fill", "cloud.fill", "cloud.sun.fill", "sun.max.fill", "sparkles"]
+    private let moodColors: [Color] = [.clear, Color(hex: "ef4444"), Color(hex: "f97316"), Color(hex: "eab308"), Color(hex: "22c55e"), Color(hex: "10b981")]
     private let energyLabels = ["", "Drained", "Low", "Okay", "Good", "Charged"]
-    private let sorenessEmojis = ["", "💪", "👍", "😐", "😣", "🤕"]
+    private let sorenessIcons = ["", "figure.strengthtraining.traditional", "hand.thumbsup.fill", "minus.circle.fill", "exclamationmark.triangle.fill", "bandage.fill"]
+    private let sorenessColors: [Color] = [.clear, Color(hex: "10b981"), Color(hex: "22c55e"), Color(hex: "eab308"), Color(hex: "f97316"), Color(hex: "ef4444")]
 
     var body: some View {
         VStack(spacing: 32) {
@@ -1263,9 +1282,9 @@ struct AlreadyCheckedInView: View {
                     .font(.headline)
 
                 HStack(spacing: 24) {
-                    SummaryItem(emoji: moodEmojis[mood], label: "Mood")
-                    SummaryItem(emoji: "⚡", label: energyLabels[energy])
-                    SummaryItem(emoji: sorenessEmojis[soreness], label: "Soreness")
+                    SummaryIconItem(icon: moodIcons[mood], label: "Mood", color: moodColors[mood])
+                    SummaryIconItem(icon: "bolt.fill", label: energyLabels[energy], color: Color(hex: "eab308"))
+                    SummaryIconItem(icon: sorenessIcons[soreness], label: "Soreness", color: sorenessColors[soreness])
                 }
 
                 // Streak
@@ -1304,14 +1323,16 @@ struct AlreadyCheckedInView: View {
     }
 }
 
-struct SummaryItem: View {
-    let emoji: String
+struct SummaryIconItem: View {
+    let icon: String
     let label: String
+    let color: Color
 
     var body: some View {
         VStack(spacing: 6) {
-            Text(emoji)
-                .font(.largeTitle)
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(color)
             Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)

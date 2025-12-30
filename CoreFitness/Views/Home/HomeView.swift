@@ -1167,235 +1167,17 @@ struct TodayRecoverySection: View {
                 Spacer()
             }
 
-            // Recovery Card
-            TodayRecoveryCard(selectedTab: $selectedTab)
+            // Recovery Card (shared component)
+            RecoveryCard {
+                selectedTab = .health
+            }
         }
         .padding(.top, 8)
         .padding(.bottom, 8)
     }
 }
 
-// MARK: - Today's Recovery Card (Large Hero Card)
-struct TodayRecoveryCard: View {
-    @EnvironmentObject var healthKitManager: HealthKitManager
-    @Environment(\.accessibilityReduceMotion) var reduceMotion
-    @Binding var selectedTab: Tab
-    @State private var isPressed = false
-
-    // Vibrant coral accent colors
-    private let coralStart = Color(hex: "e85555")
-    private let coralEnd = Color(hex: "ff6b6b")
-    private let cardBg = Color(hex: "161616")
-
-    private var score: Int {
-        healthKitManager.calculateOverallScore()
-    }
-
-    private var scoreMessage: String {
-        if !healthKitManager.isAuthorized { return "Connect Health" }
-        switch score {
-        case 80...100: return "Crushing it!"
-        case 60..<80: return "Good recovery"
-        case 40..<60: return "Take it easy"
-        default: return "Rest day"
-        }
-    }
-
-    var body: some View {
-        Button {
-            selectedTab = .health
-        } label: {
-            VStack(spacing: 20) {
-                // Top row: Score Ring + Info
-                HStack(spacing: 16) {
-                    // Large Score Ring
-                    ZStack {
-                        Circle()
-                            .stroke(Color.white.opacity(0.15), lineWidth: 10)
-                            .frame(width: 100, height: 100)
-
-                        Circle()
-                            .trim(from: 0, to: healthKitManager.isAuthorized ? CGFloat(score) / 100.0 : 0)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [coralStart, coralEnd, Color(hex: "ff9f43")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                style: StrokeStyle(lineWidth: 10, lineCap: .round)
-                            )
-                            .frame(width: 100, height: 100)
-                            .rotationEffect(.degrees(-90))
-
-                        VStack(spacing: 0) {
-                            Text(healthKitManager.isAuthorized ? "\(score)" : "--")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(Color(hex: "ff6b6b"))
-                            Text("score")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white.opacity(0.5))
-                        }
-                    }
-
-                    // Info
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(scoreMessage)
-                            .font(.title2)
-                            .fontWeight(.bold)
-
-                        Spacer().frame(height: 4)
-
-                        HStack(spacing: 4) {
-                            Text("View Details")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                            Image(systemName: "arrow.right")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    Spacer()
-                }
-
-                // Recovery Stats - Individual cards with colored bottom accents
-                HStack(spacing: 12) {
-                    MetricCard(value: hrvValue, label: "HRV", accentColor: Color(hex: "ff6b6b"))
-                    MetricCard(value: sleepValue, label: "Sleep", accentColor: Color(hex: "00d2d3"))
-                    MetricCard(value: hrValue, label: "Rest HR", accentColor: Color(hex: "54a0ff"))
-                }
-            }
-            .foregroundStyle(.white)
-            .padding(20)
-            .frame(maxWidth: .infinity)
-            .background(cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .overlay(
-                // Coral accent bar at top
-                VStack {
-                    LinearGradient(
-                        colors: [coralStart, coralEnd, Color(hex: "ff9f43")],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 3)
-                    Spacer()
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 24))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.3), radius: 12, y: 6)
-            .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
-            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
-        }
-        .buttonStyle(.plain)
-        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
-            if !reduceMotion {
-                isPressed = pressing
-            }
-        }, perform: {})
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Today's Recovery Score")
-        .accessibilityValue(healthKitManager.isAuthorized ? "\(score) out of 100. \(scoreMessage)" : "Not connected. Connect Health app to see your score.")
-        .accessibilityHint("Double tap to view detailed recovery metrics")
-        .accessibilityAddTraits(.isButton)
-    }
-
-    private var stepsValue: String {
-        guard let steps = healthKitManager.healthData.steps else { return "--" }
-        if steps >= 1000 {
-            return String(format: "%.1fk", Double(steps) / 1000.0)
-        }
-        return "\(steps)"
-    }
-
-    private var caloriesValue: String {
-        guard let cals = healthKitManager.healthData.activeCalories else { return "--" }
-        return "\(Int(cals))"
-    }
-
-    private var sleepValue: String {
-        guard let hours = healthKitManager.healthData.sleepHours else { return "--" }
-        return String(format: "%.1fh", hours)
-    }
-
-    private var hrvValue: String {
-        guard let hrv = healthKitManager.healthData.hrv else { return "--" }
-        return "\(Int(hrv))"
-    }
-
-    private var hrValue: String {
-        guard let hr = healthKitManager.healthData.restingHeartRate else { return "--" }
-        return "\(Int(hr))"
-    }
-
-    private var waterValue: String {
-        guard let water = healthKitManager.healthData.waterIntake else { return "--" }
-        let cups = water / 8.0 // Convert oz to cups (8oz per cup)
-        return String(format: "%.1f", cups)
-    }
-
-    private var readinessValue: String {
-        // Calculate readiness based on HRV and sleep
-        guard healthKitManager.isAuthorized else { return "--" }
-        let hrvScore = min(100, max(0, (healthKitManager.healthData.hrv ?? 40) / 80 * 100))
-        let sleepScore = min(100, max(0, (healthKitManager.healthData.sleepHours ?? 6) / 8 * 100))
-        let readiness = Int((hrvScore + sleepScore) / 2)
-        return "\(readiness)%"
-    }
-
-    private var trendValue: String {
-        // Show trend based on score comparison (simplified)
-        guard healthKitManager.isAuthorized else { return "--" }
-        if score >= 70 { return "↑" }
-        if score >= 50 { return "→" }
-        return "↓"
-    }
-}
-
-// Individual metric card with colored bottom accent (matches HTML design)
-struct MetricCard: View {
-    let value: String
-    let label: String
-    let accentColor: Color
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundStyle(accentColor)
-            Text(label.uppercased())
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.white.opacity(0.4))
-                .tracking(0.5)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 8)
-        .background(Color(hex: "111111"))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            VStack {
-                Spacer()
-                accentColor
-                    .frame(height: 2)
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(label)
-        .accessibilityValue(value == "--" ? "No data available" : value)
-    }
-}
+// TodayRecoveryCard removed - now using shared RecoveryCard component from Components/RecoveryCard.swift
 
 // Compact health stat for grid layout
 struct HealthStatItem: View {
@@ -1770,61 +1552,138 @@ struct TodaysFocusCard: View {
         }
     }
 
-    // MARK: - Challenge Section
+    // MARK: - Challenge Section (Glowing Ember Card Style)
     private func challengeSection(_ challenge: Challenge) -> some View {
         let participant = currentUserParticipant(challenge)
         let completedDays = participant?.completedDays ?? 0
+        let progress = Double(completedDays) / Double(max(1, challenge.durationDays))
+        let currentWeek = min(4, (challenge.currentDay / 7) + 1)
+        let totalWeeks = max(1, challenge.durationDays / 7)
 
         return Button {
             themeManager.mediumImpact()
             selectedTab = .programs
             navigationState.showChallenges = true
         } label: {
-            HStack(spacing: 12) {
-                // Gold trophy icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(
-                            LinearGradient(
-                                colors: [goldAccent, Color(hex: "ff9f43")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 40, height: 40)
+            VStack(alignment: .leading, spacing: 14) {
+                // Badge: Active Challenge
+                HStack(spacing: 6) {
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("ACTIVE CHALLENGE")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1.5)
+                }
+                .foregroundStyle(goldAccent)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(goldAccent.opacity(0.2))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                // Main content row
+                HStack(spacing: 14) {
+                    // Trophy icon in gradient box
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "e8b339"), Color(hex: "ff9f43")],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 46, height: 46)
+                            .shadow(color: goldAccent.opacity(0.35), radius: 8, x: 0, y: 4)
+
+                        Image(systemName: "trophy.fill")
+                            .font(.system(size: 22, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+
+                    // Challenge info
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(challenge.name)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+
+                        Text("Week \(currentWeek) of \(totalWeeks)")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(goldAccent)
+                    }
+
+                    Spacer()
+
+                    // Workout count
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("\(completedDays)/\(challenge.durationDays)")
+                            .font(.system(size: 22, weight: .bold, design: .monospaced))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [goldAccent, Color(hex: "ff9f43")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+
+                        Text("workouts")
+                            .font(.system(size: 10, weight: .semibold))
+                            .tracking(1)
+                            .foregroundStyle(.white.opacity(0.4))
+                            .textCase(.uppercase)
+                    }
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(challenge.name)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
+                // Progress bar with glowing dot
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 6)
 
-                    Text("Week \(min(4, (challenge.currentDay / 7) + 1)) of \(challenge.durationDays / 7)")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.6))
+                        // Progress fill
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: "e8b339"), goldAccent, Color(hex: "ff9f43")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geo.size.width * progress, height: 6)
+
+                        // Glowing dot at the end of progress
+                        if progress > 0 {
+                            Circle()
+                                .fill(Color(hex: "ff9f43"))
+                                .frame(width: 12, height: 12)
+                                .shadow(color: Color(hex: "ff9f43"), radius: 6)
+                                .shadow(color: goldAccent, radius: 2)
+                                .offset(x: max(0, geo.size.width * progress - 6))
+                        }
+                    }
                 }
-
-                Spacer()
-
-                // Gold progress text
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(completedDays)/\(challenge.durationDays)")
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .foregroundStyle(goldAccent)
-
-                    Text("workouts")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.5))
-                }
+                .frame(height: 12)
             }
         }
         .buttonStyle(.plain)
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [
+                    goldAccent.opacity(0.12),
+                    Color(hex: "ff9f43").opacity(0.06)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(goldAccent.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private func calculateRank(for participant: ChallengeParticipant?, in challenge: Challenge) -> Int {

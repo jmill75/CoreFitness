@@ -111,7 +111,7 @@ private struct ProgressHeader: View {
             // Title with gradient
             HStack {
                 Text("PROGRESS")
-                    .font(.system(size: 34, weight: .bold))
+                    .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.white, goldStart],
@@ -168,7 +168,7 @@ private struct ProgressHeader: View {
             }
             .padding(.vertical, 16)
             .background(cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
             .overlay(
                 VStack {
                     LinearGradient(
@@ -179,10 +179,10 @@ private struct ProgressHeader: View {
                     .frame(height: 3)
                     Spacer()
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 20)
                     .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
             )
             .padding(.horizontal)
@@ -438,7 +438,7 @@ private struct ActiveProgramCard: View {
         }
         .padding(20)
         .background(cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             VStack {
                 LinearGradient(
@@ -449,10 +449,10 @@ private struct ActiveProgramCard: View {
                 .frame(height: 3)
                 Spacer()
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22)
+            RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
         )
     }
@@ -649,7 +649,7 @@ private struct FeaturedAchievementCard: View {
         }
         .padding(20)
         .background(cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
             VStack {
                 LinearGradient(
@@ -660,10 +660,10 @@ private struct FeaturedAchievementCard: View {
                 .frame(height: 3)
                 Spacer()
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22)
+            RoundedRectangle(cornerRadius: 20)
                 .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
         )
     }

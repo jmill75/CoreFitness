@@ -81,6 +81,7 @@
 		A100005A /* MusicService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005A /* MusicService.swift */; };
 		A100005B /* AnimatedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005B /* AnimatedComponents.swift */; };
 		A100005E /* WaterIntakeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200005E /* WaterIntakeManager.swift */; };
+		A88C4D597EE0D6C22205CB09 /* RecoveryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9DB23176C1B840FEC1EEEA7 /* RecoveryCard.swift */; };
 		B19D8DF0FB3D5AF6F0E7E9D4 /* RestDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 128069D38F1CB7F88EB0C832 /* RestDay.swift */; };
 		B4258C95994741A30DDB97AC /* WorkoutInvitation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF46D85E08F9C708832915F0 /* WorkoutInvitation.swift */; };
 		BEDECC4398743C0955939EF5 /* AIInsightsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADC099AE108C90A731056258 /* AIInsightsService.swift */; };
@@ -252,6 +253,7 @@
 		CF2C52A1BAFEDFFCB33C6961 /* ProgramBrowserView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProgramBrowserView.swift; path = ProgramBrowserView.swift; sourceTree = "<group>"; };
 		E20C834047ACB1A82DFBF0D7 /* UserProfileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileManager.swift; sourceTree = "<group>"; };
 		E3825E0F42746AE16DF386DA /* AIProxyService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AIProxyService.swift; sourceTree = "<group>"; };
+		E9DB23176C1B840FEC1EEEA7 /* RecoveryCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RecoveryCard.swift; sourceTree = "<group>"; };
 		F13E02CFA94D1CF3E8536CE1 /* WorkoutRecoveryCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutRecoveryCard.swift; sourceTree = "<group>"; };
 		F73C06167BE142294FE4DC6B /* RestDaySheet.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RestDaySheet.swift; sourceTree = "<group>"; };
 		F7D77888AF501B7F7DA9439C /* WorkoutBuddyPickerView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WorkoutBuddyPickerView.swift; sourceTree = "<group>"; };
@@ -610,6 +612,7 @@
 			children = (
 				A2000015 /* SectionCard.swift */,
 				A200005B /* AnimatedComponents.swift */,
+				E9DB23176C1B840FEC1EEEA7 /* RecoveryCard.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -1031,6 +1034,7 @@
 				16B1FF5301CE5A80830AE226 /* GeneratedWorkoutPreviewView.swift in Sources */,
 				81B5AAE6A24C1BD1DFFDF702 /* WorkoutQuestionnaireView.swift in Sources */,
 				D2F6418FB376E7D2F1202790 /* WorkoutQuestionnaire.swift in Sources */,
+				A88C4D597EE0D6C22205CB09 /* RecoveryCard.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

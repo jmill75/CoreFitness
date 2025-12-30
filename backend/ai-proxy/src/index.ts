@@ -90,6 +90,8 @@ export default {
           return await handleWorkout(request, env);
         case '/api/ai/tip':
           return await handleTip(request, env);
+        case '/api/ai/parse':
+          return await handleParse(request, env);
         case '/health':
           return jsonResponse({ status: 'ok', environment: env.ENVIRONMENT });
         default:
@@ -161,6 +163,37 @@ async function handleTip(request: Request, env: Env): Promise<Response> {
 
   const provider = body.provider || env.DEFAULT_PROVIDER as 'gemini' | 'claude';
   const response = await generateAIResponse(body.prompt, body.systemPrompt, provider, env);
+
+  return jsonResponse(response);
+}
+
+async function handleParse(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as AIRequest;
+
+  if (!body.prompt) {
+    return jsonResponse({ error: { code: 'INVALID_REQUEST', message: 'Prompt is required' } }, 400);
+  }
+
+  const provider = body.provider || env.DEFAULT_PROVIDER as 'gemini' | 'claude';
+
+  // Use system prompt optimized for JSON output
+  const parseSystemPrompt = body.systemPrompt || `You are an expert at parsing workout routines from text.
+Extract the workout name, description, estimated duration, difficulty level, and exercises.
+For each exercise, extract: name, sets, reps, weight (if mentioned), and rest time.
+IMPORTANT: Return ONLY valid JSON with no additional text or explanation. The response must be parseable JSON.
+Use this exact structure:
+{
+    "name": "Workout Name",
+    "description": "Brief description",
+    "estimatedDuration": 45,
+    "difficulty": "Beginner|Intermediate|Advanced",
+    "exercises": [
+        {"name": "Exercise Name", "sets": 3, "reps": "10", "weight": "135 lbs", "restSeconds": 60}
+    ]
+}
+Keep exercise names simple and standardized. If weight is not mentioned, omit it.`;
+
+  const response = await generateAIResponse(body.prompt, parseSystemPrompt, provider, env);
 
   return jsonResponse(response);
 }

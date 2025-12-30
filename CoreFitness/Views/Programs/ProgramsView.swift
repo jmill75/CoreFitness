@@ -50,6 +50,7 @@ struct ProgramsView: View {
     @State private var showCreateMenu = false
     @State private var animationStage = 0
     @State private var selectedProgram: ProgramTemplate?
+    @State private var showWorkoutExecution = false
 
     // Segment options
     enum ProgramSegment: String, CaseIterable {
@@ -63,9 +64,16 @@ struct ProgramsView: View {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
 
-    // Get current workout (active one)
+    // Get current workout - prioritize workoutManager's active session, then fallback to isActive flag
     private var currentWorkout: Workout? {
-        workouts.first { $0.isActive }
+        workoutManager.currentSession?.workout ?? workouts.first { $0.isActive }
+    }
+
+    // Check if workout is in progress
+    private var isWorkoutInProgress: Bool {
+        workoutManager.currentSession != nil &&
+        workoutManager.currentPhase != .idle &&
+        workoutManager.currentPhase != .completed
     }
 
     // Get featured programs
@@ -169,6 +177,13 @@ struct ProgramsView: View {
             .fullScreenCover(isPresented: $showProgramBrowser) {
                 ProgramBrowserView()
             }
+            .fullScreenCover(isPresented: $showWorkoutExecution) {
+                if let workout = currentWorkout {
+                    WorkoutExecutionView(workout: workout)
+                        .environmentObject(workoutManager)
+                        .environmentObject(themeManager)
+                }
+            }
             .sheet(item: $selectedProgram) { program in
                 ProgramDetailView(program: program, activeProgram: activeUserProgram)
             }
@@ -197,7 +212,7 @@ struct ProgramsView: View {
     // MARK: - Clean Header (matches HTML)
     private var cleanHeader: some View {
         HStack(alignment: .center) {
-            Text("Programs")
+            Text("PROGRAMS")
                 .font(.system(size: 32, weight: .bold))
                 .tracking(-0.5)
                 .foregroundStyle(
@@ -248,30 +263,26 @@ struct ProgramsView: View {
 
     // MARK: - Active Workout Hero (matches HTML)
     private func activeWorkoutHero(workout: Workout) -> some View {
-        Button {
-            themeManager.mediumImpact()
-            // Navigate to workout
-        } label: {
-            VStack(spacing: 0) {
-                // Accent bar
-                LinearGradient(
-                    colors: [cyan, lime],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 3)
+        VStack(spacing: 0) {
+            // Accent bar
+            LinearGradient(
+                colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [cyan, lime],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .frame(height: 3)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    // Label with pulse dot
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(cyan)
-                            .frame(width: 6, height: 6)
+            VStack(alignment: .leading, spacing: 16) {
+                // Label with pulse dot
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(isWorkoutInProgress ? coral : cyan)
+                        .frame(width: 6, height: 6)
 
-                        Text("ACTIVE WORKOUT")
-                            .font(.system(size: 11, weight: .semibold))
-                            .tracking(1.2)
-                            .foregroundStyle(cyan)
+                    Text(isWorkoutInProgress ? "IN PROGRESS" : "ACTIVE WORKOUT")
+                        .font(.system(size: 11, weight: .semibold))
+                        .tracking(1.2)
+                        .foregroundStyle(isWorkoutInProgress ? coral : cyan)
                     }
 
                     // Title & subtitle
@@ -353,20 +364,27 @@ struct ProgramsView: View {
                     HStack(spacing: 8) {
                         Button {
                             themeManager.mediumImpact()
-                            // Start workout
+                            if isWorkoutInProgress {
+                                // Resume - go directly to execution view
+                                showWorkoutExecution = true
+                            } else {
+                                // Start new workout
+                                workoutManager.startWorkout(workout)
+                                showWorkoutExecution = true
+                            }
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "play.fill")
+                                Image(systemName: isWorkoutInProgress ? "play.circle.fill" : "play.fill")
                                     .font(.system(size: 14))
-                                Text("Start Workout")
+                                Text(isWorkoutInProgress ? "Resume" : "Start Workout")
                                     .font(.system(size: 15, weight: .semibold))
                             }
-                            .foregroundStyle(.black)
+                            .foregroundStyle(isWorkoutInProgress ? .white : .black)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(
                                 LinearGradient(
-                                    colors: [lime, teal],
+                                    colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [lime, teal],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -374,20 +392,22 @@ struct ProgramsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
 
-                        Button {
-                            // Schedule
-                        } label: {
-                            Text("Schedule")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.55))
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.06))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                                )
+                        if !isWorkoutInProgress {
+                            Button {
+                                // Schedule
+                            } label: {
+                                Text("Schedule")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.55))
+                                    .padding(.horizontal, 20)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white.opacity(0.06))
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    )
+                            }
                         }
                     }
                     .padding(.top, 8)
@@ -400,8 +420,6 @@ struct ProgramsView: View {
                 RoundedRectangle(cornerRadius: 24)
                     .stroke(Color.white.opacity(0.04), lineWidth: 1)
             )
-        }
-        .buttonStyle(.plain)
     }
 
     private func formatDuration(_ seconds: Int) -> String {
@@ -1591,7 +1609,7 @@ private struct ProgramsHeader: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Programs")
+                Text("PROGRAMS")
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
