@@ -891,15 +891,18 @@ struct UnifiedWorkoutView: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
+                .id("exercise-name-\(workoutManager.currentExerciseIndex)")
 
             // Exercise progress indicator
             if workoutManager.totalExercises > 0 {
                 Text("Exercise \(workoutManager.currentExerciseIndex + 1) of \(workoutManager.totalExercises)")
                     .font(.subheadline)
                     .foregroundStyle(.gray)
+                    .id("exercise-progress-\(workoutManager.currentExerciseIndex)")
             }
         }
         .frame(maxWidth: .infinity)
+        .id("exercise-display-\(workoutManager.currentExerciseIndex)")
     }
 
     // MARK: - Set Indicator

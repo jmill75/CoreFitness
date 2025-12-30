@@ -1110,116 +1110,11 @@ private struct InProgressRow: View {
     }
 }
 
-// MARK: - Activity Section (Streaks + Recent Workouts)
+// MARK: - Activity Section (Recent Workouts)
 private struct ActivitySection: View {
     var body: some View {
         VStack(spacing: 20) {
-            WeeklyStreakSection()
             RecentWorkoutsSection()
-        }
-    }
-}
-
-private struct WeeklyStreakSection: View {
-    @Query private var workoutSessions: [WorkoutSession]
-
-    private let limeColor = Color(hex: "1dd1a1")
-    private let cardBg = Color(hex: "161616")
-
-    private var completedSessions: [WorkoutSession] {
-        workoutSessions.filter { $0.status == .completed }
-    }
-
-    private var weekDays: [(label: String, date: Date, hasWorkout: Bool, isToday: Bool)] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let dayLabels = ["S", "M", "T", "W", "T", "F", "S"]
-
-        return (0..<7).map { daysAgo in
-            let date = calendar.date(byAdding: .day, value: -(6 - daysAgo), to: today) ?? today
-            let weekday = calendar.component(.weekday, from: date) - 1
-            let hasWorkout = completedSessions.contains {
-                guard let completed = $0.completedAt else { return false }
-                return calendar.isDate(completed, inSameDayAs: date)
-            }
-            let isToday = calendar.isDateInToday(date)
-            return (label: dayLabels[weekday], date: date, hasWorkout: hasWorkout, isToday: isToday)
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Section header with colored icon
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [limeColor, Color(hex: "10ac84")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "calendar")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                Text("THIS WEEK")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .tracking(1.5)
-            }
-
-            HStack(spacing: 8) {
-                ForEach(Array(weekDays.enumerated()), id: \.offset) { _, day in
-                    VStack(spacing: 8) {
-                        ZStack {
-                            Circle()
-                                .fill(day.hasWorkout ? limeColor : Color.white.opacity(0.06))
-                                .frame(width: 38, height: 38)
-
-                            if day.hasWorkout {
-                                Image(systemName: "checkmark")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                        .overlay(
-                            Circle()
-                                .stroke(day.isToday ? Color.white.opacity(0.4) : Color.clear, lineWidth: 2)
-                                .frame(width: 42, height: 42)
-                        )
-
-                        Text(day.label)
-                            .font(.caption2)
-                            .fontWeight(day.isToday ? .bold : .regular)
-                            .foregroundStyle(day.isToday ? .white : .white.opacity(0.4))
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(16)
-            .background(cardBg)
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(
-                VStack {
-                    LinearGradient(
-                        colors: [limeColor, Color(hex: "10ac84")],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                    .frame(height: 3)
-                    Spacer()
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
-            )
         }
     }
 }

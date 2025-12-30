@@ -1302,7 +1302,7 @@ struct DayScoreCell: View {
     }
 }
 
-// MARK: - Today's Focus Section (Workout + Challenge Combined)
+// MARK: - Today's Focus Section (Workout + Challenge as Separate Cards)
 struct CurrentActivitySection: View {
     let activeChallenges: [Challenge]
     let currentUserParticipant: (Challenge) -> ChallengeParticipant?
@@ -1322,29 +1322,36 @@ struct CurrentActivitySection: View {
                 Spacer()
             }
 
-            // Combined Focus Card
-            TodaysFocusCard(
-                activeChallenges: activeChallenges,
-                currentUserParticipant: currentUserParticipant,
-                selectedTab: $selectedTab,
-                onShowWorkoutPopup: onShowWorkoutPopup
-            )
+            // Separate cards for workout and challenge
+            VStack(spacing: 12) {
+                // Workout Card
+                TodaysWorkoutCard(
+                    selectedTab: $selectedTab,
+                    onShowWorkoutPopup: onShowWorkoutPopup
+                )
+
+                // Challenge Card (if active)
+                if let challenge = activeChallenges.first {
+                    TodaysChallengeCard(
+                        challenge: challenge,
+                        currentUserParticipant: currentUserParticipant,
+                        selectedTab: $selectedTab
+                    )
+                }
+            }
         }
         .padding(.top, 8)
         .padding(.bottom, 8)
     }
 }
 
-// MARK: - Today's Focus Card (Combined Workout + Challenge)
-struct TodaysFocusCard: View {
+// MARK: - Today's Workout Card (Separate Card)
+struct TodaysWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
-    @EnvironmentObject var navigationState: NavigationState
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @Query private var userPrograms: [UserProgram]
 
-    let activeChallenges: [Challenge]
-    let currentUserParticipant: (Challenge) -> ChallengeParticipant?
     @Binding var selectedTab: Tab
     var onShowWorkoutPopup: ((Workout) -> Void)?
 
@@ -1355,20 +1362,17 @@ struct TodaysFocusCard: View {
         workoutManager.currentSession
     }
 
-    // Get active program if any
     private var activeUserProgram: UserProgram? {
         userPrograms.first { $0.status == .active }
     }
 
     private var currentWorkout: Workout? {
-        // Priority: active session > explicitly active workout > first available workout if there's an active program
         if let sessionWorkout = activeSession?.workout {
             return sessionWorkout
         }
         if let activeWorkout = workouts.first(where: { $0.isActive }) {
             return activeWorkout
         }
-        // If there's an active program but no active workout, show the most recent workout
         if activeUserProgram != nil {
             return workouts.first
         }
@@ -1379,45 +1383,25 @@ struct TodaysFocusCard: View {
         activeSession != nil && workoutManager.currentPhase != .idle && workoutManager.currentPhase != .completed
     }
 
-    private var activeChallenge: Challenge? {
-        activeChallenges.first
-    }
-
     private let cardBg = Color(hex: "161616")
     private let cyanAccent = Color(hex: "54a0ff")
-    private let goldAccent = Color(hex: "feca57")
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Workout Section - dark with subtle cyan glow
-            ZStack(alignment: .topTrailing) {
-                workoutSection
-                    .padding(20)
+        ZStack(alignment: .topTrailing) {
+            workoutContent
+                .padding(20)
 
-                // Subtle cyan glow in corner
-                RadialGradient(
-                    colors: [cyanAccent.opacity(0.15), Color.clear],
-                    center: .topTrailing,
-                    startRadius: 0,
-                    endRadius: 150
-                )
-                .allowsHitTesting(false)
-            }
-
-            // Challenge Section (if active)
-            if let challenge = activeChallenge {
-                Rectangle()
-                    .fill(Color.white.opacity(0.06))
-                    .frame(height: 1)
-
-                challengeSection(challenge)
-                    .padding(16)
-            }
+            RadialGradient(
+                colors: [cyanAccent.opacity(0.15), Color.clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 150
+            )
+            .allowsHitTesting(false)
         }
         .background(cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
-            // Cyan accent bar at top
             VStack {
                 LinearGradient(
                     colors: [Color(hex: "2e86de"), cyanAccent, Color(hex: "00d2d3")],
@@ -1449,9 +1433,8 @@ struct TodaysFocusCard: View {
         }
     }
 
-    // MARK: - Workout Section
     @ViewBuilder
-    private var workoutSection: some View {
+    private var workoutContent: some View {
         if let workout = currentWorkout {
             Button {
                 themeManager.mediumImpact()
@@ -1462,7 +1445,6 @@ struct TodaysFocusCard: View {
                 }
             } label: {
                 VStack(alignment: .leading, spacing: 12) {
-                    // Cyan badge
                     HStack(spacing: 6) {
                         Circle()
                             .fill(cyanAccent)
@@ -1478,14 +1460,12 @@ struct TodaysFocusCard: View {
                     .background(cyanAccent.opacity(0.15))
                     .clipShape(Capsule())
 
-                    // Title
                     Text(workout.name.uppercased())
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
-                    // Details
                     HStack(spacing: 16) {
                         Label("\(workout.estimatedDuration) min", systemImage: "clock")
                         Label("\(workout.exerciseCount) exercises", systemImage: "dumbbell.fill")
@@ -1493,7 +1473,6 @@ struct TodaysFocusCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.white.opacity(0.6))
 
-                    // Cyan Start button
                     HStack {
                         Spacer()
                         Text("START WORKOUT")
@@ -1517,13 +1496,11 @@ struct TodaysFocusCard: View {
             }
             .buttonStyle(.plain)
         } else {
-            // No active workout - show prompt
             Button {
                 themeManager.mediumImpact()
                 selectedTab = .programs
             } label: {
                 VStack(alignment: .leading, spacing: 12) {
-                    // Cyan badge
                     HStack(spacing: 6) {
                         Circle()
                             .fill(cyanAccent)
@@ -1539,18 +1516,15 @@ struct TodaysFocusCard: View {
                     .background(cyanAccent.opacity(0.15))
                     .clipShape(Capsule())
 
-                    // Title
                     Text("START A WORKOUT")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(.white)
 
-                    // Subtitle
                     Text("Choose from your saved workouts")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.6))
 
-                    // Cyan button
                     HStack {
                         Spacer()
                         Text("BROWSE WORKOUTS")
@@ -1575,22 +1549,33 @@ struct TodaysFocusCard: View {
             .buttonStyle(.plain)
         }
     }
+}
 
-    // MARK: - Challenge Section (Glowing Ember Card Style)
-    private func challengeSection(_ challenge: Challenge) -> some View {
+// MARK: - Today's Challenge Card (Separate Card)
+struct TodaysChallengeCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var navigationState: NavigationState
+
+    let challenge: Challenge
+    let currentUserParticipant: (Challenge) -> ChallengeParticipant?
+    @Binding var selectedTab: Tab
+
+    private let cardBg = Color(hex: "161616")
+    private let goldAccent = Color(hex: "feca57")
+
+    var body: some View {
         let participant = currentUserParticipant(challenge)
         let completedDays = participant?.completedDays ?? 0
         let progress = Double(completedDays) / Double(max(1, challenge.durationDays))
         let currentWeek = min(4, (challenge.currentDay / 7) + 1)
         let totalWeeks = max(1, challenge.durationDays / 7)
 
-        return Button {
+        Button {
             themeManager.mediumImpact()
             selectedTab = .programs
             navigationState.showChallenges = true
         } label: {
             VStack(alignment: .leading, spacing: 14) {
-                // Badge: Active Challenge
                 HStack(spacing: 6) {
                     Image(systemName: "trophy.fill")
                         .font(.system(size: 10, weight: .semibold))
@@ -1604,9 +1589,7 @@ struct TodaysFocusCard: View {
                 .background(goldAccent.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                // Main content row
                 HStack(spacing: 14) {
-                    // Trophy icon in gradient box
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(
@@ -1624,7 +1607,6 @@ struct TodaysFocusCard: View {
                             .foregroundStyle(.white)
                     }
 
-                    // Challenge info
                     VStack(alignment: .leading, spacing: 2) {
                         Text(challenge.name)
                             .font(.system(size: 16, weight: .bold))
@@ -1638,7 +1620,6 @@ struct TodaysFocusCard: View {
 
                     Spacer()
 
-                    // Workout count
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("\(completedDays)/\(challenge.durationDays)")
                             .font(.system(size: 22, weight: .bold, design: .monospaced))
@@ -1658,15 +1639,12 @@ struct TodaysFocusCard: View {
                     }
                 }
 
-                // Progress bar with glowing dot
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        // Background
                         RoundedRectangle(cornerRadius: 3)
                             .fill(Color.white.opacity(0.1))
                             .frame(height: 6)
 
-                        // Progress fill
                         RoundedRectangle(cornerRadius: 3)
                             .fill(
                                 LinearGradient(
@@ -1677,7 +1655,6 @@ struct TodaysFocusCard: View {
                             )
                             .frame(width: geo.size.width * progress, height: 6)
 
-                        // Glowing dot at the end of progress
                         if progress > 0 {
                             Circle()
                                 .fill(Color(hex: "ff9f43"))
@@ -1690,31 +1667,28 @@ struct TodaysFocusCard: View {
                 }
                 .frame(height: 12)
             }
+            .padding(18)
         }
         .buttonStyle(.plain)
-        .padding(18)
-        .background(
-            LinearGradient(
-                colors: [
-                    goldAccent.opacity(0.12),
-                    Color(hex: "ff9f43").opacity(0.06)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .background(cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(goldAccent.opacity(0.3), lineWidth: 1)
+            VStack {
+                LinearGradient(
+                    colors: [Color(hex: "e8b339"), goldAccent, Color(hex: "ff9f43")],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         )
-    }
-
-    private func calculateRank(for participant: ChallengeParticipant?, in challenge: Challenge) -> Int {
-        guard let participant = participant,
-              let participants = challenge.participants else { return 0 }
-        let sorted = participants.sorted { $0.completedDays > $1.completedDays }
-        return (sorted.firstIndex(where: { $0.id == participant.id }) ?? -1) + 1
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(goldAccent.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
     }
 }
 

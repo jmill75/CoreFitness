@@ -11,8 +11,10 @@ class MusicService: ObservableObject {
     @Published var currentTrack: MusicTrack?
     @Published var authorizationStatus: MusicAuthorization.Status = .notDetermined
     @Published var selectedProvider: MusicProvider = .appleMusic
+    @Published var currentPlaybackTime: TimeInterval = 0
 
     private let systemMusicPlayer = MPMusicPlayerController.systemMusicPlayer
+    private var pollingTimer: Timer?
 
     // MARK: - Music Provider
     enum MusicProvider: String, CaseIterable, Identifiable {
@@ -136,6 +138,32 @@ class MusicService: ObservableObject {
             await checkAuthorization()
         }
         setupNotifications()
+        updateNowPlaying() // Initial fetch
+    }
+
+    // MARK: - Polling for Real-Time Updates
+    func startPolling() {
+        stopPolling()
+        updateNowPlaying()
+        updatePlaybackState()
+
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updateNowPlaying()
+                self?.updatePlaybackState()
+                self?.currentPlaybackTime = self?.systemMusicPlayer.currentPlaybackTime ?? 0
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTimer?.invalidate()
+        pollingTimer = nil
+    }
+
+    func refreshNowPlaying() {
+        updateNowPlaying()
+        updatePlaybackState()
     }
 
     // MARK: - Authorization
@@ -275,6 +303,65 @@ class MusicService: ObservableObject {
     }
 }
 
+// MARK: - EQ Animation View
+struct EQAnimationView: View {
+    @ObservedObject var musicService = MusicService.shared
+    let barCount: Int
+    let color: Color
+    let height: CGFloat
+
+    init(barCount: Int = 4, color: Color = .green, height: CGFloat = 20) {
+        self.barCount = barCount
+        self.color = color
+        self.height = height
+    }
+
+    @State private var animationValues: [CGFloat] = []
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<barCount, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(color)
+                    .frame(width: 3, height: musicService.isPlaying ? (index < animationValues.count ? animationValues[index] : height * 0.3) : height * 0.15)
+                    .animation(
+                        .easeInOut(duration: Double.random(in: 0.3...0.5))
+                        .repeatForever(autoreverses: true)
+                        .delay(Double(index) * 0.1),
+                        value: musicService.isPlaying
+                    )
+            }
+        }
+        .onAppear {
+            animationValues = (0..<barCount).map { _ in CGFloat.random(in: height * 0.3...height) }
+            startAnimation()
+        }
+        .onChange(of: musicService.isPlaying) { _, isPlaying in
+            if isPlaying {
+                startAnimation()
+            }
+        }
+    }
+
+    private func startAnimation() {
+        guard musicService.isPlaying else { return }
+        withAnimation {
+            animationValues = (0..<barCount).map { _ in CGFloat.random(in: height * 0.3...height) }
+        }
+        // Continuously randomize heights while playing
+        Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { timer in
+            guard musicService.isPlaying else {
+                timer.invalidate()
+                return
+            }
+            withAnimation(.easeInOut(duration: 0.3)) {
+                animationValues = (0..<barCount).map { _ in CGFloat.random(in: height * 0.3...height) }
+            }
+        }
+    }
+}
+
+
 // MARK: - Music Player Mini View
 struct MusicPlayerMiniView: View {
     @ObservedObject var musicService = MusicService.shared
@@ -304,12 +391,18 @@ struct MusicPlayerMiniView: View {
                     }
                 }
 
-                // Track info
+                // Track info with EQ animation
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(musicService.currentTrack?.title ?? "Not Playing")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text(musicService.currentTrack?.title ?? "Not Playing")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .lineLimit(1)
+
+                        if musicService.isPlaying {
+                            EQAnimationView(barCount: 3, color: musicService.selectedProvider.color, height: 14)
+                        }
+                    }
 
                     Text(musicService.currentTrack?.artist ?? "Tap to open music")
                         .font(.caption)
@@ -341,6 +434,12 @@ struct MusicPlayerMiniView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
+        .onAppear {
+            musicService.startPolling()
+        }
+        .onDisappear {
+            musicService.stopPolling()
+        }
         .sheet(isPresented: $showMusicSheet) {
             MusicControlSheet()
                 .presentationDetents([.height(580)])
@@ -371,7 +470,7 @@ struct MusicControlSheet: View {
             .padding(.top, 16)
             .padding(.bottom, 24)
 
-            // Album artwork
+            // Album artwork with spinning animation when playing
             ZStack {
                 RoundedRectangle(cornerRadius: 24)
                     .fill(musicService.selectedProvider.color.opacity(0.15))
@@ -390,12 +489,20 @@ struct MusicControlSheet: View {
                 }
             }
             .shadow(color: musicService.selectedProvider.color.opacity(0.3), radius: 25, y: 12)
+            .scaleEffect(musicService.isPlaying ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: musicService.isPlaying)
 
-            // Track info
+            // Track info with EQ animation
             VStack(spacing: 6) {
-                Text(musicService.currentTrack?.title ?? "No Track Playing")
-                    .font(.title2)
-                    .fontWeight(.bold)
+                HStack(spacing: 10) {
+                    Text(musicService.currentTrack?.title ?? "No Track Playing")
+                        .font(.title2)
+                        .fontWeight(.bold)
+
+                    if musicService.isPlaying {
+                        EQAnimationView(barCount: 4, color: musicService.selectedProvider.color, height: 20)
+                    }
+                }
 
                 Text(musicService.currentTrack?.artist ?? "Open a music app to start")
                     .font(.body)
@@ -456,6 +563,12 @@ struct MusicControlSheet: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 20)
+        }
+        .onAppear {
+            musicService.startPolling()
+        }
+        .onDisappear {
+            musicService.stopPolling()
         }
     }
 }

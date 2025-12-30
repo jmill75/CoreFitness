@@ -65,40 +65,44 @@ struct SetLoggerSheet: View {
                                 .tracking(1)
 
                             HStack(spacing: 20) {
-                                Button {
-                                    if reps > 1 { reps -= 1 }
-                                    themeManager.lightImpact()
-                                } label: {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 44, height: 44)
-                                        Image(systemName: "minus")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.white)
+                                RepeatingButton(
+                                    action: {
+                                        if reps > 1 { reps -= 1 }
+                                    },
+                                    label: {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.gray.opacity(0.3))
+                                                .frame(width: 44, height: 44)
+                                            Image(systemName: "minus")
+                                                .font(.title3)
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.white)
+                                        }
                                     }
-                                }
+                                )
 
                                 Text("\(reps)")
                                     .font(.system(size: 64, weight: .bold, design: .rounded))
                                     .foregroundStyle(.cyan)
                                     .frame(width: 80)
 
-                                Button {
-                                    reps += 1
-                                    themeManager.lightImpact()
-                                } label: {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.cyan.opacity(0.3))
-                                            .frame(width: 44, height: 44)
-                                        Image(systemName: "plus")
-                                            .font(.title3)
-                                            .fontWeight(.semibold)
-                                            .foregroundStyle(.cyan)
+                                RepeatingButton(
+                                    action: {
+                                        reps += 1
+                                    },
+                                    label: {
+                                        ZStack {
+                                            Circle()
+                                                .fill(Color.cyan.opacity(0.3))
+                                                .frame(width: 44, height: 44)
+                                            Image(systemName: "plus")
+                                                .font(.title3)
+                                                .fontWeight(.semibold)
+                                                .foregroundStyle(.cyan)
+                                        }
                                     }
-                                }
+                                )
                             }
                         }
                     }
@@ -370,7 +374,7 @@ struct SetLoggerSheet: View {
     }
 }
 
-// MARK: - Repeating Button (Press-and-Hold)
+// MARK: - Repeating Button (Press-and-Hold with Acceleration)
 struct RepeatingButton<Label: View>: View {
     @EnvironmentObject var themeManager: ThemeManager
     let action: () -> Void
@@ -378,6 +382,13 @@ struct RepeatingButton<Label: View>: View {
 
     @State private var timer: Timer?
     @State private var isPressed = false
+    @State private var pressStartTime: Date?
+    @State private var currentInterval: TimeInterval = 0.15
+
+    // Acceleration settings
+    private let initialInterval: TimeInterval = 0.15
+    private let acceleratedInterval: TimeInterval = 0.05
+    private let accelerationDelay: TimeInterval = 2.0
 
     var body: some View {
         label()
@@ -388,23 +399,47 @@ struct RepeatingButton<Label: View>: View {
                     .onChanged { _ in
                         if !isPressed {
                             isPressed = true
+                            pressStartTime = Date()
+                            currentInterval = initialInterval
+
                             // Immediate action on press
                             action()
                             themeManager.lightImpact()
 
                             // Start repeating after delay
-                            timer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true) { _ in
-                                action()
-                                themeManager.lightImpact()
-                            }
+                            startTimer()
                         }
                     }
                     .onEnded { _ in
                         isPressed = false
+                        pressStartTime = nil
+                        currentInterval = initialInterval
                         timer?.invalidate()
                         timer = nil
                     }
             )
+    }
+
+    private func startTimer() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: currentInterval, repeats: false) { _ in
+            guard isPressed else { return }
+
+            action()
+            themeManager.lightImpact()
+
+            // Check if we should accelerate
+            if let startTime = pressStartTime {
+                let elapsed = Date().timeIntervalSince(startTime)
+                if elapsed >= accelerationDelay && currentInterval != acceleratedInterval {
+                    currentInterval = acceleratedInterval
+                    themeManager.mediumImpact() // Indicate acceleration
+                }
+            }
+
+            // Schedule next iteration
+            startTimer()
+        }
     }
 }
 
@@ -417,6 +452,10 @@ struct SetLoggedFeedbackView: View {
 
     @State private var showContent = false
     @State private var checkmarkScale: CGFloat = 0
+    @State private var ringScale: CGFloat = 0.5
+    @State private var ringOpacity: Double = 1.0
+    @State private var particles: [SetLoggedParticle] = []
+    @State private var glowPulse: Bool = false
 
     var body: some View {
         ZStack {
@@ -429,62 +468,148 @@ struct SetLoggedFeedbackView: View {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
 
+            // Particles layer
+            ForEach(particles) { particle in
+                Circle()
+                    .fill(particle.color)
+                    .frame(width: particle.size, height: particle.size)
+                    .position(particle.position)
+                    .opacity(particle.opacity)
+            }
+
             // Content
             VStack(spacing: 20) {
-                // Checkmark circle
+                // Checkmark circle with animated rings
                 ZStack {
-                    // Glow
-                    Circle()
-                        .fill(Color.green.opacity(0.3))
-                        .frame(width: 140, height: 140)
-                        .blur(radius: 20)
+                    // Expanding rings
+                    ForEach(0..<3) { i in
+                        Circle()
+                            .stroke(Color.green.opacity(0.3), lineWidth: 2)
+                            .frame(width: 100 + CGFloat(i * 30), height: 100 + CGFloat(i * 30))
+                            .scaleEffect(ringScale + CGFloat(i) * 0.1)
+                            .opacity(ringOpacity - Double(i) * 0.2)
+                    }
 
-                    // Circle background
+                    // Pulsing glow
+                    Circle()
+                        .fill(Color.green.opacity(glowPulse ? 0.4 : 0.2))
+                        .frame(width: 160, height: 160)
+                        .blur(radius: 30)
+                        .scaleEffect(glowPulse ? 1.2 : 1.0)
+
+                    // Circle background with gradient
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color.green, Color.green.opacity(0.8)],
+                                colors: [Color(hex: "10ac84"), Color.green, Color(hex: "1dd1a1")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 100, height: 100)
-                        .shadow(color: Color.green.opacity(0.5), radius: 15, y: 5)
+                        .shadow(color: Color.green.opacity(0.6), radius: 20, y: 5)
+                        .scaleEffect(checkmarkScale)
 
-                    // Checkmark
+                    // Checkmark with bounce
                     Image(systemName: "checkmark")
                         .font(.system(size: 50, weight: .bold))
                         .foregroundStyle(.white)
                         .scaleEffect(checkmarkScale)
                 }
 
-                // Text
+                // Text with staggered animation
                 VStack(spacing: 8) {
                     Text("SET LOGGED")
-                        .font(.title2)
-                        .fontWeight(.black)
-                        .foregroundStyle(.white)
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, .green.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .scaleEffect(showContent ? 1 : 0.8)
 
                     Text("Set \(setNumber) • \(reps) reps • \(themeManager.formatWeight(weight))")
                         .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.white.opacity(0.8))
                 }
                 .opacity(showContent ? 1 : 0)
-                .offset(y: showContent ? 0 : 20)
+                .offset(y: showContent ? 0 : 30)
             }
         }
         .onAppear {
-            // Animate checkmark
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+            // Create particles
+            createParticles()
+
+            // Animate checkmark with overshoot
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.5, blendDuration: 0)) {
                 checkmarkScale = 1.0
             }
 
+            // Animate rings
+            withAnimation(.easeOut(duration: 0.8)) {
+                ringScale = 1.5
+                ringOpacity = 0
+            }
+
             // Animate text
-            withAnimation(.easeOut(duration: 0.3).delay(0.1)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.15)) {
                 showContent = true
+            }
+
+            // Pulse glow
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                glowPulse = true
+            }
+
+            // Haptic celebration
+            themeManager.notifySuccess()
+        }
+    }
+
+    private func createParticles() {
+        let colors: [Color] = [.green, .cyan, .yellow, .white, Color(hex: "1dd1a1")]
+        let center = CGPoint(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2 - 50)
+
+        for _ in 0..<20 {
+            let angle = Double.random(in: 0...2 * .pi)
+            let distance = CGFloat.random(in: 80...200)
+            let endX = center.x + cos(angle) * distance
+            let endY = center.y + sin(angle) * distance
+
+            var particle = SetLoggedParticle(
+                id: UUID(),
+                position: center,
+                color: colors.randomElement() ?? .green,
+                size: CGFloat.random(in: 4...10),
+                opacity: 1.0
+            )
+
+            particles.append(particle)
+
+            // Animate particle outward
+            if let index = particles.firstIndex(where: { $0.id == particle.id }) {
+                withAnimation(.easeOut(duration: Double.random(in: 0.4...0.8))) {
+                    particles[index].position = CGPoint(x: endX, y: endY)
+                }
+
+                // Fade out
+                withAnimation(.easeIn(duration: 0.3).delay(0.5)) {
+                    particles[index].opacity = 0
+                }
             }
         }
     }
+}
+
+struct SetLoggedParticle: Identifiable {
+    let id: UUID
+    var position: CGPoint
+    var color: Color
+    var size: CGFloat
+    var opacity: Double
 }
 
 #Preview {
