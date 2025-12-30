@@ -1260,20 +1260,12 @@ struct TodayRecoveryCard: View {
                     Spacer()
                 }
 
-                // Recovery Stats - Single row with unique colors per metric
-                HStack(spacing: 0) {
-                    HealthStatItem(icon: "waveform.path.ecg", value: hrvValue, label: "HRV", color: Color(hex: "ff6b6b"))
-                    HealthStatItem(icon: "moon.zzz.fill", value: sleepValue, label: "Sleep", color: Color(hex: "00d2d3"))
-                    HealthStatItem(icon: "heart.fill", value: hrValue, label: "Rest HR", color: Color(hex: "54a0ff"))
+                // Recovery Stats - Individual cards with colored bottom accents
+                HStack(spacing: 12) {
+                    MetricCard(value: hrvValue, label: "HRV", accentColor: Color(hex: "ff6b6b"))
+                    MetricCard(value: sleepValue, label: "Sleep", accentColor: Color(hex: "00d2d3"))
+                    MetricCard(value: hrValue, label: "Rest HR", accentColor: Color(hex: "54a0ff"))
                 }
-                .padding(.vertical, 14)
-                .padding(.horizontal, 8)
-                .background(Color(hex: "111111"))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                )
             }
             .foregroundStyle(.white)
             .padding(20)
@@ -1363,6 +1355,45 @@ struct TodayRecoveryCard: View {
         if score >= 70 { return "↑" }
         if score >= 50 { return "→" }
         return "↓"
+    }
+}
+
+// Individual metric card with colored bottom accent (matches HTML design)
+struct MetricCard: View {
+    let value: String
+    let label: String
+    let accentColor: Color
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(accentColor)
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.white.opacity(0.4))
+                .tracking(0.5)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 8)
+        .background(Color(hex: "111111"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            VStack {
+                Spacer()
+                accentColor
+                    .frame(height: 2)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value == "--" ? "No data available" : value)
     }
 }
 

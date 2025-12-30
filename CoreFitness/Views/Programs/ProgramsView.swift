@@ -246,44 +246,75 @@ struct ProgramsView: View {
         .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.05), value: animationStage)
     }
 
-    // MARK: - Dashboard Content
+    // MARK: - Dashboard Content (matches HTML design)
     private var dashboardContent: some View {
         VStack(spacing: 24) {
-            // Workout Dashboard
+            // Quick Create Section
             VStack(alignment: .leading, spacing: 16) {
-                sectionHeader("Workout Dashboard", icon: "chart.bar.fill", color: Color(hex: "54a0ff"))
-                WorkoutDashboardView()
+                sectionHeader("Quick Create", icon: "plus", color: Color(hex: "54a0ff"))
+                quickCreateRow
             }
             .opacity(animationStage >= 3 ? 1 : 0)
             .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: animationStage)
+
+            // Workout Dashboard
+            VStack(alignment: .leading, spacing: 16) {
+                sectionHeader("Workout Dashboard", icon: "dumbbell.fill", color: Color(hex: "54a0ff"))
+                WeeklyStatsCard()
+            }
+            .opacity(animationStage >= 3 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
 
             // Active Workout
             if let workout = currentWorkout {
                 VStack(alignment: .leading, spacing: 16) {
                     sectionHeader("Active Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
-                    ActiveWorkoutHeroCard(workout: workout)
+                    RefinedActiveWorkoutCard(workout: workout)
                 }
                 .opacity(animationStage >= 4 ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
-            } else {
-                // Empty state for no active workout
-                VStack(alignment: .leading, spacing: 16) {
-                    sectionHeader("Active Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
-                    emptyWorkoutCard
-                }
-                .opacity(animationStage >= 4 ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15), value: animationStage)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: animationStage)
             }
 
             // Active Challenge
             if let challenge = activeChallenge {
                 VStack(alignment: .leading, spacing: 16) {
                     sectionHeader("Active Challenge", icon: "trophy.fill", color: Color(hex: "feca57"))
-                    ActiveChallengeHeroCard(challenge: challenge, onTap: { showChallenges = true })
+                    RefinedChallengeCard(challenge: challenge, onTap: { showChallenges = true })
                 }
                 .opacity(animationStage >= 5 ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: animationStage)
+                .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.25), value: animationStage)
             }
+
+            // My Library Section
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    sectionHeader("My Library", icon: "folder.fill", color: Color(hex: "1dd1a1"))
+                    Spacer()
+                    Text("\(workouts.count) workouts")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.white.opacity(0.06))
+                        .clipShape(Capsule())
+                }
+
+                RefinedLibraryCard(
+                    icon: "folder.fill",
+                    title: "Saved Workouts",
+                    subtitle: "View all your programs",
+                    accentColor: Color(hex: "1dd1a1")
+                ) { showSavedPrograms = true }
+
+                RefinedLibraryCard(
+                    icon: "dumbbell.fill",
+                    title: "Exercise Library",
+                    subtitle: "1300+ exercises with demos",
+                    accentColor: Color(hex: "00d2d3")
+                ) { showExerciseLibrary = true }
+            }
+            .opacity(animationStage >= 5 ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.3), value: animationStage)
         }
     }
 
@@ -460,11 +491,11 @@ struct ProgramsView: View {
                 showCreateProgram = true
             }
 
-            QuickCreatePill(icon: "sparkles", title: "AI", color: Color(hex: "00d2d3")) {
+            QuickCreatePill(icon: "sparkles", title: "AI Generate", color: Color(hex: "00d2d3")) {
                 showAIWorkoutCreation = true
             }
 
-            QuickCreatePill(icon: "square.and.arrow.down", title: "Import", color: Color(hex: "0ea5e9")) {
+            QuickCreatePill(icon: "square.and.arrow.down", title: "Import", color: Color(hex: "1dd1a1")) {
                 showImportWorkout = true
             }
         }
@@ -4600,6 +4631,440 @@ struct ExerciseImageViewer: View {
                 .font(.headline)
                 .foregroundStyle(.white)
         }
+    }
+}
+
+// MARK: - Refined Active Workout Card (matches HTML design exactly)
+private struct RefinedActiveWorkoutCard: View {
+    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var themeManager: ThemeManager
+    @Query private var allWorkouts: [Workout]
+
+    let workout: Workout
+
+    @State private var showWorkoutExecution = false
+    @State private var isPressed = false
+
+    private let cardBg = Color(hex: "161616")
+    private let cyanStart = Color(hex: "2e86de")
+    private let cyanEnd = Color(hex: "54a0ff")
+    private let tealColor = Color(hex: "00d2d3")
+
+    private func ensureWorkoutActive() {
+        guard !workout.isActive else { return }
+        for w in allWorkouts where w.isActive && w.id != workout.id {
+            w.isActive = false
+        }
+        workout.isActive = true
+        workout.status = .active
+        try? modelContext.save()
+    }
+
+    private var progressPercent: Double {
+        workout.progressPercentage / 100.0
+    }
+
+    private var completedCount: Int {
+        workout.completedSessionsCount
+    }
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            ensureWorkoutActive()
+            showWorkoutExecution = true
+        } label: {
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Header row: Icon + Details
+                    HStack(spacing: 16) {
+                        // Rounded rectangle icon (56x56, 16px corners)
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [cyanStart, cyanEnd],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+                            .overlay(
+                                Image(systemName: "dumbbell.fill")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(workout.name.uppercased())
+                                .font(.system(size: 20, weight: .bold))
+                                .tracking(1)
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+
+                            HStack(spacing: 16) {
+                                Label("\(workout.estimatedDuration) min", systemImage: "clock")
+                                Label("\(workout.exerciseCount) exercises", systemImage: "dumbbell.fill")
+                            }
+                            .font(.system(size: 13))
+                            .foregroundStyle(.white.opacity(0.7))
+                        }
+                    }
+
+                    // Progress section
+                    VStack(spacing: 8) {
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color(hex: "111111"))
+                                    .frame(height: 6)
+
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [cyanStart, cyanEnd],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: geo.size.width * progressPercent, height: 6)
+                            }
+                        }
+                        .frame(height: 6)
+
+                        HStack {
+                            Text("\(completedCount) of \(workout.totalSessions) sessions")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.white.opacity(0.4))
+
+                            Spacer()
+
+                            Text("\(Int(progressPercent * 100))%")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(cyanEnd)
+                        }
+                    }
+
+                    // Continue button
+                    Text("CONTINUE WORKOUT")
+                        .font(.system(size: 16, weight: .bold))
+                        .tracking(2)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                colors: [cyanStart, cyanEnd],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                .padding(24)
+            }
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [cyanStart, cyanEnd, tealColor],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .overlay(
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [cyanEnd.opacity(0.15), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 150, height: 150)
+                    .offset(x: 60, y: -60)
+                , alignment: .topTrailing
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+        .fullScreenCover(isPresented: $showWorkoutExecution) {
+            WorkoutExecutionView(workout: workout)
+                .environmentObject(workoutManager)
+                .environmentObject(themeManager)
+        }
+    }
+}
+
+// MARK: - Refined Challenge Card (matches HTML design exactly)
+private struct RefinedChallengeCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+
+    let challenge: Challenge
+    let onTap: () -> Void
+
+    @State private var isPressed = false
+
+    private let cardBg = Color(hex: "161616")
+    private let goldStart = Color(hex: "f39c12")
+    private let goldEnd = Color(hex: "feca57")
+    private let orangeColor = Color(hex: "ff9f43")
+
+    private var weekInfo: String {
+        let currentWeek = min(challenge.currentDay / 7 + 1, max(1, challenge.durationDays / 7))
+        let totalWeeks = max(1, challenge.durationDays / 7)
+        let daysLeft = max(0, challenge.durationDays - challenge.currentDay)
+        return "Week \(currentWeek) of \(totalWeeks) • \(daysLeft) days left"
+    }
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            onTap()
+        } label: {
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(spacing: 16) {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [goldStart, goldEnd],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+                            .overlay(
+                                Image(systemName: "trophy.fill")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            )
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(challenge.name.uppercased())
+                                .font(.system(size: 20, weight: .bold))
+                                .tracking(1)
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+
+                            Text(weekInfo)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+
+                        Spacer()
+                    }
+
+                    HStack(spacing: 12) {
+                        ChallengeStatItem(
+                            value: "\(challenge.currentDay)/\(challenge.durationDays)",
+                            label: "Days"
+                        )
+
+                        ChallengeStatItem(
+                            value: "\(Int(challenge.progress * 100))%",
+                            label: "Progress"
+                        )
+
+                        ChallengeStatItem(
+                            value: "\(challenge.daysRemaining)",
+                            label: "Remaining"
+                        )
+                    }
+
+                    Text("View Challenge")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(goldEnd)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(goldEnd.opacity(0.3), lineWidth: 1)
+                        )
+                }
+                .padding(24)
+            }
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [goldStart, goldEnd, orangeColor],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .overlay(
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [goldEnd.opacity(0.15), Color.clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 150, height: 150)
+                    .offset(x: 60, y: -60)
+                , alignment: .topTrailing
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+    }
+}
+
+// MARK: - Challenge Stat Item (gold themed)
+private struct ChallengeStatItem: View {
+    let value: String
+    let label: String
+
+    private let goldColor = Color(hex: "feca57")
+    private let statsBg = Color(hex: "111111")
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(value)
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundStyle(goldColor)
+
+            Text(label.uppercased())
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.white.opacity(0.4))
+                .tracking(0.5)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 14)
+        .background(statsBg)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Refined Library Card (matches HTML design exactly)
+private struct RefinedLibraryCard: View {
+    @EnvironmentObject var themeManager: ThemeManager
+
+    let icon: String
+    let title: String
+    let subtitle: String
+    let accentColor: Color
+    let action: () -> Void
+
+    @State private var isPressed = false
+
+    private let cardBg = Color(hex: "161616")
+
+    private var deepColor: Color {
+        if accentColor == Color(hex: "1dd1a1") {
+            return Color(hex: "10ac84")
+        } else if accentColor == Color(hex: "00d2d3") {
+            return Color(hex: "01a3a4")
+        }
+        return accentColor.opacity(0.8)
+    }
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            HStack(spacing: 16) {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(
+                        LinearGradient(
+                            colors: [deepColor, accentColor],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: icon)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.white)
+                    )
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+
+                    Text(subtitle)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.4))
+                }
+
+                Spacer()
+
+                Circle()
+                    .fill(Color.white.opacity(0.06))
+                    .frame(width: 32, height: 32)
+                    .overlay(
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.4))
+                    )
+            }
+            .padding(20)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                VStack {
+                    LinearGradient(
+                        colors: [deepColor, accentColor],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
     }
 }
 
