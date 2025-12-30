@@ -12,13 +12,8 @@ class AIProxyService: ObservableObject {
     // MARK: - Configuration
 
     /// Base URL for the AI proxy backend
-    /// Update the production URL after deploying to Cloudflare Workers
     private var baseURL: String {
-        #if DEBUG
-        return "http://localhost:8787/api/ai"
-        #else
-        return "https://corefitness-ai-proxy.workers.dev/api/ai"
-        #endif
+        return "https://corefitness-ai-proxy.jmill75.workers.dev/api/ai"
     }
 
     @Published var isLoading = false

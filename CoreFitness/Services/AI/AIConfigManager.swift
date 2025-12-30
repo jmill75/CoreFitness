@@ -13,7 +13,7 @@ class AIConfigManager: ObservableObject {
 
     @Published var currentProvider: AIProviderType = .gemini
     @Published var isAIEnabled: Bool = true
-    @Published var geminiModel: String = "gemini-pro"
+    @Published var geminiModel: String = "gemini-1.5-flash"
     @Published var claudeModel: String = "claude-3-haiku-20240307"
     @Published var lastUpdated: Date?
     @Published var isLoading: Bool = false

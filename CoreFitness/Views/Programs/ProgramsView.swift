@@ -2479,6 +2479,9 @@ struct SavedProgramsDetailView: View {
     @State private var searchText = ""
     @State private var showFilterSheet = false
     @State private var sortBySchedule = true  // Sort by session number if true
+    @State private var showDeleteAllConfirmation = false
+    @State private var deleteConfirmationText = ""
+    @Environment(\.modelContext) private var modelContext
 
     // Source filter
     enum ProgramFilter: String, CaseIterable {
@@ -2826,6 +2829,17 @@ struct SavedProgramsDetailView: View {
             .navigationTitle("My Workouts")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Menu {
+                        Button(role: .destructive) {
+                            showDeleteAllConfirmation = true
+                        } label: {
+                            Label("Delete All Workouts", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
@@ -2833,7 +2847,32 @@ struct SavedProgramsDetailView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .alert("Delete All Workouts", isPresented: $showDeleteAllConfirmation) {
+                TextField("Type DELETE to confirm", text: $deleteConfirmationText)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.characters)
+                Button("Cancel", role: .cancel) {
+                    deleteConfirmationText = ""
+                }
+                Button("Delete All", role: .destructive) {
+                    if deleteConfirmationText == "DELETE" {
+                        deleteAllWorkouts()
+                    }
+                    deleteConfirmationText = ""
+                }
+                .disabled(deleteConfirmationText != "DELETE")
+            } message: {
+                Text("This will permanently delete all \(workouts.filter { !$0.isArchived }.count) workouts. Type DELETE to confirm.")
+            }
         }
+    }
+
+    private func deleteAllWorkouts() {
+        let workoutsToDelete = workouts.filter { !$0.isArchived }
+        for workout in workoutsToDelete {
+            modelContext.delete(workout)
+        }
+        try? modelContext.save()
     }
 }
 
