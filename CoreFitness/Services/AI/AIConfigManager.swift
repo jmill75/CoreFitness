@@ -73,6 +73,10 @@ class AIConfigManager: ObservableObject {
 
             print("[AIConfigManager] Config fetched successfully - Provider: \(currentProvider.rawValue)")
 
+        } catch let error as CKError where error.code == .unknownItem {
+            // Record type doesn't exist in CloudKit yet - this is expected
+            // Just use defaults silently until AIConfig is set up in CloudKit Dashboard
+            print("[AIConfigManager] Using default config (AIConfig record type not configured)")
         } catch {
             configError = error
             print("[AIConfigManager] Failed to fetch config: \(error.localizedDescription)")
