@@ -35,6 +35,8 @@ struct ProgramsView: View {
     // MARK: - Queries
     @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
     @Query(sort: \Challenge.startDate, order: .reverse) private var challenges: [Challenge]
+    @Query(sort: \ProgramTemplate.name) private var programTemplates: [ProgramTemplate]
+    @Query private var userPrograms: [UserProgram]
 
     // MARK: - State
     @State private var selectedSegment: ProgramSegment = .dashboard
@@ -47,6 +49,7 @@ struct ProgramsView: View {
     @State private var showProgramBrowser = false
     @State private var showCreateMenu = false
     @State private var animationStage = 0
+    @State private var selectedProgram: ProgramTemplate?
 
     // Segment options
     enum ProgramSegment: String, CaseIterable {
@@ -63,6 +66,16 @@ struct ProgramsView: View {
     // Get current workout (active one)
     private var currentWorkout: Workout? {
         workouts.first { $0.isActive }
+    }
+
+    // Get featured programs
+    private var featuredPrograms: [ProgramTemplate] {
+        programTemplates.filter { $0.isFeatured }
+    }
+
+    // Get active user program
+    private var activeUserProgram: UserProgram? {
+        userPrograms.first { $0.status == .active }
     }
 
     // Colors matching HTML design
@@ -103,6 +116,12 @@ struct ProgramsView: View {
                         // MARK: - My Programs (horizontal scroll)
                         myProgramsSection
                             .padding(.bottom, 48)
+
+                        // MARK: - Featured Programs (horizontal scroll)
+                        if !featuredPrograms.isEmpty {
+                            featuredProgramsSection
+                                .padding(.bottom, 48)
+                        }
 
                         // MARK: - Quick Actions (4x grid)
                         quickActionsSection
@@ -149,6 +168,9 @@ struct ProgramsView: View {
             }
             .fullScreenCover(isPresented: $showProgramBrowser) {
                 ProgramBrowserView()
+            }
+            .sheet(item: $selectedProgram) { program in
+                ProgramDetailView(program: program, activeProgram: activeUserProgram)
             }
             .onChange(of: navigationState.showChallenges) { _, newValue in
                 if newValue {
@@ -487,6 +509,65 @@ struct ProgramsView: View {
         return colors[index % colors.count]
     }
 
+    private func categoryColor(_ category: ExerciseCategory) -> Color {
+        switch category {
+        case .strength: return cyan
+        case .cardio: return coral
+        case .hiit: return Color(hex: "ff9f43")
+        case .yoga: return purple
+        case .pilates: return teal
+        case .stretching: return lime
+        case .running: return coral
+        case .cycling: return cyan
+        case .swimming: return teal
+        case .calisthenics: return gold
+        default: return cyan
+        }
+    }
+
+    // MARK: - Featured Programs Section
+    private var featuredProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("FEATURED PROGRAMS")
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(1)
+                    .foregroundStyle(.white.opacity(0.35))
+
+                Spacer()
+
+                Button {
+                    themeManager.lightImpact()
+                    showProgramBrowser = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Text("See All")
+                            .font(.system(size: 13, weight: .medium))
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundStyle(cyan)
+                }
+            }
+            .padding(.horizontal, 24)
+
+            // Horizontal scroll
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(featuredPrograms.prefix(8)) { program in
+                        HomeFeaturedProgramCard(
+                            program: program,
+                            accentColor: categoryColor(program.category)
+                        ) {
+                            selectedProgram = program
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+        }
+    }
+
     // MARK: - Quick Actions Section (4x grid)
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -812,6 +893,86 @@ struct ProgramsView: View {
                 showImportWorkout = true
             }
         }
+    }
+}
+
+// MARK: - Home Featured Program Card
+private struct HomeFeaturedProgramCard: View {
+    let program: ProgramTemplate
+    let accentColor: Color
+    let action: () -> Void
+
+    @EnvironmentObject var themeManager: ThemeManager
+    @State private var isPressed = false
+
+    private let bgCard = Color(hex: "111111")
+
+    var body: some View {
+        Button {
+            themeManager.mediumImpact()
+            action()
+        } label: {
+            VStack(alignment: .leading, spacing: 0) {
+                // Gradient accent bar
+                LinearGradient(
+                    colors: [accentColor, accentColor.opacity(0.6)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    // Category badge
+                    Text(program.category.rawValue.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(0.5)
+                        .foregroundStyle(accentColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(accentColor.opacity(0.15))
+                        .clipShape(Capsule())
+
+                    // Name
+                    Text(program.name)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    // Description
+                    Text(program.programDescription)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    Spacer()
+
+                    // Meta row
+                    HStack(spacing: 12) {
+                        Label("\(program.durationWeeks)w", systemImage: "calendar")
+                        Label("\(program.workoutsPerWeek)x/wk", systemImage: "figure.run")
+                        Label(program.difficulty.rawValue, systemImage: "chart.bar.fill")
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.4))
+                }
+                .padding(16)
+            }
+            .frame(width: 280, height: 200)
+            .background(bgCard)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        }
+        .buttonStyle(.plain)
+        .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
     }
 }
 
