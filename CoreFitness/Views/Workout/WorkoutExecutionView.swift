@@ -1528,7 +1528,11 @@ struct WorkoutMusicBar: View {
         }
         .buttonStyle(.plain)
         .onAppear {
+            musicService.startPolling()
             startAnimations()
+        }
+        .onDisappear {
+            musicService.stopPolling()
         }
         .onChange(of: musicService.isPlaying) { _, isPlaying in
             if isPlaying {

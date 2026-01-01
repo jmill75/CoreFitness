@@ -35,7 +35,7 @@ struct WatchContentView: View {
             workoutState.currentExercise = exercise
             workoutState.totalSets = totalSets
             workoutState.currentSet = 1
-            workoutState.startElapsedTimer()
+            // Don't start local timer - iPhone syncs elapsed time every second
         }
 
         // Workout ended
