@@ -325,6 +325,21 @@ class WatchPhoneConnectivityManager: NSObject, ObservableObject {
         sendMessage(data)
     }
 
+    /// Send health data (heart rate, calories) to iPhone
+    func sendHealthDataToPhone(heartRate: Double?, calories: Int?) {
+        var data: [String: Any] = [
+            "type": "health_data_from_watch",
+            "timestamp": Date().timeIntervalSince1970
+        ]
+        if let hr = heartRate {
+            data["heartRate"] = hr
+        }
+        if let cal = calories {
+            data["calories"] = cal
+        }
+        sendMessage(data)
+    }
+
     // MARK: - Private Methods
 
     private func sendMessage(_ message: [String: Any]) {

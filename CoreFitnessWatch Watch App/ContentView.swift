@@ -76,6 +76,14 @@ struct WatchContentView: View {
             if let spo2 = bloodOxygen {
                 workoutState.bloodOxygen = spo2
             }
+
+            // Send health data to iPhone
+            if workoutState.isWorkoutActive {
+                connectivityManager.sendHealthDataToPhone(
+                    heartRate: heartRate,
+                    calories: calories
+                )
+            }
         }
 
         // Elapsed time sync

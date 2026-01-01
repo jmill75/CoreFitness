@@ -41,6 +41,12 @@ class WorkoutManager: ObservableObject {
     // Rest timer
     @Published var restTimeRemaining: Int = 0
 
+    // Real-time health metrics during workout
+    @Published var currentHeartRate: Int = 0
+    @Published var workoutCalories: Int = 0
+    @Published var averageHeartRate: Int = 0
+    @Published var maxHeartRate: Int = 0
+
     // UI State
     @Published var showExitConfirmation: Bool = false
     @Published var showWorkoutComplete: Bool = false
@@ -81,6 +87,8 @@ class WorkoutManager: ObservableObject {
     private var healthStore: HKHealthStore?
     private var hkWorkoutSession: HKWorkoutSession?
     private var hkWorkoutBuilder: HKLiveWorkoutBuilder?
+    private var heartRateQuery: HKAnchoredObjectQuery?
+    private var heartRateSamples: [Double] = []
 
     // MARK: - Computed Properties
     var currentWorkout: Workout? {
@@ -179,6 +187,29 @@ class WorkoutManager: ObservableObject {
         watchManager.onSyncRequested = { [weak self] in
             Task { @MainActor in
                 self?.sendWorkoutUpdateToWatch()
+            }
+        }
+
+        // Handle health data (heart rate, calories) from Watch
+        watchManager.onHealthDataReceived = { [weak self] heartRate, calories in
+            Task { @MainActor in
+                if let hr = heartRate {
+                    self?.currentHeartRate = hr
+                    // Track for average/max calculation
+                    if hr > 0 {
+                        self?.heartRateSamples.append(Double(hr))
+                        if hr > (self?.maxHeartRate ?? 0) {
+                            self?.maxHeartRate = hr
+                        }
+                        // Update average
+                        if let samples = self?.heartRateSamples, !samples.isEmpty {
+                            self?.averageHeartRate = Int(samples.reduce(0, +) / Double(samples.count))
+                        }
+                    }
+                }
+                if let cal = calories {
+                    self?.workoutCalories = cal
+                }
             }
         }
     }
@@ -306,11 +337,15 @@ class WorkoutManager: ObservableObject {
             // Start the workout session - this should trigger Watch app launch
             let startDate = Date()
             hkWorkoutSession?.startActivity(with: startDate)
-            hkWorkoutBuilder?.beginCollection(withStart: startDate) { success, error in
+            hkWorkoutBuilder?.beginCollection(withStart: startDate) { [weak self] success, error in
                 if let error = error {
                     print("Failed to begin workout collection: \(error)")
                 } else {
                     print("HealthKit workout session started - Watch app should launch")
+                    // Start observing heart rate
+                    Task { @MainActor in
+                        self?.startHeartRateObserver(from: startDate)
+                    }
                 }
             }
         } catch {
@@ -318,8 +353,103 @@ class WorkoutManager: ObservableObject {
         }
     }
 
+    /// Start observing real-time heart rate updates
+    private func startHeartRateObserver(from startDate: Date) {
+        guard let healthStore = healthStore,
+              let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return }
+
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: nil, options: .strictStartDate)
+
+        heartRateQuery = HKAnchoredObjectQuery(
+            type: heartRateType,
+            predicate: predicate,
+            anchor: nil,
+            limit: HKObjectQueryNoLimit
+        ) { [weak self] query, samples, deletedObjects, anchor, error in
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
+        }
+
+        // Handle updates
+        heartRateQuery?.updateHandler = { [weak self] query, samples, deletedObjects, anchor, error in
+            Task { @MainActor in
+                self?.processHeartRateSamples(samples)
+            }
+        }
+
+        if let query = heartRateQuery {
+            healthStore.execute(query)
+        }
+
+        // Also start a timer to update calories from the workout builder
+        startCaloriesTimer()
+    }
+
+    /// Process incoming heart rate samples
+    private func processHeartRateSamples(_ samples: [HKSample]?) {
+        guard let samples = samples as? [HKQuantitySample], !samples.isEmpty else { return }
+
+        let heartRateUnit = HKUnit.count().unitDivided(by: .minute())
+
+        for sample in samples {
+            let heartRate = sample.quantity.doubleValue(for: heartRateUnit)
+            heartRateSamples.append(heartRate)
+        }
+
+        // Get the latest heart rate
+        if let latestSample = samples.last {
+            let latestHR = Int(latestSample.quantity.doubleValue(for: heartRateUnit))
+
+            self.currentHeartRate = latestHR
+
+            // Update max
+            if latestHR > self.maxHeartRate {
+                self.maxHeartRate = latestHR
+            }
+
+            // Calculate average
+            if !self.heartRateSamples.isEmpty {
+                self.averageHeartRate = Int(self.heartRateSamples.reduce(0, +) / Double(self.heartRateSamples.count))
+            }
+        }
+    }
+
+    /// Start timer to periodically update calories from workout builder
+    private func startCaloriesTimer() {
+        // Update calories every 5 seconds
+        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] timer in
+            guard let self = self, self.hkWorkoutBuilder != nil else {
+                timer.invalidate()
+                return
+            }
+
+            Task { @MainActor in
+                await self.updateWorkoutCalories()
+            }
+        }
+    }
+
+    /// Fetch current calories from workout builder
+    private func updateWorkoutCalories() async {
+        guard let builder = hkWorkoutBuilder,
+              let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else { return }
+
+        let statistics = builder.statistics(for: calorieType)
+        if let sum = statistics?.sumQuantity() {
+            let calories = Int(sum.doubleValue(for: .kilocalorie()))
+            self.workoutCalories = calories
+        }
+    }
+
     /// Stop HealthKit workout session
     private func stopHealthKitWorkout() {
+        // Stop heart rate query
+        if let query = heartRateQuery {
+            healthStore?.stop(query)
+            heartRateQuery = nil
+        }
+
         hkWorkoutSession?.end()
         hkWorkoutBuilder?.endCollection(withEnd: Date()) { [weak self] success, error in
             self?.hkWorkoutBuilder?.finishWorkout { workout, error in
@@ -328,6 +458,9 @@ class WorkoutManager: ObservableObject {
         }
         hkWorkoutSession = nil
         hkWorkoutBuilder = nil
+
+        // Reset heart rate samples
+        heartRateSamples = []
     }
 
     // MARK: - Watch App Notification
@@ -943,20 +1076,32 @@ class WorkoutManager: ObservableObject {
         guard let workout = currentWorkout,
               let context = modelContext else { return }
 
-        // Increment the workout's personal records count if any PRs were set
-        // Note: The session is already saved with completed status and date
-
-        // If this is the active workout, we may want to advance to next in queue
-        // The workout's `lastSessionDate` and `completedSessionsCount` are
-        // computed properties that automatically update from sessions
-
         // Deactivate current workout after completion
         workout.isActive = false
 
-        // Find next workout in library that should become active (if any)
-        // This is handled by ProgramsView/HomeView which query for current workout
+        // If this is a program workout, advance to the next one in sequence
+        if workout.sourceProgramId != nil {
+            // Find the next workout in the program sequence
+            let nextSessionNumber = workout.programSessionNumber + 1
+            let programId = workout.sourceProgramId!
+
+            let descriptor = FetchDescriptor<Workout>(
+                predicate: #Predicate<Workout> {
+                    $0.sourceProgramId == programId &&
+                    $0.programSessionNumber == nextSessionNumber &&
+                    $0.statusRaw != "completed"
+                }
+            )
+
+            if let workouts = try? context.fetch(descriptor), let nextWorkout = workouts.first {
+                nextWorkout.isActive = true
+            }
+        }
 
         try? context.save()
+
+        // Refresh the ActiveProgramManager to pick up the new active workout
+        ActiveProgramManager.shared.refreshNow()
     }
 
     // MARK: - Helper Methods

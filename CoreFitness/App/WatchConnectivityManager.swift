@@ -31,6 +31,7 @@ class WatchConnectivityManager: NSObject, ObservableObject {
     var onSetCompleted: ((_ exerciseId: String, _ weight: Double, _ reps: Int) -> Void)?
     var onWorkoutControlAction: ((_ action: String) -> Void)?
     var onSyncRequested: (() -> Void)?
+    var onHealthDataReceived: ((_ heartRate: Int?, _ calories: Int?) -> Void)?
 
     // MARK: - Computed Properties
     var connectionStatus: String {
@@ -310,6 +311,12 @@ extension WatchConnectivityManager: WCSessionDelegate {
             // Watch is requesting current workout state
             onSyncRequested?()
             NotificationCenter.default.post(name: .watchRequestedSync, object: nil)
+
+        case "health_data_from_watch":
+            // Handle health data (heart rate, calories) from Watch
+            let heartRate = message["heartRate"] as? Double
+            let calories = message["calories"] as? Int
+            onHealthDataReceived?(heartRate != nil ? Int(heartRate!) : nil, calories)
 
         default:
             break

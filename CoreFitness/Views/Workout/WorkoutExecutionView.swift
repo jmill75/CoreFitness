@@ -803,16 +803,16 @@ struct UnifiedWorkoutView: View {
                 saveButton
                     .padding(.horizontal, 16)
 
-                Spacer(minLength: 16)
+                Spacer(minLength: 12)
 
                 // Music control bar at bottom
                 WorkoutMusicBar(showMusicSheet: $showMusicSheet)
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 40)
 
-                // Skip exercise at very bottom
+                // Skip exercise button - under music widget
                 skipExerciseButton
-                    .padding(.bottom, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, 24)
             }
             .blur(radius: showMusicSheet ? 10 : 0)
             .animation(.easeInOut(duration: 0.2), value: showMusicSheet)
@@ -846,11 +846,46 @@ struct UnifiedWorkoutView: View {
             HStack(spacing: 8) {
                 Circle()
                     .fill(Color.green)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 8, height: 8)
                 Text(workoutManager.formattedElapsedTime)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                     .monospacedDigit()
+            }
+
+            Spacer()
+
+            // Compact health metrics - centered (only show when there's data)
+            if workoutManager.currentHeartRate > 0 || workoutManager.workoutCalories > 0 {
+                HStack(spacing: 12) {
+                    // Heart Rate - compact
+                    if workoutManager.currentHeartRate > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.red)
+                            Text("\(workoutManager.currentHeartRate)")
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                        }
+                    }
+
+                    // Calories - compact
+                    if workoutManager.workoutCalories > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.orange)
+                            Text("\(workoutManager.workoutCalories)")
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
+                        }
+                    }
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.1))
+                .clipShape(Capsule())
             }
 
             Spacer()
@@ -939,18 +974,19 @@ struct UnifiedWorkoutView: View {
             // Reps row
             HStack(spacing: 0) {
                 // Minus button
-                Button {
-                    if reps > 1 { reps -= 1 }
-                    themeManager.mediumImpact()
-                } label: {
-                    Image(systemName: "minus")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 80, height: 80)
-                        .background(Color.gray.opacity(0.3))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
+                RepeatableButton(
+                    action: {
+                        if reps > 1 { reps -= 1 }
+                    },
+                    label: {
+                        Image(systemName: "minus")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                    },
+                    backgroundColor: Color.gray.opacity(0.3),
+                    accentColor: .white
+                )
 
                 Spacer()
 
@@ -959,6 +995,8 @@ struct UnifiedWorkoutView: View {
                     Text("\(reps)")
                         .font(.system(size: 72, weight: .bold, design: .rounded))
                         .foregroundStyle(.cyan)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: reps)
                     Text("REPS")
                         .font(.subheadline)
                         .fontWeight(.bold)
@@ -968,35 +1006,37 @@ struct UnifiedWorkoutView: View {
                 Spacer()
 
                 // Plus button
-                Button {
-                    reps += 1
-                    themeManager.mediumImpact()
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.cyan)
-                        .frame(width: 80, height: 80)
-                        .background(Color.cyan.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
+                RepeatableButton(
+                    action: {
+                        reps += 1
+                    },
+                    label: {
+                        Image(systemName: "plus")
+                            .font(.title)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.cyan)
+                    },
+                    backgroundColor: Color.cyan.opacity(0.2),
+                    accentColor: .cyan
+                )
             }
 
             // Weight row
             HStack(spacing: 0) {
                 // Minus button
-                Button {
-                    if weight >= 5 { weight -= 5 }
-                    themeManager.mediumImpact()
-                } label: {
-                    Text("-5")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .frame(width: 80, height: 80)
-                        .background(Color.gray.opacity(0.3))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
+                RepeatableButton(
+                    action: {
+                        if weight >= 5 { weight -= 5 }
+                    },
+                    label: {
+                        Text("-5")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                    },
+                    backgroundColor: Color.gray.opacity(0.3),
+                    accentColor: .white
+                )
 
                 Spacer()
 
@@ -1005,6 +1045,8 @@ struct UnifiedWorkoutView: View {
                     Text(themeManager.formatWeightValue(weight))
                         .font(.system(size: 72, weight: .bold, design: .rounded))
                         .foregroundStyle(.green)
+                        .contentTransition(.numericText())
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: weight)
                     Text(themeManager.weightUnitLabel)
                         .font(.subheadline)
                         .fontWeight(.bold)
@@ -1014,18 +1056,19 @@ struct UnifiedWorkoutView: View {
                 Spacer()
 
                 // Plus button
-                Button {
-                    weight += 5
-                    themeManager.mediumImpact()
-                } label: {
-                    Text("+5")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.green)
-                        .frame(width: 80, height: 80)
-                        .background(Color.green.opacity(0.2))
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                }
+                RepeatableButton(
+                    action: {
+                        weight += 5
+                    },
+                    label: {
+                        Text("+5")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.green)
+                    },
+                    backgroundColor: Color.green.opacity(0.2),
+                    accentColor: .green
+                )
             }
         }
     }
@@ -1316,29 +1359,33 @@ struct WorkoutMusicBar: View {
     @ObservedObject private var musicService = MusicService.shared
     @Binding var showMusicSheet: Bool
 
+    // Animation state for play button
+    @State private var playButtonScale: CGFloat = 1.0
+
     var body: some View {
         Button {
             showMusicSheet = true
         } label: {
-            HStack(spacing: 14) {
-                // Artwork or icon
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(musicService.selectedProvider.color.opacity(0.3))
-                        .frame(width: 56, height: 56)
-
-                    if let track = musicService.currentTrack, let artwork = track.artwork {
-                        artwork
-                            .resizable()
-                            .scaledToFill()
+            VStack(spacing: 8) {
+                HStack(spacing: 14) {
+                    // Artwork or icon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(musicService.selectedProvider.color.opacity(0.3))
                             .frame(width: 56, height: 56)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    } else {
-                        Image(systemName: "music.note")
-                            .font(.system(size: 22))
-                            .foregroundStyle(musicService.selectedProvider.color)
+
+                        if let track = musicService.currentTrack, let artwork = track.artwork {
+                            artwork
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 56, height: 56)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            Image(systemName: "music.note")
+                                .font(.system(size: 22))
+                                .foregroundStyle(musicService.selectedProvider.color)
+                        }
                     }
-                }
 
                 // Track info
                 VStack(alignment: .leading, spacing: 3) {
@@ -1348,10 +1395,21 @@ struct WorkoutMusicBar: View {
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
-                    Text(musicService.currentTrack?.artist ?? "Tap to open music")
-                        .font(.caption)
-                        .foregroundStyle(.gray)
-                        .lineLimit(1)
+                    HStack(spacing: 6) {
+                        // Small equalizer next to artist when playing
+                        if musicService.isPlaying {
+                            HStack(spacing: 2) {
+                                MiniEqualizerBar(delay: 0)
+                                MiniEqualizerBar(delay: 0.15)
+                                MiniEqualizerBar(delay: 0.3)
+                            }
+                        }
+
+                        Text(musicService.currentTrack?.artist ?? "Tap to open music")
+                            .font(.caption)
+                            .foregroundStyle(.gray)
+                            .lineLimit(1)
+                    }
                 }
 
                 Spacer()
@@ -1375,12 +1433,22 @@ struct WorkoutMusicBar: View {
                             musicService.openMusicApp()
                         }
                     } label: {
-                        Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
-                            .font(.title3)
-                            .foregroundStyle(.white)
-                            .frame(width: 52, height: 52)
-                            .background(musicService.selectedProvider.color.opacity(0.4))
-                            .clipShape(Circle())
+                        ZStack {
+                            // Pulsing ring when playing
+                            if musicService.isPlaying {
+                                Circle()
+                                    .stroke(musicService.selectedProvider.color.opacity(0.5), lineWidth: 2)
+                                    .frame(width: 52, height: 52)
+                                    .scaleEffect(playButtonScale)
+                            }
+
+                            Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .frame(width: 52, height: 52)
+                                .background(musicService.selectedProvider.color.opacity(0.4))
+                                .clipShape(Circle())
+                        }
                     }
                     .buttonStyle(.plain)
 
@@ -1395,23 +1463,191 @@ struct WorkoutMusicBar: View {
                     .buttonStyle(.plain)
                 }
 
-                // Open app button
+                // Open app button (smaller)
                 Button {
                     musicService.openMusicApp()
                 } label: {
                     Image(systemName: "arrow.up.right.square")
-                        .font(.body)
-                        .foregroundStyle(musicService.selectedProvider.color)
-                        .frame(width: 40, height: 40)
+                        .font(.caption)
+                        .foregroundStyle(musicService.selectedProvider.color.opacity(0.7))
+                        .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(Color.gray.opacity(0.25))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            // Progress/scrub bar
+            if let track = musicService.currentTrack, track.duration > 0 {
+                HStack(spacing: 8) {
+                    Text(formatTime(musicService.currentPlaybackTime))
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.gray)
+                        .frame(width: 36, alignment: .trailing)
+
+                    // Progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            // Background track
+                            Capsule()
+                                .fill(Color.white.opacity(0.1))
+                                .frame(height: 4)
+
+                            // Progress fill
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [musicService.selectedProvider.color.opacity(0.8), musicService.selectedProvider.color],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .frame(width: max(0, geo.size.width * CGFloat(musicService.currentPlaybackTime / track.duration)), height: 4)
+
+                            // Scrub handle (only show when playing)
+                            if musicService.isPlaying {
+                                Circle()
+                                    .fill(musicService.selectedProvider.color)
+                                    .frame(width: 8, height: 8)
+                                    .offset(x: max(0, geo.size.width * CGFloat(musicService.currentPlaybackTime / track.duration) - 4))
+                            }
+                        }
+                    }
+                    .frame(height: 8)
+
+                    Text(formatTime(track.duration))
+                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.gray)
+                        .frame(width: 36, alignment: .leading)
+                }
+                .padding(.top, 4)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.gray.opacity(0.25))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
+        .onAppear {
+            startAnimations()
+        }
+        .onChange(of: musicService.isPlaying) { _, isPlaying in
+            if isPlaying {
+                startAnimations()
+            }
+        }
+    }
+
+    private func startAnimations() {
+        guard musicService.isPlaying else { return }
+
+        // Pulsing play button
+        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
+            playButtonScale = 1.3
+        }
+    }
+
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let mins = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%d:%02d", mins, secs)
+    }
+}
+
+// MARK: - Mini Equalizer Bar (for artist text)
+struct MiniEqualizerBar: View {
+    let delay: Double
+    @State private var height: CGFloat = 4
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 1)
+            .fill(Color.green)
+            .frame(width: 2, height: height)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.3).repeatForever(autoreverses: true).delay(delay)) {
+                    height = CGFloat.random(in: 4...12)
+                }
+            }
+    }
+}
+
+// MARK: - Repeatable Button (Hold to increment faster)
+struct RepeatableButton<Label: View>: View {
+    let action: () -> Void
+    let label: () -> Label
+    let backgroundColor: Color
+    let accentColor: Color
+
+    @State private var isPressed = false
+    @State private var repeatTimer: Timer?
+    @State private var repeatCount = 0
+
+    // Start slow, get faster
+    private var repeatInterval: TimeInterval {
+        if repeatCount < 5 {
+            return 0.3 // First 5: slow
+        } else if repeatCount < 15 {
+            return 0.15 // Next 10: medium
+        } else {
+            return 0.08 // After 15: fast
+        }
+    }
+
+    var body: some View {
+        label()
+            .frame(width: 80, height: 80)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(backgroundColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(accentColor.opacity(isPressed ? 0.3 : 0))
+                    )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .scaleEffect(isPressed ? 0.92 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isPressed)
+            .onLongPressGesture(minimumDuration: .infinity, pressing: { pressing in
+                if pressing {
+                    // Start pressing
+                    isPressed = true
+                    repeatCount = 0
+                    action()
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    startRepeating()
+                } else {
+                    // Stop pressing
+                    isPressed = false
+                    stopRepeating()
+                }
+            }, perform: {})
+    }
+
+    private func startRepeating() {
+        stopRepeating()
+        scheduleNextRepeat()
+    }
+
+    private func scheduleNextRepeat() {
+        repeatTimer = Timer.scheduledTimer(withTimeInterval: repeatInterval, repeats: false) { _ in
+            guard isPressed else { return }
+            repeatCount += 1
+            action()
+
+            // Haptic feedback - lighter for rapid repeats
+            if repeatCount < 15 {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            } else if repeatCount % 3 == 0 {
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+            }
+
+            scheduleNextRepeat()
+        }
+    }
+
+    private func stopRepeating() {
+        repeatTimer?.invalidate()
+        repeatTimer = nil
+        repeatCount = 0
     }
 }
 

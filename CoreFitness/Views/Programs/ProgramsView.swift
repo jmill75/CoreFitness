@@ -4,6 +4,15 @@ import UniformTypeIdentifiers
 import PDFKit
 
 // MARK: - Parsed Workout Models (for AI Generation)
+struct ParsedProgram {
+    let programName: String
+    let programDescription: String
+    let difficulty: String
+    let daysPerWeek: Int
+    let durationWeeks: Int
+    let workouts: [ParsedWorkout]
+}
+
 struct ParsedWorkout {
     let name: String
     let description: String
@@ -27,6 +36,7 @@ struct ProgramsView: View {
     @EnvironmentObject var navigationState: NavigationState
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // MARK: - Bindings
@@ -51,7 +61,8 @@ struct ProgramsView: View {
     @State private var animationStage = 0
     @State private var selectedProgram: ProgramTemplate?
     @State private var showWorkoutExecution = false
-    @State private var workoutRefreshTrigger = UUID()
+    @State private var showImportSuccessAlert = false
+    @State private var importedProgramName: String = ""
 
     // Segment options
     enum ProgramSegment: String, CaseIterable {
@@ -65,20 +76,13 @@ struct ProgramsView: View {
         challenges.first { $0.isActive && !$0.isCompleted }
     }
 
-    // Get current workout - prioritize workoutManager's active session, then fallback to isActive flag, then active program
+    // Get current workout - use centralized manager for sync
     private var currentWorkout: Workout? {
-        // Priority: active session > explicitly active workout > first available workout if there's an active program
+        // Priority: active session > manager's current workout
         if let sessionWorkout = workoutManager.currentSession?.workout {
             return sessionWorkout
         }
-        if let activeWorkout = workouts.first(where: { $0.isActive }) {
-            return activeWorkout
-        }
-        // If there's an active program but no active workout, show the most recent workout
-        if activeUserProgram != nil {
-            return workouts.first
-        }
-        return nil
+        return activeProgramManager.currentWorkout
     }
 
     // Check if workout is in progress
@@ -93,9 +97,19 @@ struct ProgramsView: View {
         programTemplates.filter { $0.isFeatured }
     }
 
-    // Get active user program
+    // Get imported/user-created programs (non-featured) - use manager for sync
+    private var importedPrograms: [ProgramTemplate] {
+        activeProgramManager.importedPrograms
+    }
+
+    // Get active user program - use manager for sync
     private var activeUserProgram: UserProgram? {
-        userPrograms.first { $0.status == .active }
+        activeProgramManager.activeProgram
+    }
+
+    // Get standalone workouts (exclude workouts that are part of a program)
+    private var standaloneWorkouts: [Workout] {
+        workouts.filter { $0.sourceProgramId == nil }
     }
 
     // Colors matching HTML design
@@ -133,9 +147,15 @@ struct ProgramsView: View {
                                 .padding(.bottom, 48)
                         }
 
-                        // MARK: - My Programs (horizontal scroll)
+                        // MARK: - My Programs (horizontal scroll) - shows Workouts
                         myProgramsSection
                             .padding(.bottom, 48)
+
+                        // MARK: - Imported Programs (horizontal scroll) - shows ProgramTemplates
+                        if !importedPrograms.isEmpty {
+                            importedProgramsSection
+                                .padding(.bottom, 48)
+                        }
 
                         // MARK: - Featured Programs (horizontal scroll)
                         if !featuredPrograms.isEmpty {
@@ -217,13 +237,23 @@ struct ProgramsView: View {
                     showSavedPrograms = true
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .workoutStarted)) { _ in
-                workoutRefreshTrigger = UUID()
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ProgramImported"))) { notification in
+                if let name = notification.object as? String {
+                    importedProgramName = name
+                    showImportSuccessAlert = true
+                }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .workoutCompleted)) { _ in
-                workoutRefreshTrigger = UUID()
+            .alert("Program Imported", isPresented: $showImportSuccessAlert) {
+                Button("View Program") {
+                    // Find and select the imported program
+                    if let program = importedPrograms.first(where: { $0.name == importedProgramName }) {
+                        selectedProgram = program
+                    }
+                }
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("\"\(importedProgramName)\" has been saved. Find it in the My Programs section below.")
             }
-            .id(workoutRefreshTrigger)
         }
     }
 
@@ -243,38 +273,22 @@ struct ProgramsView: View {
 
             Spacer()
 
-            HStack(spacing: 8) {
-                // Search button
-                Button {
-                    showProgramBrowser = true
-                } label: {
-                    Circle()
-                        .fill(bgCard)
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                        )
-                        .overlay(
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(.white.opacity(0.55))
-                        )
-                }
-
-                // Create button (cyan)
-                Button {
-                    showCreateProgram = true
-                } label: {
-                    Circle()
-                        .fill(cyan)
-                        .frame(width: 44, height: 44)
-                        .overlay(
-                            Image(systemName: "plus")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
-                        )
-                }
+            // Search button - larger touch target
+            Button {
+                showProgramBrowser = true
+            } label: {
+                Circle()
+                    .fill(bgCard)
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .overlay(
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.7))
+                    )
             }
         }
     }
@@ -297,7 +311,7 @@ struct ProgramsView: View {
                         .fill(isWorkoutInProgress ? coral : cyan)
                         .frame(width: 6, height: 6)
 
-                    Text(isWorkoutInProgress ? "IN PROGRESS" : "ACTIVE WORKOUT")
+                    Text(isWorkoutInProgress ? "IN PROGRESS" : "CURRENT WORKOUT")
                         .font(.system(size: 11, weight: .semibold))
                         .tracking(1.2)
                         .foregroundStyle(isWorkoutInProgress ? coral : cyan)
@@ -458,7 +472,7 @@ struct ProgramsView: View {
                         .foregroundStyle(.white.opacity(0.35))
                 )
 
-            Text("No Active Workout")
+            Text("No Current Workout")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.55))
 
@@ -521,22 +535,107 @@ struct ProgramsView: View {
             }
             .padding(.horizontal, 24)
 
+            // Show standalone workouts only (exclude program workouts)
+            if standaloneWorkouts.isEmpty {
+                // Empty state
+                Text("No workouts yet. Create one to get started!")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.5))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 20)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(standaloneWorkouts.prefix(5)) { workout in
+                            MyProgramCard(workout: workout, accentColor: colorForIndex(standaloneWorkouts.firstIndex(of: workout) ?? 0))
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+            }
+        }
+    }
+
+    // MARK: - Imported Programs Section
+    private var importedProgramsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Header
+            HStack {
+                Text("IMPORTED PROGRAMS")
+                    .font(.system(size: 13, weight: .semibold))
+                    .tracking(1)
+                    .foregroundStyle(.white.opacity(0.35))
+
+                Spacer()
+
+                Text("\(importedPrograms.count) programs")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            .padding(.horizontal, 24)
+
             // Horizontal scroll
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(workouts.prefix(5)) { workout in
-                        MyProgramCard(workout: workout, accentColor: colorForIndex(workouts.firstIndex(of: workout) ?? 0))
-                    }
-
-                    // Add more card if few workouts
-                    if workouts.count < 3 {
-                        AddProgramCard {
-                            showCreateProgram = true
-                        }
+                    ForEach(importedPrograms) { program in
+                        ImportedProgramCard(program: program, accentColor: lime)
+                            .onTapGesture {
+                                selectedProgram = program
+                            }
                     }
                 }
                 .padding(.horizontal, 24)
             }
+        }
+    }
+
+    // MARK: - Imported Program Card
+    private struct ImportedProgramCard: View {
+        let program: ProgramTemplate
+        let accentColor: Color
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(accentColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "doc.text.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(accentColor)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(program.name)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+
+                    Text("\(program.workoutDefinitions.count) workouts • \(program.formattedDuration)")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                Spacer()
+
+                // Progress or status
+                HStack {
+                    Image(systemName: "arrow.down.doc.fill")
+                        .font(.system(size: 10))
+                    Text("Imported")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(accentColor)
+            }
+            .padding(16)
+            .frame(width: 160, height: 180)
+            .background(Color(hex: "111111"))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(accentColor.opacity(0.2), lineWidth: 1)
+            )
         }
     }
 
@@ -698,7 +797,7 @@ struct ProgramsView: View {
             // Active Workout
             if let workout = currentWorkout {
                 VStack(alignment: .leading, spacing: 16) {
-                    sectionHeader("Active Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
+                    sectionHeader("Current Workout", icon: "flame.fill", color: Color(hex: "54a0ff"))
                     RefinedActiveWorkoutCard(workout: workout)
                 }
                 .opacity(animationStage >= 4 ? 1 : 0)
@@ -870,7 +969,7 @@ struct ProgramsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("No Active Workout")
+                    Text("No Current Workout")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.6))
 
@@ -2679,90 +2778,17 @@ struct SavedProgramsDetailView: View {
                     }
 
                     // Additional filter row (Status + Goal + Filter button)
-                    HStack(spacing: 8) {
-                        // Status picker
-                        Menu {
-                            ForEach(StatusFilter.allCases, id: \.self) { status in
-                                Button {
-                                    selectedStatusFilter = status
-                                } label: {
-                                    HStack {
-                                        Text(status.rawValue)
-                                        if selectedStatusFilter == status {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "flag.fill")
-                                Text(selectedStatusFilter.rawValue)
-                                Image(systemName: "chevron.down")
-                                    .font(.caption2)
-                            }
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(selectedStatusFilter != .all ? .white : .primary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(selectedStatusFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
-                            .clipShape(Capsule())
-                        }
-
-                        // Goal picker
-                        Menu {
-                            ForEach(GoalFilter.allCases, id: \.self) { goal in
-                                Button {
-                                    selectedGoalFilter = goal
-                                } label: {
-                                    HStack {
-                                        Text(goal.rawValue)
-                                        if selectedGoalFilter == goal {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "target")
-                                Text(selectedGoalFilter.rawValue)
-                                Image(systemName: "chevron.down")
-                                    .font(.caption2)
-                            }
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(selectedGoalFilter != .all ? .white : .primary)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(selectedGoalFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
-                            .clipShape(Capsule())
-                        }
-
-                        // Week picker (only show if there are program workouts)
-                        if !availableWeeks.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            // Status picker
                             Menu {
-                                Button {
-                                    selectedWeek = 0
-                                } label: {
-                                    HStack {
-                                        Text("All Weeks")
-                                        if selectedWeek == 0 {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-
-                                Divider()
-
-                                ForEach(1...maxWeeks, id: \.self) { week in
+                                ForEach(StatusFilter.allCases, id: \.self) { status in
                                     Button {
-                                        selectedWeek = week
+                                        selectedStatusFilter = status
                                     } label: {
                                         HStack {
-                                            Text("Week \(week)")
-                                            if selectedWeek == week {
+                                            Text(status.rawValue)
+                                            if selectedStatusFilter == status {
                                                 Image(systemName: "checkmark")
                                             }
                                         }
@@ -2770,43 +2796,120 @@ struct SavedProgramsDetailView: View {
                                 }
                             } label: {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "calendar")
-                                    Text(selectedWeek > 0 ? "Week \(selectedWeek)" : "All Weeks")
+                                    Image(systemName: "flag.fill")
+                                    Text(selectedStatusFilter.rawValue)
                                     Image(systemName: "chevron.down")
                                         .font(.caption2)
                                 }
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .foregroundStyle(selectedWeek > 0 ? .white : .primary)
+                                .foregroundStyle(selectedStatusFilter != .all ? .white : .primary)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(selectedWeek > 0 ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                                .background(selectedStatusFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
                                 .clipShape(Capsule())
+                                .fixedSize()
                             }
-                        }
 
-                        Spacer()
-
-                        // Clear filters button
-                        if activeFilterCount > 0 {
-                            Button {
-                                withAnimation {
-                                    selectedFilter = .all
-                                    selectedStatusFilter = .all
-                                    selectedGoalFilter = .all
-                                    selectedWeek = 0
+                            // Goal picker
+                            Menu {
+                                ForEach(GoalFilter.allCases, id: \.self) { goal in
+                                    Button {
+                                        selectedGoalFilter = goal
+                                    } label: {
+                                        HStack {
+                                            Text(goal.rawValue)
+                                            if selectedGoalFilter == goal {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
                                 }
                             } label: {
                                 HStack(spacing: 4) {
-                                    Image(systemName: "xmark.circle.fill")
-                                    Text("Clear (\(activeFilterCount))")
+                                    Image(systemName: "target")
+                                    Text(selectedGoalFilter.rawValue)
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption2)
                                 }
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .fontWeight(.medium)
+                                .foregroundStyle(selectedGoalFilter != .all ? .white : .primary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(selectedGoalFilter != .all ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                                .clipShape(Capsule())
+                                .fixedSize()
+                            }
+
+                            // Week picker (only show if there are program workouts)
+                            if !availableWeeks.isEmpty {
+                                Menu {
+                                    Button {
+                                        selectedWeek = 0
+                                    } label: {
+                                        HStack {
+                                            Text("All Weeks")
+                                            if selectedWeek == 0 {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+
+                                    Divider()
+
+                                    ForEach(1...maxWeeks, id: \.self) { week in
+                                        Button {
+                                            selectedWeek = week
+                                        } label: {
+                                            HStack {
+                                                Text("Week \(week)")
+                                                if selectedWeek == week {
+                                                    Image(systemName: "checkmark")
+                                                }
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "calendar")
+                                        Text(selectedWeek > 0 ? "Week \(selectedWeek)" : "All Weeks")
+                                        Image(systemName: "chevron.down")
+                                            .font(.caption2)
+                                    }
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(selectedWeek > 0 ? .white : .primary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(selectedWeek > 0 ? Color(hex: "2d6a4f") : Color(.tertiarySystemGroupedBackground))
+                                    .clipShape(Capsule())
+                                    .fixedSize()
+                                }
+                            }
+
+                            // Clear filters button
+                            if activeFilterCount > 0 {
+                                Button {
+                                    withAnimation {
+                                        selectedFilter = .all
+                                        selectedStatusFilter = .all
+                                        selectedGoalFilter = .all
+                                        selectedWeek = 0
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "xmark.circle.fill")
+                                        Text("Clear (\(activeFilterCount))")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize()
+                                }
                             }
                         }
+                        .padding(.horizontal)
                     }
-                    .padding(.horizontal)
 
                     // Results count
                     HStack {
@@ -3580,6 +3683,7 @@ struct ImportWorkoutView: View {
     // AI Parsing
     @State private var showAIProcessing = false
     @State private var parsedWorkout: ParsedWorkout?
+    @State private var parsedProgram: ParsedProgram?
     @State private var showParsedPreview = false
 
     // Naming step
@@ -3593,8 +3697,11 @@ struct ImportWorkoutView: View {
             ZStack {
                 ScrollView {
                     VStack(spacing: 24) {
-                        if showParsedPreview, let parsed = parsedWorkout {
-                            // Show AI-parsed workout preview
+                        if showParsedPreview, let program = parsedProgram {
+                            // Show AI-parsed program preview (multiple workouts)
+                            parsedProgramPreview(program)
+                        } else if showParsedPreview, let parsed = parsedWorkout {
+                            // Show AI-parsed single workout preview
                             parsedWorkoutPreview(parsed)
                         } else if showNamingStep {
                             // Naming step UI
@@ -3612,7 +3719,7 @@ struct ImportWorkoutView: View {
                     aiProcessingOverlay
                 }
             }
-            .navigationTitle(showParsedPreview ? "Review Workout" : (showNamingStep ? "Name Your Workout" : "Import Workout"))
+            .navigationTitle(showParsedPreview ? (parsedProgram != nil ? "Review Program" : "Review Workout") : (showNamingStep ? "Name Your Workout" : "Import Workout"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -3620,6 +3727,7 @@ struct ImportWorkoutView: View {
                         Button("Cancel") {
                             showParsedPreview = false
                             parsedWorkout = nil
+                            parsedProgram = nil
                         }
                     } else if showNamingStep {
                         Button("Cancel") {
@@ -3678,6 +3786,11 @@ struct ImportWorkoutView: View {
                     Text("AI is extracting exercises from your file...")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.8))
+
+                    Text("This may take 1-2 minutes for large programs")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(.top, 4)
                 }
 
                 ProgressView()
@@ -3791,6 +3904,266 @@ struct ImportWorkoutView: View {
         .onAppear {
             customWorkoutName = parsed.name
         }
+    }
+
+    // MARK: - Parsed Program Preview (Multiple Workouts)
+    private func parsedProgramPreview(_ program: ParsedProgram) -> some View {
+        VStack(spacing: 20) {
+            // Header
+            VStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+
+                Text("Program Parsed!")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Text("\(program.workouts.count) workouts • \(program.daysPerWeek) days/week • \(program.durationWeeks) weeks")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.top, 24)
+
+            // Program Name
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Program Name")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                TextField("Program name", text: $customWorkoutName)
+                    .font(.headline)
+                    .padding()
+                    .background(Color(.tertiarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal)
+
+            // Program Info
+            if !program.programDescription.isEmpty {
+                Text(program.programDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal)
+            }
+
+            // Workouts List
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Workouts")
+                    .font(.headline)
+                    .padding(.horizontal)
+
+                ForEach(Array(program.workouts.enumerated()), id: \.offset) { index, workout in
+                    DisclosureGroup {
+                        VStack(spacing: 8) {
+                            ForEach(Array(workout.exercises.enumerated()), id: \.offset) { exIndex, exercise in
+                                HStack(spacing: 8) {
+                                    Text("\(exIndex + 1).")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 20)
+
+                                    Text(exercise.name)
+                                        .font(.caption)
+
+                                    Spacer()
+
+                                    Text("\(exercise.sets)×\(exercise.reps)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 8)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Text("\(index + 1)")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .frame(width: 24, height: 24)
+                                .background(Color(hex: "0ea5e9"))
+                                .clipShape(Circle())
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(workout.name)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+
+                                Text("\(workout.exercises.count) exercises • \(workout.estimatedDuration) min")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                }
+            }
+
+            // Info Row
+            HStack(spacing: 16) {
+                Label("\(program.workouts.count) workouts", systemImage: "list.bullet")
+                Label(program.difficulty.capitalized, systemImage: "chart.bar")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding()
+
+            // Save Button
+            Button {
+                saveAIParsedProgram(program)
+            } label: {
+                Text("Save Program (\(program.workouts.count) workouts)")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color(hex: "2d6a4f"))
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 32)
+        }
+        .onAppear {
+            customWorkoutName = program.programName
+        }
+    }
+
+    private func saveAIParsedProgram(_ program: ParsedProgram) {
+        let difficulty: Difficulty
+        switch program.difficulty.lowercased() {
+        case "beginner": difficulty = .beginner
+        case "advanced": difficulty = .advanced
+        default: difficulty = .intermediate
+        }
+
+        // Calculate average duration from workouts
+        let workoutCount = program.workouts.count
+        let avgDuration = program.workouts.isEmpty ? 45 :
+            program.workouts.reduce(0) { $0 + $1.estimatedDuration } / workoutCount
+
+        // Use the parsed values from AI (daysPerWeek and durationWeeks)
+        let workoutsPerWeek = program.daysPerWeek
+        let durationWeeks = program.durationWeeks
+
+        // Create the program template
+        let template = ProgramTemplate(
+            name: program.programName,
+            description: program.programDescription,
+            category: .strength,
+            difficulty: difficulty,
+            durationWeeks: durationWeeks,
+            workoutsPerWeek: workoutsPerWeek,
+            estimatedMinutesPerSession: avgDuration,
+            goal: .general
+        )
+
+        // Convert parsed workouts to ProgramWorkoutDefinitions
+        var workoutDefinitions: [ProgramWorkoutDefinition] = []
+        for parsedWorkout in program.workouts {
+            let exercises = parsedWorkout.exercises.map { parsedExercise in
+                ProgramExerciseDefinition(
+                    exerciseName: parsedExercise.name,
+                    sets: parsedExercise.sets,
+                    reps: parsedExercise.reps,
+                    weight: parsedExercise.weight,
+                    restSeconds: parsedExercise.restSeconds ?? 60
+                )
+            }
+
+            let workoutDef = ProgramWorkoutDefinition(
+                name: parsedWorkout.name,
+                description: parsedWorkout.description,
+                estimatedMinutes: parsedWorkout.estimatedDuration,
+                exercises: exercises
+            )
+            workoutDefinitions.append(workoutDef)
+        }
+
+        template.workoutDefinitions = workoutDefinitions
+
+        // Create a weekly schedule based on workouts per week
+        // Distribute workouts across the week (Mon, Wed, Fri, etc.)
+        let schedule = createWeeklySchedule(
+            workoutsPerWeek: workoutsPerWeek,
+            workoutDefinitions: workoutDefinitions
+        )
+        template.schedule = schedule
+
+        modelContext.insert(template)
+
+        do {
+            try modelContext.save()
+            themeManager.notifySuccess()
+
+            // Post notification to refresh programs view
+            NotificationCenter.default.post(name: NSNotification.Name("ProgramImported"), object: template.name)
+
+            showParsedPreview = false
+            parsedProgram = nil
+            dismiss()
+        } catch {
+            errorMessage = "Failed to save program: \(error.localizedDescription)"
+            themeManager.notifyError()
+        }
+    }
+
+    /// Creates a weekly schedule distributing workouts across days
+    private func createWeeklySchedule(
+        workoutsPerWeek: Int,
+        workoutDefinitions: [ProgramWorkoutDefinition]
+    ) -> [ProgramDaySchedule] {
+        var schedule: [ProgramDaySchedule] = []
+
+        // Determine which days to have workouts based on workouts per week
+        // Standard distribution patterns for even spacing
+        let workoutDays: [Int]
+        switch workoutsPerWeek {
+        case 1:
+            workoutDays = [1] // Monday only
+        case 2:
+            workoutDays = [1, 4] // Mon, Thu
+        case 3:
+            workoutDays = [1, 3, 5] // Mon, Wed, Fri
+        case 4:
+            workoutDays = [1, 2, 4, 5] // Mon, Tue, Thu, Fri
+        case 5:
+            workoutDays = [1, 2, 3, 4, 5] // Mon-Fri
+        case 6:
+            workoutDays = [1, 2, 3, 4, 5, 6] // Mon-Sat
+        default:
+            workoutDays = [1, 3, 5] // Default to 3 days
+        }
+
+        // Create schedule for all 7 days
+        var workoutIndex = 0
+        for day in 1...7 {
+            let isWorkoutDay = workoutDays.contains(day)
+
+            if isWorkoutDay && !workoutDefinitions.isEmpty {
+                // Cycle through workout definitions
+                let workoutName = workoutDefinitions[workoutIndex % workoutDefinitions.count].name
+                schedule.append(ProgramDaySchedule(
+                    dayOfWeek: day,
+                    workoutName: workoutName,
+                    isRest: false
+                ))
+                workoutIndex += 1
+            } else {
+                // Rest day
+                schedule.append(ProgramDaySchedule(
+                    dayOfWeek: day,
+                    workoutName: nil,
+                    isRest: true
+                ))
+            }
+        }
+
+        return schedule
     }
 
     // MARK: - Initial Import Content
@@ -4140,8 +4513,18 @@ struct ImportWorkoutView: View {
                 await MainActor.run {
                     showAIProcessing = false
 
-                    if let parsed = response.parsed {
+                    if let program = response.parsedProgram {
+                        // Full program with multiple workouts
+                        parsedProgram = program
+                        parsedWorkout = nil
+                        withAnimation {
+                            showParsedPreview = true
+                        }
+                        themeManager.mediumImpact()
+                    } else if let parsed = response.parsed {
+                        // Single workout
                         parsedWorkout = parsed
+                        parsedProgram = nil
                         withAnimation {
                             showParsedPreview = true
                         }

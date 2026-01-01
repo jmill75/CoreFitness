@@ -9,6 +9,7 @@ struct HomeView: View {
     @EnvironmentObject var navigationState: NavigationState
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var workoutManager: WorkoutManager
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
     @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     // MARK: - Bindings
@@ -51,13 +52,6 @@ struct HomeView: View {
                                 .opacity(animationStage >= 1 ? 1 : 0)
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
                                 .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8), value: animationStage)
-
-                            // Week Calendar (no card, at top)
-                            WeekCalendarStrip()
-                                .padding(.bottom, 8)
-                                .opacity(animationStage >= 2 ? 1 : 0)
-                                .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 10))
-                                .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.8).delay(0.05), value: animationStage)
 
                             // Today's Recovery Section
                             TodayRecoverySection(selectedTab: $selectedTab)
@@ -229,9 +223,7 @@ struct WelcomeHeader: View {
     }
 
     private var dateString: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: Date())
+        CachedFormatters.dateString.string(from: Date())
     }
 
     var body: some View {
@@ -1238,9 +1230,7 @@ struct WeekCalendarStrip: View {
     }
 
     private var monthYearText: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: Date())
+        CachedFormatters.monthYear.string(from: Date())
     }
 
     var body: some View {
@@ -1260,23 +1250,9 @@ struct DayScoreCell: View {
         Calendar.current.isDateInToday(date)
     }
 
-    private var dayFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter
-    }
-
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d"
-        return formatter
-    }
-
-    private var fullDateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-        return formatter
-    }
+    private var dayFormatter: DateFormatter { CachedFormatters.day }
+    private var dateFormatter: DateFormatter { CachedFormatters.date }
+    private var fullDateFormatter: DateFormatter { CachedFormatters.fullDate }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -1349,34 +1325,23 @@ struct CurrentActivitySection: View {
 struct TodaysWorkoutCard: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @EnvironmentObject var themeManager: ThemeManager
-    @Query(sort: \Workout.createdAt, order: .reverse) private var workouts: [Workout]
-    @Query private var userPrograms: [UserProgram]
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
 
     @Binding var selectedTab: Tab
     var onShowWorkoutPopup: ((Workout) -> Void)?
 
     @State private var showWorkoutExecution = false
-    @State private var workoutRefreshTrigger = UUID()
 
     private var activeSession: WorkoutSession? {
         workoutManager.currentSession
     }
 
-    private var activeUserProgram: UserProgram? {
-        userPrograms.first { $0.status == .active }
-    }
-
     private var currentWorkout: Workout? {
+        // Priority: active session > manager's current workout
         if let sessionWorkout = activeSession?.workout {
             return sessionWorkout
         }
-        if let activeWorkout = workouts.first(where: { $0.isActive }) {
-            return activeWorkout
-        }
-        if activeUserProgram != nil {
-            return workouts.first
-        }
-        return nil
+        return activeProgramManager.currentWorkout
     }
 
     private var isWorkoutInProgress: Bool {
@@ -1418,13 +1383,6 @@ struct TodaysWorkoutCard: View {
                 .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
-        .id(workoutRefreshTrigger)
-        .onReceive(NotificationCenter.default.publisher(for: .workoutStarted)) { _ in
-            workoutRefreshTrigger = UUID()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .workoutCompleted)) { _ in
-            workoutRefreshTrigger = UUID()
-        }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = currentWorkout {
                 WorkoutExecutionView(workout: workout)
@@ -1445,20 +1403,38 @@ struct TodaysWorkoutCard: View {
                 }
             } label: {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(cyanAccent)
-                            .frame(width: 6, height: 6)
-                        Text(isWorkoutInProgress ? "IN PROGRESS" : "SCHEDULED")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .tracking(1)
+                    HStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(cyanAccent)
+                                .frame(width: 6, height: 6)
+                            Text(isWorkoutInProgress ? "IN PROGRESS" : "SCHEDULED")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .tracking(1)
+                        }
+                        .foregroundStyle(cyanAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(cyanAccent.opacity(0.15))
+                        .clipShape(Capsule())
+
+                        // Show Week/Workout for program workouts
+                        if workout.sourceProgramId != nil && workout.programWeekNumber > 0 {
+                            Text("Week \(workout.programWeekNumber) • Workout \(workout.programSessionNumber)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
                     }
-                    .foregroundStyle(cyanAccent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(cyanAccent.opacity(0.15))
-                    .clipShape(Capsule())
+
+                    // Show program name if this is a program workout
+                    if let programName = workout.sourceProgramName, !programName.isEmpty {
+                        Text(programName)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
 
                     Text(workout.name.uppercased())
                         .font(.title2)
@@ -1575,99 +1551,108 @@ struct TodaysChallengeCard: View {
             selectedTab = .programs
             navigationState.showChallenges = true
         } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 6) {
-                    Image(systemName: "trophy.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("ACTIVE CHALLENGE")
-                        .font(.system(size: 10, weight: .bold))
-                        .tracking(1.5)
-                }
-                .foregroundStyle(goldAccent)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(goldAccent.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            ZStack(alignment: .topTrailing) {
+                VStack(alignment: .leading, spacing: 12) {
+                    // Header row with badge
+                    HStack(spacing: 8) {
+                        // Challenge badge
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(goldAccent)
+                                .frame(width: 6, height: 6)
+                            Text("ACTIVE CHALLENGE")
+                                .font(.caption2)
+                                .fontWeight(.bold)
+                                .tracking(1)
+                        }
+                        .foregroundStyle(goldAccent)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(goldAccent.opacity(0.15))
+                        .clipShape(Capsule())
 
-                HStack(spacing: 14) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color(hex: "e8b339"), Color(hex: "ff9f43")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 46, height: 46)
-                            .shadow(color: goldAccent.opacity(0.35), radius: 8, x: 0, y: 4)
-
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.white)
+                        // Day progress
+                        Text("Day \(challenge.currentDay) of \(challenge.durationDays)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.white.opacity(0.5))
                     }
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(challenge.name)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
+                    // Challenge name - matching workout card title style
+                    Text(challenge.name.uppercased())
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
 
-                        Text("Week \(currentWeek) of \(totalWeeks)")
-                            .font(.system(size: 13, weight: .semibold))
+                    // Stats row - matching workout card style
+                    HStack(spacing: 16) {
+                        Label("Week \(currentWeek)/\(totalWeeks)", systemImage: "calendar")
+                        Label("\(completedDays) completed", systemImage: "checkmark.circle.fill")
+                    }
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.6))
+
+                    // Progress bar
+                    VStack(alignment: .leading, spacing: 6) {
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white.opacity(0.1))
+                                    .frame(height: 8)
+
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color(hex: "e8b339"), goldAccent],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(width: max(0, geo.size.width * progress), height: 8)
+                            }
+                        }
+                        .frame(height: 8)
+
+                        // Progress percentage
+                        Text("\(Int(progress * 100))% Complete")
+                            .font(.caption)
+                            .fontWeight(.medium)
                             .foregroundStyle(goldAccent)
                     }
 
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(completedDays)/\(challenge.durationDays)")
-                            .font(.system(size: 22, weight: .bold, design: .monospaced))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [goldAccent, Color(hex: "ff9f43")],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-
-                        Text("workouts")
-                            .font(.system(size: 10, weight: .semibold))
+                    // View Challenge button - matching workout card button style
+                    HStack {
+                        Spacer()
+                        Text("VIEW CHALLENGE")
+                            .font(.subheadline)
+                            .fontWeight(.bold)
                             .tracking(1)
-                            .foregroundStyle(.white.opacity(0.4))
-                            .textCase(.uppercase)
-                    }
-                }
-
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 6)
-
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 14)
+                            .background(
                                 LinearGradient(
-                                    colors: [Color(hex: "e8b339"), goldAccent, Color(hex: "ff9f43")],
+                                    colors: [Color(hex: "e8b339"), goldAccent],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
                             )
-                            .frame(width: geo.size.width * progress, height: 6)
-
-                        if progress > 0 {
-                            Circle()
-                                .fill(Color(hex: "ff9f43"))
-                                .frame(width: 12, height: 12)
-                                .shadow(color: Color(hex: "ff9f43"), radius: 6)
-                                .shadow(color: goldAccent, radius: 2)
-                                .offset(x: max(0, geo.size.width * progress - 6))
-                        }
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        Spacer()
                     }
                 }
-                .frame(height: 12)
+                .padding(20)
+
+                // Radial gradient decoration - matching workout card
+                RadialGradient(
+                    colors: [goldAccent.opacity(0.15), Color.clear],
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 150
+                )
+                .allowsHitTesting(false)
             }
-            .padding(18)
         }
         .buttonStyle(.plain)
         .background(cardBg)
@@ -1686,7 +1671,7 @@ struct TodaysChallengeCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(goldAccent.opacity(0.2), lineWidth: 1)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
     }
@@ -1867,7 +1852,7 @@ struct ActiveWorkoutCard: View {
 
                     // Text content
                     VStack(spacing: 6) {
-                        Text("No Active Workout")
+                        Text("No Current Workout")
                             .font(.system(size: 17, weight: .semibold))
                             .foregroundStyle(.white)
 
@@ -2222,6 +2207,9 @@ struct QuickWaterIntakeView: View {
     @State private var showAddAnimation = false
     @State private var animateProgress = false
     @State private var showCelebration = false
+    @State private var ringPulse = false
+    @State private var checkmarkAnimating = false
+    @State private var checkmarkColor: Color = .white
 
     private let hydrationTips: [(icon: String, tip: String)] = [
         ("sunrise.fill", "Drink water first thing in the morning"),
@@ -2256,8 +2244,14 @@ struct QuickWaterIntakeView: View {
                             }
 
                         VStack(spacing: 20) {
-                            // Large progress ring
+                            // Large progress ring with animated glow
                             ZStack {
+                                // Pulsing glow behind ring
+                                Circle()
+                                    .fill(Color.white.opacity(ringPulse ? 0.15 : 0.05))
+                                    .frame(width: 180, height: 180)
+                                    .blur(radius: 20)
+
                                 // Background ring with segments
                                 Circle()
                                     .stroke(Color.white.opacity(0.2), lineWidth: 14)
@@ -2282,6 +2276,7 @@ struct QuickWaterIntakeView: View {
                                     )
                                     .frame(width: 150, height: 150)
                                     .rotationEffect(.degrees(-90))
+                                    .shadow(color: waterManager.hasReachedGoal ? Color.accentGreen.opacity(0.6) : Color.accentBlue.opacity(0.4), radius: ringPulse ? 12 : 6)
 
                                 // Center content
                                 VStack(spacing: 2) {
@@ -2322,16 +2317,22 @@ struct QuickWaterIntakeView: View {
                                 }
                             }
 
-                            // Status message
+                            // Status message with animated checkmark
                             if waterManager.hasReachedGoal {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "checkmark.seal.fill")
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 22, weight: .semibold))
+                                        .foregroundStyle(checkmarkColor)
+                                        .scaleEffect(checkmarkAnimating ? 1.3 : 1.0)
+                                        .shadow(color: checkmarkColor == .green ? Color.green.opacity(0.8) : Color.clear, radius: checkmarkAnimating ? 10 : 0)
                                     Text("Daily goal reached!")
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
                                 }
-                                .font(.headline)
-                                .foregroundStyle(.white)
                                 .scaleEffect(showCelebration ? 1.1 : 1.0)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.5), value: showCelebration)
+                                .onAppear {
+                                    animateGoalReached()
+                                }
                             } else {
                                 Text("\(waterManager.remainingOunces) oz more to reach your goal")
                                     .font(.subheadline)
@@ -2453,6 +2454,39 @@ struct QuickWaterIntakeView: View {
                 waterManager.loadTodayData()
                 withAnimation(.easeOut(duration: 0.8)) {
                     animateProgress = true
+                }
+                // Start ring pulse animation
+                startRingPulse()
+            }
+        }
+    }
+
+    // MARK: - Animations
+
+    private func startRingPulse() {
+        // Continuous subtle pulse for the ring glow
+        withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+            ringPulse = true
+        }
+    }
+
+    private func animateGoalReached() {
+        // Animate checkmark from white to green with pulse
+        withAnimation(.easeInOut(duration: 0.3)) {
+            checkmarkColor = .green
+        }
+
+        // Pulse animation - scale up and down 3 times
+        let pulseDuration = 0.4
+        for i in 0..<3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * pulseDuration * 2) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                    checkmarkAnimating = true
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * pulseDuration * 2 + pulseDuration) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                    checkmarkAnimating = false
                 }
             }
         }
@@ -3026,10 +3060,10 @@ struct WaterDropletCelebration: View {
                 x: CGFloat.random(in: 0...size.width),
                 startY: CGFloat.random(in: -50...(-20)),
                 endY: size.height + 50,
-                size: CGFloat.random(in: 8...18),
+                size: CGFloat.random(in: 18...36),
                 delay: Double(index) * 0.08,
                 duration: Double.random(in: 1.5...2.5),
-                opacity: Double.random(in: 0.5...0.9)
+                opacity: Double.random(in: 0.6...0.95)
             )
         }
     }
@@ -3070,9 +3104,9 @@ struct WaterDropletBackground: View {
         let droplet = ContinuousWaterDroplet(
             id: dropletCounter,
             x: CGFloat.random(in: 20...(size.width - 20)),
-            size: CGFloat.random(in: 6...14),
-            duration: Double.random(in: 3.0...5.0),
-            opacity: Double.random(in: 0.15...0.35),
+            size: CGFloat.random(in: 16...32),
+            duration: Double.random(in: 3.5...6.0),
+            opacity: Double.random(in: 0.2...0.45),
             createdAt: Date()
         )
         droplets.append(droplet)
@@ -3300,6 +3334,39 @@ struct WorkoutStartPopup: View {
             onCancel()
         }
     }
+}
+
+// MARK: - Cached DateFormatters (Performance: avoid recreating on every render)
+private enum CachedFormatters {
+    static let dateString: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f
+    }()
+
+    static let monthYear: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM yyyy"
+        return f
+    }()
+
+    static let day: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE"
+        return f
+    }()
+
+    static let date: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "d"
+        return f
+    }()
+
+    static let fullDate: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .full
+        return f
+    }()
 }
 
 #Preview {
