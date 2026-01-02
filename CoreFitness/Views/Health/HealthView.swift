@@ -38,10 +38,7 @@ struct HealthView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // Header
-                        HealthPageHeader(
-                            onCheckIn: { showDailyCheckIn = true },
-                            onLogWater: { showWaterIntake = true }
-                        )
+                        HealthPageHeader()
                         .id("top")
                         .padding(.horizontal)
                         .opacity(animationStage >= 1 ? 1 : 0)
@@ -261,9 +258,6 @@ struct HealthAlert: Identifiable {
 
 // MARK: - Health Page Header
 private struct HealthPageHeader: View {
-    let onCheckIn: () -> Void
-    let onLogWater: () -> Void
-
     private let teal = Color(hex: "00d2d3")
     private let sage = Color(hex: "1dd1a1")
 
@@ -274,53 +268,22 @@ private struct HealthPageHeader: View {
     }
 
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(dateString)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color(hex: "666666"))
+        VStack(alignment: .leading, spacing: 4) {
+            Text(dateString)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: "666666"))
 
-                Text("Health")
-                    .font(.custom("Helvetica Neue", size: 28).weight(.light))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.white, teal, sage],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+            Text("Health")
+                .font(.custom("Helvetica Neue", size: 28).weight(.light))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, teal, sage],
+                        startPoint: .leading,
+                        endPoint: .trailing
                     )
-            }
-
-            Spacer()
-
-            HStack(spacing: 10) {
-                Button(action: onLogWater) {
-                    Image(systemName: "drop.fill")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(Color(hex: "54a0ff"))
-                        .frame(width: 44, height: 44)
-                        .background(Color(hex: "141414"))
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                        )
-                }
-
-                Button(action: onCheckIn) {
-                    Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(sage)
-                        .frame(width: 44, height: 44)
-                        .background(Color(hex: "141414"))
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                        )
-                }
-            }
+                )
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 16)
         .padding(.bottom, 8)
     }
