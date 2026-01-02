@@ -1106,6 +1106,50 @@ class WorkoutManager: ObservableObject {
         ActiveProgramManager.shared.refreshNow()
     }
 
+    // MARK: - Weekly Statistics
+
+    /// Get workout minutes for each day of the current week (Mon-Sun)
+    /// Returns array of 7 integers representing minutes for each day
+    func getWeeklyWorkoutMinutes() -> [Int] {
+        guard let context = modelContext else { return Array(repeating: 0, count: 7) }
+
+        let calendar = Calendar.current
+        let today = Date()
+
+        // Find the start of the week (Monday)
+        var weekStart = today
+        while calendar.component(.weekday, from: weekStart) != 2 { // 2 = Monday
+            weekStart = calendar.date(byAdding: .day, value: -1, to: weekStart)!
+        }
+        weekStart = calendar.startOfDay(for: weekStart)
+
+        // Fetch all completed sessions
+        let descriptor = FetchDescriptor<WorkoutSession>()
+        guard let sessions = try? context.fetch(descriptor) else {
+            return Array(repeating: 0, count: 7)
+        }
+
+        // Filter to completed sessions this week and group by day
+        var minutesByDay = Array(repeating: 0, count: 7)
+
+        for session in sessions {
+            guard session.status == .completed,
+                  let completedAt = session.completedAt,
+                  let duration = session.totalDuration else { continue }
+
+            // Check if this session is within the current week
+            let sessionDay = calendar.startOfDay(for: completedAt)
+            let dayOffset = calendar.dateComponents([.day], from: weekStart, to: sessionDay).day ?? -1
+
+            // Only include sessions from this week (Mon-Sun, index 0-6)
+            if dayOffset >= 0 && dayOffset < 7 {
+                minutesByDay[dayOffset] += duration / 60 // Convert seconds to minutes
+            }
+        }
+
+        return minutesByDay
+    }
+
     // MARK: - Helper Methods
 
     private func prefillFromLastSession() {

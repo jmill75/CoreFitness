@@ -3677,14 +3677,14 @@ struct WeeklyActivitySection: View {
 
     // Generate weekly data based on current day (Mon-Sun)
     private var weeklyData: [DayActivity] {
-        // TODO: Replace mock minutes with actual workout data from workoutManager
-        let mockMinutesData = [45, 95, 30, 60, 0, 0, 0] // Example past data
+        // Get real workout data from workoutManager
+        let weeklyMinutes = workoutManager.getWeeklyWorkoutMinutes()
 
         return dayNames.enumerated().map { index, day in
             let isToday = index == todayIndex
             let isFuture = index > todayIndex
             // Future days show 0 minutes, past/today can show actual data
-            let minutes = isFuture ? 0 : (index < mockMinutesData.count ? mockMinutesData[index] : 0)
+            let minutes = isFuture ? 0 : (index < weeklyMinutes.count ? weeklyMinutes[index] : 0)
             return DayActivity(day: day, minutes: minutes, isToday: isToday, isFuture: isFuture)
         }
     }
