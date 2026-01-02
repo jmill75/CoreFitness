@@ -32,20 +32,12 @@ struct ProgressTabView: View {
                             .padding(.top, 24)
                             .padding(.horizontal)
 
-                        // Featured Achievement - Next to Earn
-                        FeaturedAchievementSection(
-                            achievements: achievements,
-                            userAchievements: userAchievements
-                        )
-                        .padding(.top, 24)
-                        .padding(.horizontal)
-
-                        // Trophy Case - Earned Achievements
+                        // Achievements - Earned Achievements
                         TrophyCaseSection(
                             achievements: achievements,
                             userAchievements: userAchievements
                         )
-                        .padding(.top, 28)
+                        .padding(.top, 24)
                         .padding(.horizontal)
 
                         // In Progress Achievements
@@ -238,7 +230,7 @@ private struct ProgressHeader: View {
 
                     ProgressStatCard(
                         value: "\(earnedCount)",
-                        label: "Trophies",
+                        label: "Achievements",
                         icon: "trophy.fill",
                         color: goldStart
                     )
@@ -724,7 +716,7 @@ private struct AllAchievementsEarnedCard: View {
             Text("🏆")
                 .font(.system(size: 48))
 
-            Text("All Trophies Earned!")
+            Text("All Achievements Earned!")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
@@ -781,19 +773,25 @@ private struct TrophyCaseSection: View {
         GridItem(.flexible(), spacing: 12)
     ]
 
+    private let teal = Color(hex: "00d2d3")
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Section header
             HStack {
-                Text("Trophy Case")
+                Text("Achievements")
                     .font(.system(size: 20, weight: .regular, design: .serif))
                     .foregroundStyle(.white)
 
                 Spacer()
 
-                Text("\(earnedAchievements.count) earned")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Color(hex: "666666"))
+                NavigationLink {
+                    AchievementWallView()
+                } label: {
+                    Text("View All")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(teal)
+                }
             }
 
             if earnedAchievements.isEmpty {
@@ -802,7 +800,7 @@ private struct TrophyCaseSection: View {
                     Image(systemName: "trophy")
                         .font(.largeTitle)
                         .foregroundStyle(.white.opacity(0.2))
-                    Text("Complete challenges to earn trophies")
+                    Text("Complete challenges to earn achievements")
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.4))
                 }
@@ -844,26 +842,6 @@ private struct TrophyCaseSection: View {
                     RoundedRectangle(cornerRadius: 20)
                         .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
                 )
-
-                // View all if more than 8
-                if earnedAchievements.count > 8 {
-                    NavigationLink {
-                        AchievementWallView()
-                    } label: {
-                        HStack {
-                            Text("View all \(earnedAchievements.count) trophies")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            Image(systemName: "arrow.right")
-                                .font(.caption)
-                        }
-                        .foregroundStyle(Color(hex: "54a0ff"))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color(hex: "54a0ff").opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
             }
         }
     }
