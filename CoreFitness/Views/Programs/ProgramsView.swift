@@ -156,14 +156,8 @@ struct ProgramsView: View {
                             .opacity(animationStage >= 3 ? 1 : 0)
                             .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
 
-                        // MARK: - My Programs Section
-                        myProgramsSection
-                            .padding(.top, 24)
-                            .opacity(animationStage >= 4 ? 1 : 0)
-                            .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
-
-                        // MARK: - Discover Section
-                        discoverSection
+                        // MARK: - Browse Section
+                        browseSection
                             .padding(.horizontal)
                             .padding(.top, 24)
                             .padding(.bottom, 100)
@@ -1097,11 +1091,11 @@ struct ProgramsView: View {
         }
     }
 
-    // MARK: - Discover Section (grid layout)
-    private var discoverSection: some View {
+    // MARK: - Browse Section (grid layout)
+    private var browseSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Section header
-            Text("Discover")
+            Text("Browse")
                 .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
 
@@ -1109,7 +1103,16 @@ struct ProgramsView: View {
                 GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12)
             ], spacing: 12) {
-                DiscoverCard(
+                BrowseCard(
+                    icon: "folder.fill",
+                    title: "My Programs",
+                    subtitle: importedPrograms.isEmpty ? "No programs" : "\(importedPrograms.count) saved",
+                    color: coral
+                ) {
+                    showAllPrograms = true
+                }
+
+                BrowseCard(
                     icon: "square.grid.2x2.fill",
                     title: "Programs",
                     subtitle: "100+ templates",
@@ -1118,7 +1121,7 @@ struct ProgramsView: View {
                     showProgramBrowser = true
                 }
 
-                DiscoverCard(
+                BrowseCard(
                     icon: "trophy.fill",
                     title: "Challenges",
                     subtitle: "Compete",
@@ -1127,7 +1130,7 @@ struct ProgramsView: View {
                     showChallenges = true
                 }
 
-                DiscoverCard(
+                BrowseCard(
                     icon: "dumbbell.fill",
                     title: "Exercises",
                     subtitle: "1300+ demos",
@@ -1135,21 +1138,12 @@ struct ProgramsView: View {
                 ) {
                     showExerciseLibrary = true
                 }
-
-                DiscoverCard(
-                    icon: "person.2.fill",
-                    title: "Community",
-                    subtitle: "Coming soon",
-                    color: purple
-                ) {
-                    // Coming soon
-                }
             }
         }
     }
 
-    // MARK: - Discover Card (grid card style)
-    private struct DiscoverCard: View {
+    // MARK: - Browse Card (grid card style)
+    private struct BrowseCard: View {
         let icon: String
         let title: String
         let subtitle: String
