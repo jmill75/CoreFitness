@@ -82,12 +82,10 @@ struct MainTabView: View {
     }
 }
 
-// MARK: - Custom Tab Bar
+// MARK: - Custom Tab Bar (Liquid Glass Style)
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
     let hasProgramActivity: Bool
-
-    private let tabBarBackground = Color(hex: "0A0A0A")
 
     var body: some View {
         HStack(spacing: 0) {
@@ -104,16 +102,41 @@ struct CustomTabBar: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.top, 8)
+        .padding(.top, 12)
         .padding(.bottom, 28)
         .background(
-            tabBarBackground
-                .overlay(
-                    Rectangle()
-                        .fill(Color.white.opacity(0.06))
-                        .frame(height: 0.5),
-                    alignment: .top
+            ZStack {
+                // Liquid glass effect
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+
+                // Subtle gradient overlay for depth
+                LinearGradient(
+                    colors: [
+                        Color.white.opacity(0.08),
+                        Color.clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
+
+                // Top border highlight
+                VStack {
+                    Rectangle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.2),
+                                    Color.white.opacity(0.05)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(height: 0.5)
+                    Spacer()
+                }
+            }
         )
     }
 }
@@ -129,9 +152,9 @@ struct TabBarButton: View {
         if isSelected {
             return .white
         } else if isInactive {
-            return Color(hex: "333333")
+            return Color.white.opacity(0.2)
         } else {
-            return Color(hex: "666666")
+            return Color.white.opacity(0.5)
         }
     }
 
@@ -139,9 +162,9 @@ struct TabBarButton: View {
         if isSelected {
             return .white
         } else if isInactive {
-            return Color(hex: "333333")
+            return Color.white.opacity(0.2)
         } else {
-            return Color(hex: "666666")
+            return Color.white.opacity(0.5)
         }
     }
 
@@ -149,14 +172,16 @@ struct TabBarButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: tab.icon)
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 22, weight: .medium))
                     .foregroundStyle(iconColor)
+                    .symbolEffect(.bounce, value: isSelected)
 
                 Text(tab.rawValue)
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(labelColor)
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
         }
         .buttonStyle(.plain)
     }
