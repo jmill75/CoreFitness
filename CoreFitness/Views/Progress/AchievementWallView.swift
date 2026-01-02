@@ -321,7 +321,7 @@ struct AchievementGridView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(sortedAchievements, id: \.id) { achievement in
+            ForEach(sortedAchievements, id: \.persistentId) { achievement in
                 AchievementTileView(
                     achievement: achievement,
                     userAchievement: userAchievements.first { $0.achievementId == achievement.id }
@@ -476,16 +476,13 @@ struct AchievementDetailSheet: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            // Close button
+            // Done button
             HStack {
                 Spacer()
-                Button {
+                Button("Done") {
                     dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
                 }
+                .fontWeight(.semibold)
             }
             .padding(.top, 8)
 
@@ -687,7 +684,7 @@ struct AchievementShareCardView: View {
                         GridItem(.flexible()),
                         GridItem(.flexible())
                     ], spacing: 16) {
-                        ForEach(topAchievements.prefix(6), id: \.id) { achievement in
+                        ForEach(topAchievements.prefix(6), id: \.persistentId) { achievement in
                             VStack(spacing: 8) {
                                 ZStack {
                                     Circle()

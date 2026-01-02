@@ -939,6 +939,7 @@ struct QuickOptionsGrid: View {
                 }
             )
             .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
     }
 

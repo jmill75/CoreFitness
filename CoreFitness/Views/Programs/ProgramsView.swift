@@ -220,6 +220,8 @@ struct ProgramsView: View {
                         selectedProgram = program
                     }
                 }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
             .fullScreenCover(isPresented: $showWorkoutExecution) {
                 if let workout = currentWorkout {
@@ -3752,6 +3754,8 @@ struct SavedWorkoutCard: View {
         }
         .sheet(isPresented: $showWorkoutDetail) {
             WorkoutDetailSheet(workout: workout)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 }
@@ -5220,6 +5224,7 @@ struct ExerciseLibraryView: View {
             .sheet(item: $selectedExercise) { exercise in
                 ExerciseDetailView(exercise: exercise)
                     .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showFavoritesSheet) {
                 FavoritesSheet(exercises: favoriteExercises) { exercise in
@@ -5228,6 +5233,8 @@ struct ExerciseLibraryView: View {
                         selectedExercise = exercise
                     }
                 }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
             .onAppear {
                 if reduceMotion {
@@ -5754,12 +5761,8 @@ private struct FavoritesSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    Button("Done") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
                     }
                 }
             }

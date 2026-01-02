@@ -118,6 +118,8 @@ struct HealthView: View {
             }
             .sheet(item: $selectedMetric) { metric in
                 HealthMetricDetailView(metricType: metric)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             .task {
                 if healthKitManager.isAuthorized {
