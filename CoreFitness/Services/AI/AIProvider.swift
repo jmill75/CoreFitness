@@ -81,7 +81,8 @@ extension AIProvider {
 enum AIError: LocalizedError {
     case networkError(underlying: Error)
     case invalidResponse
-    case rateLimited
+    case rateLimited(message: String?)
+    case quotaExceeded(message: String)
     case serverError(statusCode: Int, message: String?)
     case providerUnavailable
     case configurationError(String)
@@ -93,8 +94,10 @@ enum AIError: LocalizedError {
             return "Network error: \(error.localizedDescription)"
         case .invalidResponse:
             return "Invalid response from AI service"
-        case .rateLimited:
-            return "Rate limit exceeded. Please try again later."
+        case .rateLimited(let message):
+            return message ?? "Rate limit exceeded. Please try again later."
+        case .quotaExceeded(let message):
+            return message
         case .serverError(let code, let message):
             return "Server error (\(code)): \(message ?? "Unknown error")"
         case .providerUnavailable:
@@ -138,12 +141,37 @@ struct AISystemPrompts {
         """
 
     static let workoutParsing = """
-        You are an expert at parsing workout routines from text.
-        Extract the workout name, description, estimated duration, difficulty level, and exercises.
-        For each exercise, extract: name, sets, reps, weight (if mentioned), and rest time.
+        You are an expert at parsing workout routines and programs from text.
+
         IMPORTANT: Return ONLY valid JSON with no additional text, explanation, or markdown code fences.
         The response must be directly parseable as JSON.
-        Use this exact structure:
+
+        If the content contains MULTIPLE workouts or is a full training program, use this structure:
+        {
+            "programName": "Program Name",
+            "programDescription": "Brief description of the program",
+            "difficulty": "Beginner|Intermediate|Advanced",
+            "daysPerWeek": 4,
+            "durationWeeks": 8,
+            "workouts": [
+                {
+                    "name": "Day 1 - Push",
+                    "description": "Upper body push focus",
+                    "estimatedDuration": 45,
+                    "exercises": [
+                        {"name": "Bench Press", "sets": 4, "reps": "8-10", "weight": "135 lbs", "restSeconds": 90}
+                    ]
+                },
+                {
+                    "name": "Day 2 - Pull",
+                    "description": "Upper body pull focus",
+                    "estimatedDuration": 45,
+                    "exercises": [...]
+                }
+            ]
+        }
+
+        If the content contains a SINGLE workout only, use this simpler structure:
         {
             "name": "Workout Name",
             "description": "Brief description",
@@ -153,6 +181,11 @@ struct AISystemPrompts {
                 {"name": "Exercise Name", "sets": 3, "reps": "10", "weight": "135 lbs", "restSeconds": 60}
             ]
         }
-        Keep exercise names simple and standardized. If weight is not mentioned, omit the weight field entirely.
+
+        CRITICAL: For daysPerWeek, count the number of unique workout days in the program.
+        If the program shows 6 different workouts (Day 1-6), set daysPerWeek to 6.
+        If it shows 3 workouts (like Mon/Wed/Fri), set daysPerWeek to 3.
+
+        Keep exercise names simple and standardized. If weight is not mentioned, omit the weight field.
         """
 }

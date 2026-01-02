@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Pastel Dark Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #000000;
+            --card-bg: #141414;
+            --card-border: rgba(255,255,255,0.06);
+            --peach: #FACDB4;
+            --peach-dark: #E8A67C;
+            --lavender: #E5D4F2;
+            --lavender-dark: #B794D4;
+            --mint: #B8F5C8;
+            --mint-dark: #4ADE80;
+            --coral: #FF8066;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #666666;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0A0A0A;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            margin: 40px auto;
+            background: var(--bg);
+            border-radius: 50px;
+            border: 8px solid #333;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            padding: 50px 20px 40px;
+            overflow-y: auto;
+        }
+
+        .screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFB088 0%, #FF8066 100%);
+            border: 2px solid var(--card-bg);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .header-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .header-btn svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+        }
+
+        /* Date */
+        .date-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .date-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .date-text svg {
+            width: 12px;
+            height: 12px;
+            margin-left: 4px;
+        }
+
+        /* Greeting */
+        .greeting {
+            font-size: 26px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            line-height: 1.3;
+        }
+
+        .greeting strong {
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--peach) 0%, var(--lavender) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Stats Card */
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .stats-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .stat-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .stat-dot.peach { background: var(--peach); }
+        .stat-dot.lavender { background: var(--lavender); }
+        .stat-dot.coral { background: var(--coral); }
+
+        /* Progress Ring */
+        .progress-ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: #222222;
+            stroke-width: 10;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#ringGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 141;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-ring-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+        }
+
+        .progress-ring-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .see-full-stats {
+            text-align: center;
+            padding-top: 16px;
+            margin-top: 16px;
+            border-top: 1px solid var(--card-border);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .see-full-stats:hover {
+            color: var(--text-primary);
+        }
+
+        /* Metric Cards Grid */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .metric-card {
+            border-radius: 24px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            min-height: 150px;
+        }
+
+        .metric-card.peach {
+            background: var(--peach);
+        }
+
+        .metric-card.lavender {
+            background: var(--lavender);
+        }
+
+        .metric-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: auto;
+        }
+
+        .metric-icon svg {
+            width: 16px;
+            height: 16px;
+            color: #1A1A1A;
+        }
+
+        .metric-chart {
+            position: absolute;
+            bottom: 50px;
+            left: 18px;
+            right: 18px;
+            height: 50px;
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            border-radius: 4px 4px 2px 2px;
+            transition: height 0.3s ease;
+        }
+
+        .metric-card.peach .chart-bar {
+            background: var(--peach-dark);
+        }
+
+        .metric-card.lavender .chart-bar {
+            background: var(--lavender-dark);
+        }
+
+        .metric-info {
+            position: absolute;
+            bottom: 18px;
+            left: 18px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 2px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1A1A1A;
+        }
+
+        /* Mood Card */
+        .mood-card {
+            background: var(--mint);
+            border-radius: 24px;
+            padding: 24px;
+        }
+
+        .mood-question {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1A1A1A;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .mood-options {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .mood-btn {
+            padding: 12px 20px;
+            background: #1A1A1A;
+            border: none;
+            border-radius: 24px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mood-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .mood-btn.outline {
+            background: transparent;
+            border: 2px solid #1A1A1A;
+            color: #1A1A1A;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="screen">
+            <!-- Header -->
+            <header class="header">
+                <div class="avatar"></div>
+                <div class="header-actions">
+                    <button class="header-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        </svg>
+                    </button>
+                    <button class="header-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Date -->
+            <div class="date-row">
+                <span class="date-text">
+                    Jan 1, 2026
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </span>
+            </div>
+
+            <!-- Greeting -->
+            <h1 class="greeting">Hello Jeff! Your <strong>Fitness Data</strong></h1>
+
+            <!-- Stats Card -->
+            <div class="stats-card">
+                <div class="stats-content">
+                    <div class="stats-list">
+                        <div class="stat-row">
+                            <span class="stat-label">Target</span>
+                            <span class="stat-value">500 kcal <span class="stat-dot peach"></span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Burned</span>
+                            <span class="stat-value">240 kcal <span class="stat-dot lavender"></span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Remaining</span>
+                            <span class="stat-value">260 kcal <span class="stat-dot coral"></span></span>
+                        </div>
+                    </div>
+                    <div class="progress-ring-container">
+                        <svg class="progress-ring" width="120" height="120" viewBox="0 0 120 120">
+                            <defs>
+                                <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#E8A67C"/>
+                                    <stop offset="100%" style="stop-color:#B794D4"/>
+                                </linearGradient>
+                            </defs>
+                            <circle class="progress-ring-bg" cx="60" cy="60" r="50"/>
+                            <circle class="progress-ring-fill" cx="60" cy="60" r="50"/>
+                        </svg>
+                        <div class="progress-ring-text">
+                            <span class="progress-ring-label">Remaining</span>
+                            <span class="progress-ring-value">55%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="see-full-stats">See Full Stats</div>
+            </div>
+
+            <!-- Metric Cards -->
+            <div class="metric-grid">
+                <div class="metric-card peach">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-chart">
+                        <div class="chart-bar" style="height: 30%;"></div>
+                        <div class="chart-bar" style="height: 45%;"></div>
+                        <div class="chart-bar" style="height: 35%;"></div>
+                        <div class="chart-bar" style="height: 60%;"></div>
+                        <div class="chart-bar" style="height: 50%;"></div>
+                        <div class="chart-bar" style="height: 80%;"></div>
+                        <div class="chart-bar" style="height: 70%;"></div>
+                        <div class="chart-bar" style="height: 55%;"></div>
+                        <div class="chart-bar" style="height: 90%;"></div>
+                        <div class="chart-bar" style="height: 65%;"></div>
+                    </div>
+                    <div class="metric-info">
+                        <span class="metric-label">Heart Rate</span>
+                        <span class="metric-value">102</span>
+                    </div>
+                </div>
+                <div class="metric-card lavender">
+                    <div class="metric-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                        </svg>
+                    </div>
+                    <div class="metric-chart">
+                        <div class="chart-bar" style="height: 40%;"></div>
+                        <div class="chart-bar" style="height: 55%;"></div>
+                        <div class="chart-bar" style="height: 45%;"></div>
+                        <div class="chart-bar" style="height: 70%;"></div>
+                        <div class="chart-bar" style="height: 60%;"></div>
+                        <div class="chart-bar" style="height: 50%;"></div>
+                        <div class="chart-bar" style="height: 75%;"></div>
+                        <div class="chart-bar" style="height: 65%;"></div>
+                        <div class="chart-bar" style="height: 85%;"></div>
+                        <div class="chart-bar" style="height: 70%;"></div>
+                    </div>
+                    <div class="metric-info">
+                        <span class="metric-label">Sleep</span>
+                        <span class="metric-value">7H 20M</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mood Card -->
+            <div class="mood-card">
+                <h2 class="mood-question">How are you feeling today?</h2>
+                <div class="mood-options">
+                    <button class="mood-btn">Happy</button>
+                    <button class="mood-btn outline">Tired</button>
+                    <button class="mood-btn outline">Sore</button>
+                    <button class="mood-btn outline">Great</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Programs - Concept 1: Brutalist Fitness</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #000;
+            --bg-card: #111;
+            --bg-elevated: #1a1a1a;
+            --cyan: #54a0ff;
+            --green: #1dd1a1;
+            --gold: #feca57;
+            --purple: #a55eea;
+            --coral: #ff6b6b;
+            --text-primary: #fff;
+            --text-secondary: rgba(255,255,255,0.5);
+            --text-tertiary: rgba(255,255,255,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+            padding-bottom: 100px;
+        }
+
+        /* Brutalist Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 3px solid var(--cyan);
+        }
+
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            letter-spacing: 8px;
+            line-height: 0.85;
+            background: linear-gradient(180deg, #fff 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .search-btn {
+            width: 56px;
+            height: 56px;
+            background: transparent;
+            border: 2px solid var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .search-btn:hover {
+            border-color: var(--cyan);
+            background: var(--cyan);
+        }
+
+        .search-btn svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--text-primary);
+        }
+
+        /* Hero Workout - Massive */
+        .hero-workout {
+            background: var(--bg-card);
+            margin-bottom: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-workout::before {
+            content: 'NOW';
+            position: absolute;
+            top: -20px;
+            right: -10px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 180px;
+            color: rgba(84, 160, 255, 0.08);
+            letter-spacing: 10px;
+        }
+
+        .hero-content {
+            padding: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-label {
+            display: inline-block;
+            background: var(--cyan);
+            color: #000;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            padding: 6px 12px;
+            margin-bottom: 16px;
+        }
+
+        .hero-program {
+            font-size: 11px;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .hero-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 48px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .hero-meta span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .start-btn {
+            display: block;
+            width: 100%;
+            background: var(--cyan);
+            color: #000;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 4px;
+            padding: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            background: #fff;
+            transform: translateY(-2px);
+        }
+
+        /* Section Labels */
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-tertiary);
+            margin-bottom: 16px;
+            padding-left: 4px;
+        }
+
+        /* Quick Actions - Brutalist Grid */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2px;
+            background: var(--text-tertiary);
+            margin-bottom: 48px;
+        }
+
+        .quick-action {
+            background: var(--bg-card);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: var(--text-primary);
+        }
+
+        .quick-action:hover {
+            background: var(--bg-elevated);
+        }
+
+        .quick-action svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .quick-action.cyan svg { stroke: var(--cyan); }
+        .quick-action.purple svg { stroke: var(--purple); }
+        .quick-action.green svg { stroke: var(--green); }
+        .quick-action.gold svg { stroke: var(--gold); }
+
+        .quick-action span {
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        /* My Workouts - Horizontal */
+        .workouts-section {
+            margin-bottom: 48px;
+        }
+
+        .workouts-scroll {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+            scrollbar-width: none;
+        }
+
+        .workouts-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .workout-card {
+            flex-shrink: 0;
+            width: 200px;
+            background: var(--bg-card);
+            border-left: 3px solid var(--cyan);
+            padding: 20px;
+        }
+
+        .workout-card h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 24px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .workout-card p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* Active Program */
+        .active-program {
+            background: var(--bg-card);
+            padding: 24px;
+            margin-bottom: 48px;
+            border-top: 3px solid var(--green);
+        }
+
+        .program-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .program-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 28px;
+            letter-spacing: 1px;
+        }
+
+        .program-week {
+            font-size: 11px;
+            color: var(--green);
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--bg-elevated);
+            margin-top: 16px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 25%;
+            background: var(--green);
+        }
+
+        /* Discover */
+        .discover-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            background: var(--text-tertiary);
+        }
+
+        .discover-row {
+            background: var(--bg-card);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .discover-row:hover {
+            background: var(--bg-elevated);
+        }
+
+        .discover-row h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .discover-row p {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .discover-row svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-tertiary);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header { animation: slideUp 0.5s ease-out; }
+        .hero-workout { animation: slideUp 0.5s ease-out 0.1s both; }
+        .quick-actions { animation: slideUp 0.5s ease-out 0.2s both; }
+        .workouts-section { animation: slideUp 0.5s ease-out 0.3s both; }
+        .active-program { animation: slideUp 0.5s ease-out 0.4s both; }
+        .discover-section { animation: slideUp 0.5s ease-out 0.5s both; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>PROGRAMS</h1>
+        <button class="search-btn">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+            </svg>
+        </button>
+    </header>
+
+    <section class="hero-workout">
+        <div class="hero-content">
+            <span class="hero-label">CURRENT WORKOUT</span>
+            <p class="hero-program">8-WEEK STRENGTH BUILDER // WEEK 2 WORKOUT 3</p>
+            <h2 class="hero-title">UPPER BODY STRENGTH</h2>
+            <div class="hero-meta">
+                <span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                    ~35 MIN
+                </span>
+                <span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"></path>
+                    </svg>
+                    4 EXERCISES
+                </span>
+            </div>
+            <button class="start-btn">START WORKOUT →</button>
+        </div>
+    </section>
+
+    <p class="section-label">QUICK ACTIONS</p>
+    <div class="quick-actions">
+        <button class="quick-action cyan">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14"></path>
+            </svg>
+            <span>CREATE WORKOUT</span>
+        </button>
+        <button class="quick-action purple">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+            </svg>
+            <span>AI GENERATE</span>
+        </button>
+        <button class="quick-action green">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+            </svg>
+            <span>IMPORT</span>
+        </button>
+        <button class="quick-action gold">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+            <span>CHALLENGES</span>
+        </button>
+    </div>
+
+    <section class="workouts-section">
+        <p class="section-label">MY WORKOUTS</p>
+        <div class="workouts-scroll">
+            <div class="workout-card">
+                <h3>PUSH DAY</h3>
+                <p>Chest, shoulders, triceps</p>
+            </div>
+            <div class="workout-card">
+                <h3>PULL DAY</h3>
+                <p>Back, biceps, rear delts</p>
+            </div>
+            <div class="workout-card">
+                <h3>LEG DAY</h3>
+                <p>Quads, hamstrings, glutes</p>
+            </div>
+        </div>
+    </section>
+
+    <p class="section-label">ACTIVE PROGRAM</p>
+    <section class="active-program">
+        <div class="program-header">
+            <div>
+                <h3 class="program-title">8-WEEK STRENGTH BUILDER</h3>
+                <p class="program-week">WEEK 2 OF 8</p>
+            </div>
+            <span style="font-size: 24px; color: var(--green);">25%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+    </section>
+
+    <p class="section-label">DISCOVER</p>
+    <div class="discover-section">
+        <div class="discover-row">
+            <div>
+                <h4>Browse Programs</h4>
+                <p>100+ templates for every goal</p>
+            </div>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="m9 18 6-6-6-6"></path>
+            </svg>
+        </div>
+        <div class="discover-row">
+            <div>
+                <h4>Exercise Library</h4>
+                <p>1300+ exercises with demos</p>
+            </div>
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="m9 18 6-6-6-6"></path>
+            </svg>
+        </div>
+    </div>
+</body>
+</html>

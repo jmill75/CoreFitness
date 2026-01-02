@@ -529,10 +529,14 @@ class WorkoutManager: ObservableObject {
             Task { @MainActor in
                 guard let self = self else { return }
                 self.elapsedTime += 1
-                // Sync elapsed time to Watch every second to keep in sync
-                self.watchManager.sendElapsedTimeUpdate(self.elapsedTime)
-                // Update Live Activity
-                self.updateLiveActivity()
+                // Sync elapsed time to Watch every 3 seconds (balance sync vs performance)
+                if self.elapsedTime % 3 == 0 {
+                    self.watchManager.sendElapsedTimeUpdate(self.elapsedTime)
+                }
+                // Update Live Activity every 5 seconds to reduce overhead
+                if self.elapsedTime % 5 == 0 {
+                    self.updateLiveActivity()
+                }
             }
         }
     }

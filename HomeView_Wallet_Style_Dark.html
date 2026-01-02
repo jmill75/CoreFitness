@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Wallet Style Dark</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0A0A0F;
+            --card-bg: #16161F;
+            --card-bg-elevated: #1E1E2A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+            --green: #22C55E;
+            --green-bg: rgba(34, 197, 94, 0.15);
+            --red: #EF4444;
+            --red-bg: rgba(239, 68, 68, 0.15);
+            --blue: #3B82F6;
+            --pink: #EC4899;
+            --purple: #8B5CF6;
+            --orange: #F97316;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: var(--bg);
+            border-radius: 50px;
+            border: 10px solid #2A2A35;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 28px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .status-icons {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            color: var(--text-primary);
+        }
+
+        .screen {
+            width: 100%;
+            height: calc(100% - 40px);
+            padding: 0 20px 100px;
+            overflow-y: auto;
+        }
+
+        .screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 20px;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* Main Balance Card */
+        .balance-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .balance-label-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .balance-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .currency-toggle {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .balance-amount {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .balance-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+        }
+
+        .balance-change {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .balance-change.positive {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .balance-change.negative {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .balance-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .balance-expand {
+            display: flex;
+            justify-content: center;
+            padding-top: 12px;
+            margin-top: 12px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        /* Sort Row */
+        .sort-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .sort-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        /* Metric List */
+        .metric-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .metric-item:hover {
+            background: var(--card-bg-elevated);
+            transform: translateX(4px);
+        }
+
+        .metric-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .metric-icon.recovery { background: linear-gradient(135deg, #22C55E, #16A34A); }
+        .metric-icon.hrv { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+        .metric-icon.sleep { background: linear-gradient(135deg, #3B82F6, #2563EB); }
+        .metric-icon.steps { background: linear-gradient(135deg, #F97316, #EA580C); }
+
+        .metric-info {
+            flex: 1;
+        }
+
+        .metric-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .metric-secondary {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .metric-values {
+            text-align: right;
+        }
+
+        .metric-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .metric-change {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .metric-change.positive { color: var(--green); }
+        .metric-change.negative { color: var(--red); }
+
+        /* Tab Bar */
+        .tab-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border);
+            padding: 16px 40px 34px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            color: var(--text-primary);
+        }
+
+        .tab-icon {
+            font-size: 22px;
+        }
+
+        /* ===== DETAIL SCREEN ===== */
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0 20px;
+        }
+
+        .back-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+        .detail-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .more-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* Detail Balance */
+        .detail-balance-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 20px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .detail-icon-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .detail-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            background: linear-gradient(135deg, #22C55E, #16A34A);
+        }
+
+        .detail-type {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .detail-unit {
+            font-size: 13px;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            background: var(--card-bg-elevated);
+            border-radius: 6px;
+        }
+
+        .detail-value {
+            font-size: 40px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+            margin-bottom: 4px;
+        }
+
+        .detail-value span {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .detail-secondary-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-secondary {
+            font-size: 15px;
+            color: var(--text-muted);
+        }
+
+        .detail-change {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .detail-change.positive {
+            background: var(--green-bg);
+            color: var(--green);
+        }
+
+        .detail-change.negative {
+            background: var(--red-bg);
+            color: var(--red);
+        }
+
+        .detail-expand {
+            display: flex;
+            justify-content: center;
+            padding-top: 16px;
+            margin-top: 16px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        /* Time Toggle */
+        .time-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .time-btn {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-btn.active {
+            background: var(--text-primary);
+            color: var(--bg);
+        }
+
+        /* Chart Card */
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .chart-legend {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.low { background: var(--red); }
+        .legend-dot.high { background: var(--green); }
+
+        .chart-area {
+            height: 100px;
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            height: 60px;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #F59E0B;
+        }
+
+        .indicator-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--card-bg-elevated);
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+        }
+
+        .action-icon.blue { background: var(--blue); }
+        .action-icon.pink { background: var(--pink); }
+
+        .action-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Design label */
+        .design-label {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6B7280;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Screen 1: Dashboard -->
+        <div>
+            <div class="design-label">Dashboard View - Dark</div>
+            <div class="phone-frame">
+                <div class="status-bar">
+                    <span>9:41</span>
+                    <div class="status-icons">
+                        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
+                            <path d="M1 4.5C1 3.67 1.67 3 2.5 3H3.5C4.33 3 5 3.67 5 4.5V10.5C5 11.33 4.33 12 3.5 12H2.5C1.67 12 1 11.33 1 10.5V4.5Z"/>
+                            <path d="M6 3C6 2.17 6.67 1.5 7.5 1.5H8.5C9.33 1.5 10 2.17 10 3V10.5C10 11.33 9.33 12 8.5 12H7.5C6.67 12 6 11.33 6 10.5V3Z"/>
+                            <path d="M11 1C11 0.17 11.67 -0.5 12.5 -0.5H13.5C14.33 -0.5 15 0.17 15 1V10.5C15 11.33 14.33 12 13.5 12H12.5C11.67 12 11 11.33 11 10.5V1Z" opacity="0.3"/>
+                            <path d="M16 2.5C16 1.67 16.67 1 17.5 1H18.5C19.33 1 20 1.67 20 2.5V10.5C20 11.33 19.33 12 18.5 12H17.5C16.67 12 16 11.33 16 10.5V2.5Z" opacity="0.3"/>
+                        </svg>
+                        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+                            <path d="M8 2C11.31 2 14.14 3.67 15.5 6C14.14 8.33 11.31 10 8 10C4.69 10 1.86 8.33 0.5 6C1.86 3.67 4.69 2 8 2Z"/>
+                        </svg>
+                        <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor">
+                            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/>
+                            <rect x="2" y="2" width="14" height="8" rx="1" fill="currentColor"/>
+                            <path d="M23 4V8C23.83 8 24.5 7.1 24.5 6C24.5 4.9 23.83 4 23 4Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="screen">
+                    <!-- Header -->
+                    <header class="header">
+                        <div class="header-btn">
+                            <svg width="20" height="14" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="0" y1="2" x2="14" y2="2"/>
+                                <line x1="0" y1="7" x2="20" y2="7"/>
+                                <line x1="0" y1="12" x2="10" y2="12"/>
+                            </svg>
+                        </div>
+                        <span class="header-title">Fitness</span>
+                        <div class="header-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                            </svg>
+                        </div>
+                    </header>
+
+                    <!-- Main Balance Card -->
+                    <div class="balance-card">
+                        <div class="balance-header">
+                            <div class="balance-label-row">
+                                <div class="balance-icon" style="background: linear-gradient(135deg, #22C55E, #16A34A);">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                    </svg>
+                                </div>
+                                <span class="balance-label">Weekly Recovery Score</span>
+                            </div>
+                            <div class="currency-toggle">
+                                pts
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="balance-amount">
+                            <span class="balance-value">78.5</span>
+                            <span class="balance-change positive">+8.2%</span>
+                        </div>
+                        <div class="balance-subtitle">Average score this week</div>
+                        <div class="balance-expand">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Sort Row -->
+                    <div class="sort-row">
+                        <span>Sorted by importance</span>
+                        <div class="sort-dropdown">
+                            Today
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Metric List -->
+                    <div class="metric-list">
+                        <div class="metric-item">
+                            <div class="metric-icon recovery">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-name">Recovery Score</div>
+                                <div class="metric-secondary">Current</div>
+                            </div>
+                            <div class="metric-values">
+                                <div class="metric-value">75</div>
+                                <div class="metric-change positive">+4.2%</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-icon hrv">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                                    <path d="M3 12h4l3-9 4 18 3-9h4"/>
+                                </svg>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-name">HRV</div>
+                                <div class="metric-secondary">Heart Rate Variability</div>
+                            </div>
+                            <div class="metric-values">
+                                <div class="metric-value">52 ms</div>
+                                <div class="metric-change positive">+3.9%</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-icon sleep">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-name">Sleep</div>
+                                <div class="metric-secondary">Last night</div>
+                            </div>
+                            <div class="metric-values">
+                                <div class="metric-value">7.2 hrs</div>
+                                <div class="metric-change negative">-12.5%</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-item">
+                            <div class="metric-icon steps">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M13.5 5.5C14.33 5.5 15 4.83 15 4s-.67-1.5-1.5-1.5S12 3.17 12 4s.67 1.5 1.5 1.5zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/>
+                                </svg>
+                            </div>
+                            <div class="metric-info">
+                                <div class="metric-name">Steps</div>
+                                <div class="metric-secondary">Today</div>
+                            </div>
+                            <div class="metric-values">
+                                <div class="metric-value">8,432</div>
+                                <div class="metric-change positive">+24.1%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <div class="tab-item active">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen 2: Detail View -->
+        <div>
+            <div class="design-label">Recovery Detail View - Dark</div>
+            <div class="phone-frame">
+                <div class="status-bar">
+                    <span>9:45</span>
+                    <div class="status-icons">
+                        <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor">
+                            <path d="M1 4.5C1 3.67 1.67 3 2.5 3H3.5C4.33 3 5 3.67 5 4.5V10.5C5 11.33 4.33 12 3.5 12H2.5C1.67 12 1 11.33 1 10.5V4.5Z"/>
+                            <path d="M6 3C6 2.17 6.67 1.5 7.5 1.5H8.5C9.33 1.5 10 2.17 10 3V10.5C10 11.33 9.33 12 8.5 12H7.5C6.67 12 6 11.33 6 10.5V3Z"/>
+                            <path d="M11 1C11 0.17 11.67 -0.5 12.5 -0.5H13.5C14.33 -0.5 15 0.17 15 1V10.5C15 11.33 14.33 12 13.5 12H12.5C11.67 12 11 11.33 11 10.5V1Z" opacity="0.3"/>
+                            <path d="M16 2.5C16 1.67 16.67 1 17.5 1H18.5C19.33 1 20 1.67 20 2.5V10.5C20 11.33 19.33 12 18.5 12H17.5C16.67 12 16 11.33 16 10.5V2.5Z" opacity="0.3"/>
+                        </svg>
+                        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor">
+                            <path d="M8 2C11.31 2 14.14 3.67 15.5 6C14.14 8.33 11.31 10 8 10C4.69 10 1.86 8.33 0.5 6C1.86 3.67 4.69 2 8 2Z"/>
+                        </svg>
+                        <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor">
+                            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" fill="none"/>
+                            <rect x="2" y="2" width="14" height="8" rx="1" fill="currentColor"/>
+                            <path d="M23 4V8C23.83 8 24.5 7.1 24.5 6C24.5 4.9 23.83 4 23 4Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="screen">
+                    <!-- Detail Header -->
+                    <header class="detail-header">
+                        <div class="back-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="15 18 9 12 15 6"/>
+                            </svg>
+                        </div>
+                        <span class="detail-title">Recovery Score</span>
+                        <div class="more-btn">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="2"/>
+                                <circle cx="12" cy="12" r="2"/>
+                                <circle cx="12" cy="19" r="2"/>
+                            </svg>
+                        </div>
+                    </header>
+
+                    <!-- Detail Balance -->
+                    <div class="detail-balance-card">
+                        <div class="detail-icon-row">
+                            <div class="detail-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
+                            </div>
+                            <span class="detail-type">Recovery</span>
+                            <span class="detail-unit">pts</span>
+                        </div>
+                        <div class="detail-value">75 <span>/ 100</span></div>
+                        <div class="detail-secondary-row">
+                            <span class="detail-secondary">Yesterday: 72</span>
+                            <span class="detail-change positive">+4.2%</span>
+                        </div>
+                        <div class="detail-expand">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Time Toggle -->
+                    <div class="time-toggle">
+                        <button class="time-btn">Day</button>
+                        <button class="time-btn active">Week</button>
+                        <button class="time-btn">Month</button>
+                        <button class="time-btn">Year</button>
+                    </div>
+
+                    <!-- Chart Card -->
+                    <div class="chart-card">
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <span class="legend-dot low"></span>
+                                Lower: 58
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-dot high"></span>
+                                Higher: 82
+                            </div>
+                        </div>
+                        <div class="chart-area">
+                            <svg class="chart-svg" viewBox="0 0 320 80" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="chartGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#F97316;stop-opacity:0.4"/>
+                                        <stop offset="100%" style="stop-color:#F97316;stop-opacity:0"/>
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,60 Q40,55 80,50 T160,35 T240,40 T320,25"
+                                      fill="none"
+                                      stroke="#F97316"
+                                      stroke-width="3"
+                                      stroke-linecap="round"/>
+                                <path d="M0,60 Q40,55 80,50 T160,35 T240,40 T320,25 V80 H0 Z"
+                                      fill="url(#chartGradientDark)"/>
+                                <circle cx="320" cy="25" r="6" fill="#F97316"/>
+                                <circle cx="320" cy="25" r="3" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="chart-indicator">
+                            <span class="indicator-dot"></span>
+                            <span class="indicator-text">Avg this week: 71</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <div class="action-btn">
+                            <div class="action-icon blue">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </div>
+                            <span class="action-label">Check-In</span>
+                        </div>
+                        <div class="action-btn">
+                            <div class="action-icon pink">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z"/>
+                                </svg>
+                            </div>
+                            <span class="action-label">Log Water</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <div class="tab-item active">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                    </div>
+                    <div class="tab-item">
+                        <svg class="tab-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -99,6 +99,15 @@ export default {
       }
     } catch (error) {
       console.error('Error processing request:', error);
+
+      // Return 429 for quota errors
+      if (error instanceof QuotaExceededError) {
+        return jsonResponse(
+          { error: { code: 'QUOTA_EXCEEDED', message: error.message } },
+          429
+        );
+      }
+
       return jsonResponse(
         { error: { code: 'INTERNAL_ERROR', message: error instanceof Error ? error.message : 'Unknown error' } },
         500
@@ -177,28 +186,54 @@ async function handleParse(request: Request, env: Env): Promise<Response> {
   const provider = body.provider || env.DEFAULT_PROVIDER as 'gemini' | 'claude';
 
   // Use system prompt optimized for JSON output
-  const parseSystemPrompt = body.systemPrompt || `You are an expert at parsing workout routines from text.
-Extract the workout name, description, estimated duration, difficulty level, and exercises.
-For each exercise, extract: name, sets, reps, weight (if mentioned), and rest time.
-IMPORTANT: Return ONLY valid JSON with no additional text or explanation. The response must be parseable JSON.
+  const parseSystemPrompt = body.systemPrompt || `You are an expert at parsing workout programs from text.
+Extract ALL workouts from the program - every day and every week.
+
+CRITICAL RULES:
+1. Return ONLY raw JSON - NO markdown code fences, NO backticks, NO explanation text
+2. Return an object with "programName" and "workouts" array containing ALL workout days
+3. The response must start with { and end with }
+4. Include EVERY workout day from the program
+
 Use this exact structure:
 {
-    "name": "Workout Name",
-    "description": "Brief description",
-    "estimatedDuration": 45,
+    "programName": "Program Name",
+    "programDescription": "Brief description of the overall program",
     "difficulty": "Beginner|Intermediate|Advanced",
-    "exercises": [
-        {"name": "Exercise Name", "sets": 3, "reps": "10", "weight": "135 lbs", "restSeconds": 60}
+    "workouts": [
+        {
+            "name": "Week 1 Day 1 - Chest & Triceps",
+            "description": "Brief description",
+            "estimatedDuration": 45,
+            "exercises": [
+                {"name": "Exercise Name", "sets": 3, "reps": "10", "weight": "135 lbs", "restSeconds": 60}
+            ]
+        },
+        {
+            "name": "Week 1 Day 2 - Back & Biceps",
+            "description": "Brief description",
+            "estimatedDuration": 45,
+            "exercises": [...]
+        }
     ]
 }
-Keep exercise names simple and standardized. If weight is not mentioned, omit it.`;
+Keep exercise names simple and standardized (e.g., "Bench Press", "Squat", "Deadlift").
+If weight is not mentioned, omit it. Include ALL days from ALL weeks.`;
 
   const response = await generateAIResponse(body.prompt, parseSystemPrompt, provider, env);
 
   return jsonResponse(response);
 }
 
-// AI Generation
+// Custom error class for quota exceeded
+class QuotaExceededError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'QuotaExceededError';
+  }
+}
+
+// AI Generation with automatic fallback
 async function generateAIResponse(
   prompt: string,
   systemPrompt: string | undefined,
@@ -206,7 +241,29 @@ async function generateAIResponse(
   env: Env
 ): Promise<AIResponse> {
   if (provider === 'gemini') {
-    return await callGemini(prompt, systemPrompt, env);
+    try {
+      return await callGemini(prompt, systemPrompt, env);
+    } catch (error) {
+      // Check if it's a quota/rate limit error (429) - fallback to Claude
+      const errorMessage = error instanceof Error ? error.message : '';
+      const isQuotaError = errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('RESOURCE_EXHAUSTED');
+
+      if (isQuotaError) {
+        console.log('Gemini quota exceeded, attempting fallback to Claude');
+        if (env.CLAUDE_API_KEY) {
+          try {
+            const response = await callClaude(prompt, systemPrompt, env);
+            return { ...response, model: `${response.model} (fallback)` };
+          } catch (claudeError) {
+            console.error('Claude fallback also failed:', claudeError);
+            throw new QuotaExceededError('AI quota exceeded and fallback unavailable. Please try again later.');
+          }
+        } else {
+          throw new QuotaExceededError('AI quota exceeded. Please try again later (quota resets daily).');
+        }
+      }
+      throw error;
+    }
   } else {
     return await callClaude(prompt, systemPrompt, env);
   }
@@ -227,9 +284,11 @@ async function callGemini(prompt: string, systemPrompt: string | undefined, env:
   const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
   // Add system instruction if provided
+  // Note: Gemini 2.5 Flash uses "thinking" tokens by default which consume output budget
+  // We disable thinking for structured output tasks
   const requestBody: {
     contents: typeof contents;
-    generationConfig: { maxOutputTokens: number; temperature: number };
+    generationConfig: { maxOutputTokens: number; temperature: number; thinkingConfig?: { thinkingBudget: number } };
     systemInstruction?: { parts: Array<{ text: string }> };
   } = {
     contents: [
@@ -239,8 +298,11 @@ async function callGemini(prompt: string, systemPrompt: string | undefined, env:
       }
     ],
     generationConfig: {
-      maxOutputTokens: 2048,
+      maxOutputTokens: 65536,  // Max for Gemini 2.5 Flash
       temperature: 0.7,
+      thinkingConfig: {
+        thinkingBudget: 0  // Disable thinking for faster, direct output
+      }
     }
   };
 
@@ -248,6 +310,15 @@ async function callGemini(prompt: string, systemPrompt: string | undefined, env:
     requestBody.systemInstruction = {
       parts: [{ text: systemPrompt }]
     };
+  }
+
+  // Log request for debugging
+  console.log('=== GEMINI REQUEST ===');
+  console.log('Model:', model);
+  console.log('Prompt length:', prompt.length);
+  console.log('Prompt preview:', prompt.substring(0, 500) + (prompt.length > 500 ? '...' : ''));
+  if (systemPrompt) {
+    console.log('System prompt preview:', systemPrompt.substring(0, 200) + '...');
   }
 
   const response = await fetch(url, {
@@ -258,7 +329,9 @@ async function callGemini(prompt: string, systemPrompt: string | undefined, env:
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Gemini API error:', response.status, errorText);
+    console.error('=== GEMINI ERROR ===');
+    console.error('Status:', response.status);
+    console.error('Response:', errorText);
     throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
 
@@ -273,8 +346,21 @@ async function callGemini(prompt: string, systemPrompt: string | undefined, env:
     };
   };
 
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  let content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   const tokensUsed = data.usageMetadata?.totalTokenCount || null;
+
+  // Strip markdown code fences if present (Gemini sometimes adds them despite instructions)
+  content = content
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  // Log response for debugging
+  console.log('=== GEMINI RESPONSE ===');
+  console.log('Tokens used:', tokensUsed);
+  console.log('Response length:', content.length);
+  console.log('Response preview:', content.substring(0, 500) + (content.length > 500 ? '...' : ''));
 
   return {
     content,

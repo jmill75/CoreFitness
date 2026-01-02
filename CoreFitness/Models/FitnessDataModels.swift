@@ -344,6 +344,7 @@ final class StreakData {
 @Model
 final class Achievement {
     var id: String = "" // e.g., "first_workout", "7_day_streak"
+    var persistentId: UUID = UUID() // Unique ID for SwiftUI ForEach
     var name: String = ""
     var achievementDescription: String = ""
     var categoryRaw: String = AchievementCategory.workout.rawValue

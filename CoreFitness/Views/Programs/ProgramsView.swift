@@ -399,10 +399,17 @@ struct ProgramsView: View {
                         .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(.white)
 
-                    // Subtitle
-                    Text("Week \(workout.programWeekNumber + 1) of \(workout.totalWeeks) • Day \(workout.programDayNumber)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(textMuted)
+                    // Program name and progress info
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let programName = workout.sourceProgramName, !programName.isEmpty {
+                            Text(programName)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(sage)
+                        }
+                        Text("Week \(workout.programWeekNumber + 1) of \(workout.totalWeeks) • Day \(workout.programDayNumber)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(textMuted)
+                    }
 
                     // Progress bar
                     VStack(spacing: 8) {

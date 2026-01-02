@@ -134,6 +134,7 @@ class WorkoutGeneratorEngine: ObservableObject {
             workoutsPerWeek: plan.workoutsPerWeek,
             isPremium: false
         )
+        program.sourceType = .aiGenerated
 
         context.insert(program)
 

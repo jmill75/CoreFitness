@@ -147,7 +147,7 @@ class MusicService: ObservableObject {
         updateNowPlaying()
         updatePlaybackState()
 
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateNowPlaying()
                 self?.updatePlaybackState()

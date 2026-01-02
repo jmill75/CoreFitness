@@ -1359,9 +1359,6 @@ struct WorkoutMusicBar: View {
     @ObservedObject private var musicService = MusicService.shared
     @Binding var showMusicSheet: Bool
 
-    // Animation state for play button
-    @State private var playButtonScale: CGFloat = 1.0
-
     var body: some View {
         Button {
             showMusicSheet = true
@@ -1398,11 +1395,7 @@ struct WorkoutMusicBar: View {
                     HStack(spacing: 6) {
                         // Small equalizer next to artist when playing
                         if musicService.isPlaying {
-                            HStack(spacing: 2) {
-                                MiniEqualizerBar(delay: 0)
-                                MiniEqualizerBar(delay: 0.15)
-                                MiniEqualizerBar(delay: 0.3)
-                            }
+                            MiniEqualizerBars()
                         }
 
                         Text(musicService.currentTrack?.artist ?? "Tap to open music")
@@ -1433,22 +1426,12 @@ struct WorkoutMusicBar: View {
                             musicService.openMusicApp()
                         }
                     } label: {
-                        ZStack {
-                            // Pulsing ring when playing
-                            if musicService.isPlaying {
-                                Circle()
-                                    .stroke(musicService.selectedProvider.color.opacity(0.5), lineWidth: 2)
-                                    .frame(width: 52, height: 52)
-                                    .scaleEffect(playButtonScale)
-                            }
-
-                            Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.title3)
-                                .foregroundStyle(.white)
-                                .frame(width: 52, height: 52)
-                                .background(musicService.selectedProvider.color.opacity(0.4))
-                                .clipShape(Circle())
-                        }
+                        Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .frame(width: 52, height: 52)
+                            .background(musicService.selectedProvider.color.opacity(musicService.isPlaying ? 0.6 : 0.4))
+                            .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
 
@@ -1529,24 +1512,9 @@ struct WorkoutMusicBar: View {
         .buttonStyle(.plain)
         .onAppear {
             musicService.startPolling()
-            startAnimations()
         }
         .onDisappear {
             musicService.stopPolling()
-        }
-        .onChange(of: musicService.isPlaying) { _, isPlaying in
-            if isPlaying {
-                startAnimations()
-            }
-        }
-    }
-
-    private func startAnimations() {
-        guard musicService.isPlaying else { return }
-
-        // Pulsing play button
-        withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-            playButtonScale = 1.3
         }
     }
 
@@ -1557,20 +1525,20 @@ struct WorkoutMusicBar: View {
     }
 }
 
-// MARK: - Mini Equalizer Bar (for artist text)
-struct MiniEqualizerBar: View {
-    let delay: Double
-    @State private var height: CGFloat = 4
-
+// MARK: - Mini Equalizer Bars (static for performance)
+struct MiniEqualizerBars: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: 1)
-            .fill(Color.green)
-            .frame(width: 2, height: height)
-            .onAppear {
-                withAnimation(.easeInOut(duration: 0.3).repeatForever(autoreverses: true).delay(delay)) {
-                    height = CGFloat.random(in: 4...12)
-                }
-            }
+        HStack(spacing: 2) {
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 6)
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 10)
+            RoundedRectangle(cornerRadius: 1)
+                .fill(Color.green)
+                .frame(width: 2, height: 4)
+        }
     }
 }
 

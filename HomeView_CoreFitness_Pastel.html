@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreFitness - Pastel Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #000000;
+            --card-bg: #141414;
+            --card-border: rgba(255,255,255,0.06);
+            --peach: #FACDB4;
+            --peach-dark: #E8A67C;
+            --lavender: #E5D4F2;
+            --lavender-dark: #B794D4;
+            --mint: #B8F5C8;
+            --mint-dark: #4ADE80;
+            --coral: #FF6B6B;
+            --coral-light: #ff9f43;
+            --cyan: #54a0ff;
+            --teal: #00d2d3;
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #666666;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0A0A0A;
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            margin: 40px auto;
+            background: var(--bg);
+            border-radius: 50px;
+            border: 8px solid #333;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.5);
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            padding: 50px 20px 100px;
+            overflow-y: auto;
+        }
+
+        .screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Welcome Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .greeting {
+            flex: 1;
+        }
+
+        .greeting-text {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #feca57 50%, #ff9f43 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .date-text {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .ai-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #161616;
+            border: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .ai-btn svg {
+            width: 18px;
+            height: 18px;
+            color: #feca57;
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            background: var(--coral);
+            border-radius: 50%;
+            border: 2px solid #0a0a0a;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .section-header svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* Today's Recovery Card */
+        .recovery-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+        }
+
+        .recovery-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #e85555, #ff6b6b, #ff9f43);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .recovery-top {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        /* Score Ring */
+        .score-ring-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .score-ring {
+            transform: rotate(-90deg);
+        }
+
+        .score-ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.15);
+            stroke-width: 10;
+        }
+
+        .score-ring-fill {
+            fill: none;
+            stroke: url(#recoveryGradient);
+            stroke-width: 10;
+            stroke-linecap: round;
+            stroke-dasharray: 251;
+            stroke-dashoffset: 63;
+        }
+
+        .score-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--coral);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .score-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .recovery-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .recovery-message {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .view-details {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        /* Recovery Metrics */
+        .recovery-metrics {
+            display: flex;
+            gap: 12px;
+        }
+
+        .metric-card {
+            flex: 1;
+            background: #111111;
+            border-radius: 12px;
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .metric-card:nth-child(1)::after { background: var(--coral); }
+        .metric-card:nth-child(2)::after { background: var(--teal); }
+        .metric-card:nth-child(3)::after { background: var(--cyan); }
+
+        .metric-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .metric-card:nth-child(1) .metric-value { color: var(--coral); }
+        .metric-card:nth-child(2) .metric-value { color: var(--teal); }
+        .metric-card:nth-child(3) .metric-value { color: var(--cyan); }
+
+        .metric-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Today's Focus Section */
+        .focus-section {
+            margin-bottom: 20px;
+        }
+
+        /* Workout Card - Pastel */
+        .workout-card {
+            background: var(--lavender);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workout-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .workout-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: #4ADE80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .workout-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .workout-program {
+            font-size: 13px;
+            color: rgba(0,0,0,0.6);
+            margin-bottom: 16px;
+        }
+
+        .workout-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .workout-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workout-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .workout-stat-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(0,0,0,0.5);
+            text-transform: uppercase;
+        }
+
+        .workout-play-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .workout-play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .workout-play-btn svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+            margin-left: 2px;
+        }
+
+        /* Challenge Card - Pastel */
+        .challenge-card {
+            background: var(--peach);
+            border-radius: 24px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .challenge-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .challenge-rank {
+            padding: 6px 12px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .challenge-progress-bar {
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .challenge-progress-fill {
+            height: 100%;
+            width: 65%;
+            background: var(--peach-dark);
+            border-radius: 4px;
+        }
+
+        .challenge-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: rgba(0,0,0,0.6);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            margin-bottom: 20px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 8px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: #1a1a1a;
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .action-btn:nth-child(1) .action-icon { background: rgba(255,107,107,0.15); color: var(--coral); }
+        .action-btn:nth-child(2) .action-icon { background: rgba(84,160,255,0.15); color: var(--cyan); }
+        .action-btn:nth-child(3) .action-icon { background: rgba(255,159,67,0.15); color: var(--coral-light); }
+        .action-btn:nth-child(4) .action-icon { background: rgba(29,209,161,0.15); color: var(--mint-dark); }
+        .action-btn:nth-child(5) .action-icon { background: rgba(238,82,83,0.15); color: #ee5253; }
+        .action-btn:nth-child(6) .action-icon { background: rgba(0,210,211,0.15); color: var(--teal); }
+        .action-btn:nth-child(7) .action-icon { background: rgba(254,202,87,0.15); color: #feca57; }
+        .action-btn:nth-child(8) .action-icon { background: rgba(87,101,116,0.15); color: #576574; }
+
+        .action-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* AI Insights Card */
+        .ai-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #01a3a4, #00d2d3, #1dd1a1);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, rgba(0,210,211,0.2) 0%, rgba(29,209,161,0.1) 100%);
+            border: 1px solid rgba(0,210,211,0.3);
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .ai-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .ai-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .ai-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-action-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .ai-action-btn.primary {
+            background: linear-gradient(135deg, #01a3a4, #00d2d3);
+            color: white;
+        }
+
+        .ai-action-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+        }
+
+        /* Mood Card - Mint */
+        .mood-card {
+            background: var(--mint);
+            border-radius: 24px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .mood-question {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .mood-options {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mood-btn {
+            padding: 10px 18px;
+            background: #1a1a1a;
+            border: none;
+            border-radius: 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mood-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .mood-btn.outline {
+            background: transparent;
+            border: 2px solid #1a1a1a;
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-frame">
+        <div class="screen">
+            <!-- Welcome Header -->
+            <header class="header">
+                <div class="greeting">
+                    <h1 class="greeting-text">GOOD MORNING, JEFF</h1>
+                    <p class="date-text">Wednesday, January 1</p>
+                </div>
+                <button class="ai-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+                    </svg>
+                    <span class="notification-dot"></span>
+                </button>
+            </header>
+
+            <!-- Today's Recovery Section -->
+            <div class="section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <span class="section-title">Today's Recovery</span>
+            </div>
+
+            <div class="recovery-card">
+                <svg width="0" height="0">
+                    <defs>
+                        <linearGradient id="recoveryGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#e85555"/>
+                            <stop offset="50%" style="stop-color:#ff6b6b"/>
+                            <stop offset="100%" style="stop-color:#ff9f43"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="recovery-top">
+                    <div class="score-ring-container">
+                        <svg class="score-ring" width="100" height="100" viewBox="0 0 100 100">
+                            <circle class="score-ring-bg" cx="50" cy="50" r="40"/>
+                            <circle class="score-ring-fill" cx="50" cy="50" r="40"/>
+                        </svg>
+                        <div class="score-text">
+                            <div class="score-value">75</div>
+                            <div class="score-label">score</div>
+                        </div>
+                    </div>
+                    <div class="recovery-info">
+                        <div class="recovery-message">Good recovery</div>
+                        <div class="view-details">
+                            View Details
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="recovery-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">52</div>
+                        <div class="metric-label">HRV</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">7.2h</div>
+                        <div class="metric-label">Sleep</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">58</div>
+                        <div class="metric-label">Rest HR</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Focus Section -->
+            <div class="focus-section">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#54a0ff" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                    </svg>
+                    <span class="section-title">Today's Focus</span>
+                </div>
+
+                <!-- Workout Card -->
+                <div class="workout-card">
+                    <div class="workout-badge">
+                        <span class="workout-badge-dot"></span>
+                        Up Next
+                    </div>
+                    <div class="workout-name">Push Day</div>
+                    <div class="workout-program">12-Week Strength Builder • Week 3, Day 1</div>
+                    <div class="workout-stats">
+                        <div class="workout-stat">
+                            <span class="workout-stat-value">8</span>
+                            <span class="workout-stat-label">Exercises</span>
+                        </div>
+                        <div class="workout-stat">
+                            <span class="workout-stat-value">45</span>
+                            <span class="workout-stat-label">Minutes</span>
+                        </div>
+                        <div class="workout-stat">
+                            <span class="workout-stat-value">24</span>
+                            <span class="workout-stat-label">Sets</span>
+                        </div>
+                    </div>
+                    <button class="workout-play-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Challenge Card -->
+                <div class="challenge-card">
+                    <div class="challenge-header">
+                        <div class="challenge-name">January Steps Challenge</div>
+                        <div class="challenge-rank">2nd Place</div>
+                    </div>
+                    <div class="challenge-progress-bar">
+                        <div class="challenge-progress-fill"></div>
+                    </div>
+                    <div class="challenge-meta">
+                        <span>65,000 / 100,000 steps</span>
+                        <span>18 days left</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#1dd1a1" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    <span class="section-title">Quick Actions</span>
+                </div>
+                <div class="actions-grid">
+                    <button class="action-btn">
+                        <div class="action-icon">✓</div>
+                        <span class="action-label">Check-In</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">💧</div>
+                        <span class="action-label">Water</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">🏋️</div>
+                        <span class="action-label">Exercises</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">📈</div>
+                        <span class="action-label">Progress</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">❤️</div>
+                        <span class="action-label">Health</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">📚</div>
+                        <span class="action-label">Programs</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">🏁</div>
+                        <span class="action-label">Challenges</span>
+                    </button>
+                    <button class="action-btn">
+                        <div class="action-icon">⚙️</div>
+                        <span class="action-label">Settings</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Insights -->
+            <div class="section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#00d2d3" stroke-width="2">
+                    <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
+                </svg>
+                <span class="section-title">AI Insights</span>
+            </div>
+
+            <div class="ai-card">
+                <div class="ai-badge">
+                    🎓 AI Coach
+                </div>
+                <div class="ai-title">Recovery Looking Good</div>
+                <div class="ai-message">Your HRV is above average today and you got quality sleep. You're primed for a solid push day workout!</div>
+                <div class="ai-actions">
+                    <button class="ai-action-btn primary">Start Workout</button>
+                    <button class="ai-action-btn secondary">Dismiss</button>
+                </div>
+            </div>
+
+            <!-- Mood Check -->
+            <div class="mood-card">
+                <h2 class="mood-question">How are you feeling today?</h2>
+                <div class="mood-options">
+                    <button class="mood-btn">💪 Strong</button>
+                    <button class="mood-btn outline">😴 Tired</button>
+                    <button class="mood-btn outline">😤 Sore</button>
+                    <button class="mood-btn outline">🔥 Motivated</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

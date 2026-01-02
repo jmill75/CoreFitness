@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fitness Home - Neo Organic Concept</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black: #000000;
+            --card: #0A0A0A;
+            --card-border: rgba(255,255,255,0.08);
+            --mint: #00E5A0;
+            --coral: #FF6B6B;
+            --purple: #A855F7;
+            --cyan: #00D4FF;
+            --blue: #3B82F6;
+            --text-primary: #FFFFFF;
+            --text-secondary: rgba(255,255,255,0.5);
+            --text-tertiary: rgba(255,255,255,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--black);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+
+        /* Animated background blob */
+        .bg-blob {
+            position: fixed;
+            top: -50%;
+            right: -30%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(ellipse at center,
+                rgba(168, 85, 247, 0.15) 0%,
+                rgba(0, 212, 255, 0.08) 40%,
+                transparent 70%);
+            filter: blur(60px);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-5%, 5%) rotate(5deg); }
+            66% { transform: translate(5%, -5%) rotate(-5deg); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        .greeting {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--cyan));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* Hero headline */
+        .hero-headline {
+            margin-bottom: 48px;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero-headline h1 {
+            font-size: 52px;
+            font-weight: 800;
+            line-height: 0.95;
+            letter-spacing: -2px;
+        }
+
+        .hero-headline h1 span {
+            display: block;
+        }
+
+        .hero-headline h1 .accent-mint {
+            color: var(--mint);
+        }
+
+        .hero-headline h1 .accent-coral {
+            color: var(--coral);
+        }
+
+        /* Today's Workout Card */
+        .workout-card {
+            position: relative;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 24px;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out 0.1s both;
+        }
+
+        .workout-card-blob {
+            position: absolute;
+            top: -40px;
+            right: -40px;
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(ellipse at 30% 30%,
+                var(--coral) 0%,
+                var(--purple) 50%,
+                transparent 70%);
+            filter: blur(40px);
+            opacity: 0.6;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .workout-card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .workout-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--mint);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .workout-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.1;
+        }
+
+        .workout-meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .workout-stats {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .workout-stat {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workout-stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .workout-stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .start-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--mint), #00C896);
+            border: none;
+            border-radius: 16px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--black);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 229, 160, 0.3);
+        }
+
+        .start-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        .stat-card {
+            position: relative;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .stat-card-blob {
+            position: absolute;
+            bottom: -30px;
+            left: -30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            filter: blur(30px);
+            opacity: 0.4;
+        }
+
+        .stat-card:nth-child(1) .stat-card-blob {
+            background: var(--cyan);
+        }
+
+        .stat-card:nth-child(2) .stat-card-blob {
+            background: var(--purple);
+        }
+
+        .stat-card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-card:nth-child(1) .stat-number {
+            color: var(--cyan);
+        }
+
+        .stat-card:nth-child(2) .stat-number {
+            color: var(--purple);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Progress Ring Section */
+        .progress-section {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 24px;
+            animation: slideUp 0.8s ease-out 0.3s both;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .progress-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--coral);
+        }
+
+        .progress-ring-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .progress-ring {
+            width: 160px;
+            height: 160px;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(255,255,255,0.06);
+            stroke-width: 12;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#progressGradient);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-dasharray: 440;
+            stroke-dashoffset: 132;
+            animation: progressFill 1.5s ease-out 0.5s both;
+        }
+
+        @keyframes progressFill {
+            from { stroke-dashoffset: 440; }
+            to { stroke-dashoffset: 132; }
+        }
+
+        .progress-center {
+            position: absolute;
+            text-align: center;
+        }
+
+        .progress-percent {
+            font-size: 42px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            animation: slideUp 0.8s ease-out 0.4s both;
+        }
+
+        .quick-action {
+            position: relative;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 20px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .quick-action:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .quick-action-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+        }
+
+        .quick-action:nth-child(1) .quick-action-icon {
+            background: linear-gradient(135deg, var(--mint), var(--cyan));
+        }
+
+        .quick-action:nth-child(2) .quick-action-icon {
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+        }
+
+        .quick-action:nth-child(3) .quick-action-icon {
+            background: linear-gradient(135deg, var(--coral), #FF8F6B);
+        }
+
+        .quick-action-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--black);
+        }
+
+        .quick-action-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Decorative Elements */
+        .deco-circle {
+            position: fixed;
+            bottom: 10%;
+            left: -10%;
+            width: 200px;
+            height: 200px;
+            border: 1px solid var(--card-border);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .deco-line {
+            position: fixed;
+            top: 20%;
+            right: 5%;
+            width: 1px;
+            height: 100px;
+            background: linear-gradient(to bottom, transparent, var(--mint), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blob"></div>
+    <div class="deco-circle"></div>
+    <div class="deco-line"></div>
+
+    <div class="container">
+        <header class="header">
+            <span class="greeting">Good morning</span>
+            <div class="avatar">JM</div>
+        </header>
+
+        <div class="hero-headline">
+            <h1>
+                <span>your</span>
+                <span class="accent-mint">fitness</span>
+                <span class="accent-coral">journey</span>
+            </h1>
+        </div>
+
+        <div class="workout-card">
+            <div class="workout-card-blob"></div>
+            <div class="workout-card-content">
+                <div class="workout-label">Today's Workout</div>
+                <h2 class="workout-name">Upper Body<br>Strength</h2>
+                <p class="workout-meta">Push Day • Week 2, Day 3</p>
+                <div class="workout-stats">
+                    <div class="workout-stat">
+                        <span class="workout-stat-value">6</span>
+                        <span class="workout-stat-label">Exercises</span>
+                    </div>
+                    <div class="workout-stat">
+                        <span class="workout-stat-value">45</span>
+                        <span class="workout-stat-label">Minutes</span>
+                    </div>
+                    <div class="workout-stat">
+                        <span class="workout-stat-value">~320</span>
+                        <span class="workout-stat-label">Calories</span>
+                    </div>
+                </div>
+                <button class="start-btn">
+                    <span>Start Workout</span>
+                    <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-card-blob"></div>
+                <div class="stat-card-content">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-blob"></div>
+                <div class="stat-card-content">
+                    <div class="stat-number">24</div>
+                    <div class="stat-label">Workouts</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-header">
+                <span class="progress-title">Weekly Goal</span>
+                <span class="progress-value">5 of 7 days</span>
+            </div>
+            <div class="progress-ring-container">
+                <svg class="progress-ring" viewBox="0 0 160 160">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#FF6B6B"/>
+                            <stop offset="100%" stop-color="#A855F7"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring-bg" cx="80" cy="80" r="70"/>
+                    <circle class="progress-ring-fill" cx="80" cy="80" r="70"/>
+                </svg>
+                <div class="progress-center">
+                    <div class="progress-percent">70%</div>
+                    <div class="progress-label">complete</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="quick-action">
+                <div class="quick-action-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 4v16m8-8H4"/>
+                    </svg>
+                </div>
+                <span class="quick-action-label">Create</span>
+            </div>
+            <div class="quick-action">
+                <div class="quick-action-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                </div>
+                <span class="quick-action-label">AI Generate</span>
+            </div>
+            <div class="quick-action">
+                <div class="quick-action-icon">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+                <span class="quick-action-label">Programs</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

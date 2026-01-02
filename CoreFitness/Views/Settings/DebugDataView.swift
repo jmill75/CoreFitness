@@ -433,6 +433,8 @@ struct DebugActionsView: View {
     @State private var successMessage = ""
 
     enum DeleteType: String, CaseIterable {
+        case workouts = "Workouts"
+        case programTemplates = "Program Templates"
         case exercises = "Exercises"
         case sessions = "Sessions"
         case completedSets = "Completed Sets"
@@ -660,6 +662,12 @@ struct DebugActionsView: View {
     private func performDelete(_ type: DeleteType) {
         do {
             switch type {
+            case .workouts:
+                try modelContext.delete(model: WorkoutExercise.self)
+                try modelContext.delete(model: Workout.self)
+            case .programTemplates:
+                try modelContext.delete(model: UserProgram.self)
+                try modelContext.delete(model: ProgramTemplate.self)
             case .exercises:
                 try modelContext.delete(model: Exercise.self)
             case .sessions:

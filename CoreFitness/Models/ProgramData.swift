@@ -35,11 +35,262 @@ struct ProgramData {
             seedSwimmingPrograms(in: context)
             seedCalisthenicsPrograms(in: context)
 
+            // Ensure ALL seeded programs have isFeatured = true
+            let allPrograms = FetchDescriptor<ProgramTemplate>()
+            if let programs = try? context.fetch(allPrograms) {
+                for program in programs {
+                    program.isFeatured = true
+                }
+            }
+
             try? context.save()
 
             // Update saved version
             UserDefaults.standard.set(currentVersion, forKey: "ProgramDataVersion")
         }
+
+        // One-time fix: Ensure all seeded programs have isFeatured = true
+        // (Programs with schedules already defined are seeded, not AI-imported)
+        fixSeededProgramsFeaturedFlag(in: context)
+
+        // Always run migration for imported programs with empty schedules
+        migrateImportedProgramsWithEmptySchedules(in: context)
+
+        // Clean up any duplicate imported programs
+        removeDuplicateImportedPrograms(in: context)
+    }
+
+    /// Fixes seeded programs that incorrectly have isFeatured = false
+    /// Seeded programs have schedules pre-defined, AI-imported programs have empty schedules initially
+    static func fixSeededProgramsFeaturedFlag(in context: ModelContext) {
+        let hasRunKey = "HasFixedSeededProgramsFeaturedFlag"
+        guard !UserDefaults.standard.bool(forKey: hasRunKey) else { return }
+
+        // Find all programs with isFeatured = false but have a schedule defined
+        // These are seeded programs that were incorrectly marked
+        let descriptor = FetchDescriptor<ProgramTemplate>(
+            predicate: #Predicate<ProgramTemplate> { $0.isFeatured == false }
+        )
+
+        guard let programs = try? context.fetch(descriptor) else { return }
+
+        var fixedCount = 0
+        for program in programs {
+            // If program has a pre-defined schedule, it's a seeded program
+            if !program.schedule.isEmpty {
+                program.isFeatured = true
+                fixedCount += 1
+            }
+        }
+
+        if fixedCount > 0 {
+            try? context.save()
+            print("ProgramData: Fixed \(fixedCount) seeded programs with incorrect isFeatured flag")
+        }
+
+        UserDefaults.standard.set(true, forKey: hasRunKey)
+    }
+
+    /// Migrates imported programs that have empty schedules or incorrect workoutsPerWeek
+    static func migrateImportedProgramsWithEmptySchedules(in context: ModelContext) {
+        // Find all non-featured (imported) programs
+        let descriptor = FetchDescriptor<ProgramTemplate>(
+            predicate: #Predicate<ProgramTemplate> { $0.isFeatured == false }
+        )
+
+        guard let importedPrograms = try? context.fetch(descriptor) else { return }
+
+        var migratedCount = 0
+
+        for program in importedPrograms {
+            var needsMigration = false
+
+            // Try to extract correct values from description
+            let descWeeks = extractWeeksFromText(program.programDescription)
+            let descDays = extractDaysPerWeekFromText(program.programDescription)
+
+            // Fix durationWeeks if description says different
+            if let descWeeks = descWeeks, descWeeks != program.durationWeeks {
+                program.durationWeeks = descWeeks
+                needsMigration = true
+            }
+
+            // Fix workoutsPerWeek if:
+            // 1. It's > 7 (invalid)
+            // 2. Description says something different
+            // 3. It's 7 but most programs are 6 max (cap at 6 unless explicitly 7)
+            if program.workoutsPerWeek > 7 {
+                let corrected = descDays ?? min(6, program.workoutDefinitions.count)
+                program.workoutsPerWeek = corrected
+                needsMigration = true
+            } else if let descDays = descDays, descDays != program.workoutsPerWeek {
+                program.workoutsPerWeek = descDays
+                needsMigration = true
+            } else if program.workoutsPerWeek == 7 && descDays == nil {
+                // Cap at 6 if no explicit 7-day indication
+                program.workoutsPerWeek = 6
+                needsMigration = true
+            }
+
+            // Generate schedule if empty but has workout definitions
+            if program.schedule.isEmpty && !program.workoutDefinitions.isEmpty {
+                let schedule = generateSchedule(
+                    workoutsPerWeek: program.workoutsPerWeek,
+                    workoutDefinitions: program.workoutDefinitions
+                )
+                program.schedule = schedule
+                needsMigration = true
+            }
+            // Regenerate schedule if values were fixed
+            else if needsMigration && !program.workoutDefinitions.isEmpty {
+                let schedule = generateSchedule(
+                    workoutsPerWeek: program.workoutsPerWeek,
+                    workoutDefinitions: program.workoutDefinitions
+                )
+                program.schedule = schedule
+            }
+
+            if needsMigration {
+                migratedCount += 1
+            }
+        }
+
+        if migratedCount > 0 {
+            try? context.save()
+            print("ProgramData: Migrated \(migratedCount) imported programs (fixed workoutsPerWeek and schedules)")
+        }
+    }
+
+    /// Removes duplicate imported programs, keeping only unique ones by name
+    /// Programs with only 1 workout definition that share a name pattern are likely duplicates
+    static func removeDuplicateImportedPrograms(in context: ModelContext) {
+        // Find all non-featured (imported) programs
+        let descriptor = FetchDescriptor<ProgramTemplate>(
+            predicate: #Predicate<ProgramTemplate> { $0.isFeatured == false },
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)] // Keep oldest
+        )
+
+        guard let importedPrograms = try? context.fetch(descriptor) else { return }
+
+        var seenNames = Set<String>()
+        var deletedCount = 0
+
+        for program in importedPrograms {
+            let normalizedName = program.name.lowercased().trimmingCharacters(in: .whitespaces)
+
+            if seenNames.contains(normalizedName) {
+                // Duplicate found - delete it
+                context.delete(program)
+                deletedCount += 1
+            } else {
+                seenNames.insert(normalizedName)
+            }
+        }
+
+        // Also delete programs that have only 1 workout and seem like workout entries, not programs
+        let singleWorkoutDescriptor = FetchDescriptor<ProgramTemplate>(
+            predicate: #Predicate<ProgramTemplate> { $0.isFeatured == false }
+        )
+
+        if let allImported = try? context.fetch(singleWorkoutDescriptor) {
+            for program in allImported {
+                // If program has only 1 workout definition and durationWeeks is 1 or 0,
+                // it's likely a workout that was incorrectly saved as a program
+                if program.workoutDefinitions.count <= 1 && program.durationWeeks <= 1 {
+                    context.delete(program)
+                    deletedCount += 1
+                }
+            }
+        }
+
+        if deletedCount > 0 {
+            try? context.save()
+            print("ProgramData: Removed \(deletedCount) duplicate/invalid imported programs")
+        }
+    }
+
+    /// Extracts weeks from text like "6-week program", "8 weeks"
+    private static func extractWeeksFromText(_ text: String) -> Int? {
+        let patterns = [#"(\d+)[- ]?week"#, #"(\d+)\s*weeks"#]
+        let lowercased = text.lowercased()
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: lowercased, range: NSRange(lowercased.startIndex..., in: lowercased)),
+               let range = Range(match.range(at: 1), in: lowercased) {
+                return Int(lowercased[range])
+            }
+        }
+        return nil
+    }
+
+    /// Extracts days per week from text like "6 days", "6-day"
+    private static func extractDaysPerWeekFromText(_ text: String) -> Int? {
+        let patterns = [#"(\d)[- ]?day"#, #"(\d)\s*days"#, #"(\d)x\s*(?:per|a)\s*week"#]
+        let lowercased = text.lowercased()
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: lowercased, range: NSRange(lowercased.startIndex..., in: lowercased)),
+               let range = Range(match.range(at: 1), in: lowercased),
+               let days = Int(lowercased[range]), days >= 1 && days <= 7 {
+                return days
+            }
+        }
+        return nil
+    }
+
+    /// Generates a weekly schedule distributing workouts across days
+    private static func generateSchedule(
+        workoutsPerWeek: Int,
+        workoutDefinitions: [ProgramWorkoutDefinition]
+    ) -> [ProgramDaySchedule] {
+        var schedule: [ProgramDaySchedule] = []
+
+        // Determine which days to have workouts based on workouts per week
+        let workoutDays: [Int]
+        switch workoutsPerWeek {
+        case 1:
+            workoutDays = [1] // Monday only
+        case 2:
+            workoutDays = [1, 4] // Mon, Thu
+        case 3:
+            workoutDays = [1, 3, 5] // Mon, Wed, Fri
+        case 4:
+            workoutDays = [1, 2, 4, 5] // Mon, Tue, Thu, Fri
+        case 5:
+            workoutDays = [1, 2, 3, 4, 5] // Mon-Fri
+        case 6:
+            workoutDays = [1, 2, 3, 4, 5, 6] // Mon-Sat
+        case 7:
+            workoutDays = [1, 2, 3, 4, 5, 6, 7] // Every day
+        default:
+            workoutDays = [1, 3, 5] // Default to 3 days
+        }
+
+        // Create schedule for all 7 days
+        var workoutIndex = 0
+        for day in 1...7 {
+            let isWorkoutDay = workoutDays.contains(day)
+
+            if isWorkoutDay && !workoutDefinitions.isEmpty {
+                // Cycle through workout definitions
+                let workoutName = workoutDefinitions[workoutIndex % workoutDefinitions.count].name
+                schedule.append(ProgramDaySchedule(
+                    dayOfWeek: day,
+                    workoutName: workoutName,
+                    isRest: false
+                ))
+                workoutIndex += 1
+            } else {
+                // Rest day
+                schedule.append(ProgramDaySchedule(
+                    dayOfWeek: day,
+                    workoutName: nil,
+                    isRest: true
+                ))
+            }
+        }
+
+        return schedule
     }
 
     // MARK: - Strength Programs (10+)

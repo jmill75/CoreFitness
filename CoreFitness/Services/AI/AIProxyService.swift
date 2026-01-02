@@ -27,8 +27,8 @@ class AIProxyService: ObservableObject {
 
     private init() {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
-        config.timeoutIntervalForResource = 60
+        config.timeoutIntervalForRequest = 120  // 2 minutes for large AI responses
+        config.timeoutIntervalForResource = 180 // 3 minutes total
         self.session = URLSession(configuration: config)
 
         self.decoder = JSONDecoder()
@@ -94,11 +94,73 @@ class AIProxyService: ObservableObject {
         )
         let response = try await sendRequest(request, endpoint: "/parse")
 
-        guard let data = response.content.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return WorkoutParseResult(parsed: nil, parseError: "Failed to parse workout response")
+        // Clean the response - remove markdown code fences if present
+        let cleanContent = response.content
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let data = cleanContent.data(using: .utf8) else {
+            return WorkoutParseResult(parsed: nil, parsedProgram: nil, parseError: "Failed to parse workout response")
         }
 
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return WorkoutParseResult(parsed: nil, parsedProgram: nil, parseError: "Failed to parse workout response")
+        }
+
+        // Check if it's a program with multiple workouts
+        if let workoutsArray = json["workouts"] as? [[String: Any]], !workoutsArray.isEmpty {
+            let programName = json["programName"] as? String ?? fileName.replacingOccurrences(of: ".\(fileType)", with: "")
+            let programDesc = json["programDescription"] as? String ?? ""
+            let difficulty = json["difficulty"] as? String ?? "Intermediate"
+
+            // Parse daysPerWeek - check JSON fields first, then extract from description
+            var daysPerWeek = json["daysPerWeek"] as? Int
+                ?? json["days_per_week"] as? Int
+
+            // If not in JSON, try to extract from description (e.g., "6 days", "6-day", "6x per week")
+            if daysPerWeek == nil {
+                daysPerWeek = extractDaysPerWeek(from: programDesc) ?? extractDaysPerWeek(from: programName)
+            }
+
+            // Final fallback: use workout count but cap at 6 (most programs max out at 6 days/week)
+            if daysPerWeek == nil {
+                daysPerWeek = min(6, workoutsArray.count)
+            }
+
+            // Parse durationWeeks - check JSON fields first, then extract from description
+            var durationWeeks = json["durationWeeks"] as? Int
+                ?? json["duration_weeks"] as? Int
+                ?? json["weeks"] as? Int
+
+            // If not in JSON, try to extract from description (e.g., "6-week program", "8 weeks")
+            if durationWeeks == nil {
+                durationWeeks = extractWeeks(from: programDesc) ?? extractWeeks(from: programName) ?? 8
+            }
+
+            let workouts = workoutsArray.map { workoutJson in
+                ParsedWorkout(
+                    name: workoutJson["name"] as? String ?? "Workout",
+                    description: workoutJson["description"] as? String ?? "",
+                    estimatedDuration: workoutJson["estimatedDuration"] as? Int ?? 45,
+                    difficulty: difficulty,
+                    exercises: parseExercisesFromJSON(workoutJson["exercises"] as? [[String: Any]] ?? [])
+                )
+            }
+
+            let program = ParsedProgram(
+                programName: programName,
+                programDescription: programDesc,
+                difficulty: difficulty,
+                daysPerWeek: daysPerWeek ?? 3,
+                durationWeeks: durationWeeks ?? 8,
+                workouts: workouts
+            )
+
+            return WorkoutParseResult(parsed: nil, parsedProgram: program, parseError: nil)
+        }
+
+        // Single workout format
         let parsed = ParsedWorkout(
             name: json["name"] as? String ?? fileName.replacingOccurrences(of: ".\(fileType)", with: ""),
             description: json["description"] as? String ?? "",
@@ -107,7 +169,7 @@ class AIProxyService: ObservableObject {
             exercises: parseExercisesFromJSON(json["exercises"] as? [[String: Any]] ?? [])
         )
 
-        return WorkoutParseResult(parsed: parsed, parseError: nil)
+        return WorkoutParseResult(parsed: parsed, parsedProgram: nil, parseError: nil)
     }
 
     private func parseExercisesFromJSON(_ jsonArray: [[String: Any]]) -> [ParsedExercise] {
@@ -120,6 +182,46 @@ class AIProxyService: ObservableObject {
                 restSeconds: dict["restSeconds"] as? Int
             )
         }
+    }
+
+    /// Extracts weeks from text like "6-week program", "8 weeks", "12 week"
+    private func extractWeeks(from text: String) -> Int? {
+        let patterns = [
+            #"(\d+)[- ]?week"#,  // "6-week", "6 week", "6week"
+            #"(\d+)\s*weeks"#    // "6 weeks"
+        ]
+
+        let lowercased = text.lowercased()
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: lowercased, range: NSRange(lowercased.startIndex..., in: lowercased)),
+               let range = Range(match.range(at: 1), in: lowercased) {
+                return Int(lowercased[range])
+            }
+        }
+        return nil
+    }
+
+    /// Extracts days per week from text like "6 days", "6-day", "6x per week"
+    private func extractDaysPerWeek(from text: String) -> Int? {
+        let patterns = [
+            #"(\d)[- ]?day"#,           // "6-day", "6 day"
+            #"(\d)\s*days"#,            // "6 days"
+            #"(\d)x\s*(?:per|a)\s*week"#, // "6x per week", "6x a week"
+            #"(\d)\s*times?\s*(?:per|a)\s*week"# // "6 times per week"
+        ]
+
+        let lowercased = text.lowercased()
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: []),
+               let match = regex.firstMatch(in: lowercased, range: NSRange(lowercased.startIndex..., in: lowercased)),
+               let range = Range(match.range(at: 1), in: lowercased),
+               let days = Int(lowercased[range]),
+               days >= 1 && days <= 7 {
+                return days
+            }
+        }
+        return nil
     }
 
     // MARK: - Private Methods
@@ -170,7 +272,17 @@ class AIProxyService: ObservableObject {
                 }
 
             case 429:
-                throw AIError.rateLimited
+                // Parse error message from server
+                if let errorResponse = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let error = errorResponse["error"] as? [String: Any],
+                   let code = error["code"] as? String,
+                   let message = error["message"] as? String {
+                    if code == "QUOTA_EXCEEDED" {
+                        throw AIError.quotaExceeded(message: message)
+                    }
+                    throw AIError.rateLimited(message: message)
+                }
+                throw AIError.rateLimited(message: nil)
 
             case 503:
                 throw AIError.providerUnavailable
@@ -209,5 +321,10 @@ struct ProxyError: Codable {
 
 struct WorkoutParseResult {
     let parsed: ParsedWorkout?
+    let parsedProgram: ParsedProgram?
     let parseError: String?
+
+    var isProgram: Bool {
+        parsedProgram != nil && (parsedProgram?.workouts.count ?? 0) > 1
+    }
 }
