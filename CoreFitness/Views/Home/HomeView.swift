@@ -3655,8 +3655,6 @@ struct WeeklyActivitySection: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @Binding var selectedTab: Tab
 
-    @State private var selectedTimeframe = 0 // 0: Week, 1: Month, 2: Year
-
     private let cardBg = Color(hex: "141414")
     private let cardBorder = Color.white.opacity(0.06)
     private let teal = Color(hex: "00d2d3")
@@ -3664,16 +3662,16 @@ struct WeeklyActivitySection: View {
     private let textPrimary = Color.white
     private let textMuted = Color(hex: "666666")
 
-    // Mock data - replace with actual workout data
+    // Mock data - replace with actual workout data (Mon-Sun)
     private var weeklyData: [DayActivity] {
         [
-            DayActivity(day: "Sun", minutes: 65, isToday: false),
             DayActivity(day: "Mon", minutes: 45, isToday: false),
             DayActivity(day: "Tue", minutes: 95, isToday: false),
-            DayActivity(day: "Wed", minutes: 0, isToday: true),
-            DayActivity(day: "Thu", minutes: 0, isToday: false),
+            DayActivity(day: "Wed", minutes: 0, isToday: false),
+            DayActivity(day: "Thu", minutes: 0, isToday: true),
             DayActivity(day: "Fri", minutes: 0, isToday: false),
-            DayActivity(day: "Sat", minutes: 0, isToday: false)
+            DayActivity(day: "Sat", minutes: 0, isToday: false),
+            DayActivity(day: "Sun", minutes: 65, isToday: false)
         ]
     }
 
@@ -3710,26 +3708,6 @@ struct WeeklyActivitySection: View {
 
             // Chart Card
             VStack(spacing: 20) {
-                // Timeframe tabs
-                HStack(spacing: 8) {
-                    ForEach(["Week", "Month", "Year"].indices, id: \.self) { index in
-                        Button {
-                            selectedTimeframe = index
-                        } label: {
-                            Text(["Week", "Month", "Year"][index])
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(selectedTimeframe == index ? Color(hex: "000000") : textMuted)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(selectedTimeframe == index ? textPrimary : Color.clear)
-                                .clipShape(Capsule())
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    Spacer()
-                }
-
                 // Bar Chart
                 HStack(alignment: .bottom, spacing: 0) {
                     ForEach(weeklyData.indices, id: \.self) { index in
