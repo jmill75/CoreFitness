@@ -1605,7 +1605,7 @@ struct WorkoutStatItem: View {
     }
 }
 
-// MARK: - Today's Challenge Card (Separate Card)
+// MARK: - Today's Challenge Card (Featured Card Style - Matching Workout Card)
 struct TodaysChallengeCard: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var navigationState: NavigationState
@@ -1614,8 +1614,12 @@ struct TodaysChallengeCard: View {
     let currentUserParticipant: (Challenge) -> ChallengeParticipant?
     @Binding var selectedTab: Tab
 
-    private let cardBg = Color(hex: "161616")
+    private let cardBg = Color(hex: "141414")
+    private let cardBorder = Color.white.opacity(0.06)
     private let goldAccent = Color(hex: "feca57")
+    private let goldDark = Color(hex: "e8b339")
+    private let orange = Color(hex: "ff9f43")
+    private let textMuted = Color(hex: "666666")
 
     var body: some View {
         let participant = currentUserParticipant(challenge)
@@ -1629,129 +1633,119 @@ struct TodaysChallengeCard: View {
             selectedTab = .programs
             navigationState.showChallenges = true
         } label: {
-            ZStack(alignment: .topTrailing) {
-                VStack(alignment: .leading, spacing: 12) {
-                    // Header row with badge
-                    HStack(spacing: 8) {
-                        // Challenge badge
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(goldAccent)
-                                .frame(width: 6, height: 6)
-                            Text("ACTIVE CHALLENGE")
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .tracking(1)
-                        }
-                        .foregroundStyle(goldAccent)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(goldAccent.opacity(0.15))
-                        .clipShape(Capsule())
+            VStack(spacing: 0) {
+                // Gradient Header (matching workout card)
+                ZStack(alignment: .bottomLeading) {
+                    // Gradient background
+                    LinearGradient(
+                        colors: [goldDark, goldAccent, orange],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(height: 140)
 
-                        // Day progress
-                        Text("Day \(challenge.currentDay) of \(challenge.durationDays)")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-
-                    // Challenge name - matching workout card title style
-                    Text(challenge.name.uppercased())
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-
-                    // Stats row - matching workout card style
-                    HStack(spacing: 16) {
-                        Label("Week \(currentWeek)/\(totalWeeks)", systemImage: "calendar")
-                        Label("\(completedDays) completed", systemImage: "checkmark.circle.fill")
-                    }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.6))
-
-                    // Progress bar
-                    VStack(alignment: .leading, spacing: 6) {
-                        GeometryReader { geo in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(Color.white.opacity(0.1))
-                                    .frame(height: 8)
-
-                                RoundedRectangle(cornerRadius: 4)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color(hex: "e8b339"), goldAccent],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
+                    // Pattern overlay (decorative)
+                    GeometryReader { geo in
+                        Path { path in
+                            let size: CGFloat = 60
+                            for x in stride(from: 0, to: geo.size.width + size, by: size) {
+                                for y in stride(from: 0, to: geo.size.height + size, by: size) {
+                                    path.move(to: CGPoint(x: x, y: y))
+                                    path.addQuadCurve(
+                                        to: CGPoint(x: x + size/2, y: y + size),
+                                        control: CGPoint(x: x - size/4, y: y + size/2)
                                     )
-                                    .frame(width: max(0, geo.size.width * progress), height: 8)
+                                }
                             }
                         }
-                        .frame(height: 8)
-
-                        // Progress percentage
-                        Text("\(Int(progress * 100))% Complete")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(goldAccent)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     }
 
-                    // View Challenge button - matching workout card button style
-                    HStack {
-                        Spacer()
-                        Text("VIEW CHALLENGE")
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .tracking(1)
+                    // Badge
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(orange)
+                            .frame(width: 8, height: 8)
+                        Text("Day \(challenge.currentDay) of \(challenge.durationDays)")
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 14)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color(hex: "e8b339"), goldAccent],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                        Spacer()
                     }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.6))
+                    .background(.ultraThinMaterial.opacity(0.3))
+                    .clipShape(Capsule())
+                    .padding(16)
+                }
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        topTrailingRadius: 24
+                    )
+                )
+
+                // Content
+                VStack(alignment: .leading, spacing: 16) {
+                    // Title (serif font like workout card)
+                    Text(challenge.name)
+                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .foregroundStyle(.white)
+
+                    // Subtitle
+                    Text("Week \(currentWeek) of \(totalWeeks) • \(Int(progress * 100))% Complete")
+                        .font(.system(size: 13))
+                        .foregroundStyle(textMuted)
+
+                    // Stats row
+                    HStack(spacing: 20) {
+                        HomeChallengeStatItem(value: "\(completedDays)", label: "DAYS")
+                        HomeChallengeStatItem(value: "\(challenge.durationDays - completedDays)", label: "REMAINING")
+                        HomeChallengeStatItem(value: "\(challenge.participants?.count ?? 0)", label: "MEMBERS")
+                    }
+                    .padding(.top, 4)
+
+                    // View Challenge button
+                    Text("View Challenge")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                colors: [goldDark, goldAccent],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
                 .padding(20)
-
-                // Radial gradient decoration - matching workout card
-                RadialGradient(
-                    colors: [goldAccent.opacity(0.15), Color.clear],
-                    center: .topTrailing,
-                    startRadius: 0,
-                    endRadius: 150
-                )
-                .allowsHitTesting(false)
             }
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(cardBorder, lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
-        .background(cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            VStack {
-                LinearGradient(
-                    colors: [Color(hex: "e8b339"), goldAccent, Color(hex: "ff9f43")],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 3)
-                Spacer()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
+    }
+}
+
+private struct HomeChallengeStatItem: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .tracking(0.5)
+                .foregroundStyle(Color(hex: "666666"))
+        }
     }
 }
 
