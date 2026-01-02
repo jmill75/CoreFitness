@@ -773,34 +773,39 @@ struct AIInsightCard: View {
 
     private let tealAccent = Color(hex: "00d2d3")
     private let tealDeep = Color(hex: "01a3a4")
-    private let cardBg = Color(hex: "161616")
+    private let cardBg = Color(hex: "1a1a1a")
+    private let cardBgLight = Color(hex: "222222")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // AI Coach badge
-            HStack(spacing: 6) {
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 12))
-                Text("AI COACH")
-                    .font(.caption2)
-                    .fontWeight(.bold)
-                    .tracking(1)
+            // Header with AI Coach badge and X button
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "graduationcap.fill")
+                        .font(.system(size: 12))
+                    Text("AI COACH")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(1)
+                }
+                .foregroundStyle(tealAccent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(tealAccent.opacity(0.15))
+                .clipShape(Capsule())
+
+                Spacer()
+
+                // X button to dismiss
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .frame(width: 28, height: 28)
+                        .background(Color.white.opacity(0.08))
+                        .clipShape(Circle())
+                }
             }
-            .foregroundStyle(tealAccent)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                LinearGradient(
-                    colors: [tealAccent.opacity(0.2), Color(hex: "1dd1a1").opacity(0.1)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(tealAccent.opacity(0.3), lineWidth: 1)
-            )
 
             // Content
             VStack(alignment: .leading, spacing: 8) {
@@ -815,74 +820,68 @@ struct AIInsightCard: View {
                     .lineLimit(3)
             }
 
-            // Action buttons
-            HStack(spacing: 12) {
-                if let actionLabel = insight.actionLabel {
-                    Button(action: onAction) {
-                        Text(actionLabel)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(
-                                LinearGradient(
-                                    colors: [tealDeep, tealAccent],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                }
-
-                Button(action: onDismiss) {
-                    Text("Dismiss")
+            // Action button (if available)
+            if let actionLabel = insight.actionLabel {
+                Button(action: onAction) {
+                    Text(actionLabel)
                         .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.6))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .background(
+                            LinearGradient(
+                                colors: [tealDeep, tealAccent],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
-        .padding(24)
-        .background(cardBg)
+        .padding(20)
+        .background(
+            // 3D layered background
+            ZStack {
+                // Base shadow layer
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(Color.black.opacity(0.5))
+                    .offset(y: 4)
+                    .blur(radius: 8)
+
+                // Main card background with gradient for depth
+                LinearGradient(
+                    colors: [cardBgLight, cardBg],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+
+                // Inner highlight at top for 3D effect
+                VStack {
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.06), Color.clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 60)
+                    Spacer()
+                }
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
-            // Teal accent bar at top
-            VStack {
-                LinearGradient(
-                    colors: [tealDeep, tealAccent, Color(hex: "1dd1a1")],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 3)
-                Spacer()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-        )
-        .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.04)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
         )
-        .overlay(
-            // Teal glow in corner
-            RadialGradient(
-                colors: [tealAccent.opacity(0.1), Color.clear],
-                center: .topTrailing,
-                startRadius: 0,
-                endRadius: 150
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-            .allowsHitTesting(false)
-        )
+        .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 6)
     }
 }
 
