@@ -20,6 +20,17 @@ struct HealthView: View {
     @State private var animationStage = 0
     @State private var selectedMetric: HealthMetricType?
     @State private var healthAlerts: [HealthAlert] = []
+    @State private var dismissedAlertIDs: Set<UUID> = []
+
+    private var visibleAlerts: [HealthAlert] {
+        healthAlerts.filter { !dismissedAlertIDs.contains($0.id) }
+    }
+
+    private func dismissAlert(_ alertID: UUID) {
+        withAnimation(.easeOut(duration: 0.3)) {
+            dismissedAlertIDs.insert(alertID)
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -48,8 +59,8 @@ struct HealthView: View {
                                 .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
 
                             // Health Alerts (if any)
-                            if !healthAlerts.isEmpty {
-                                HealthAlertsSection(alerts: healthAlerts)
+                            if !visibleAlerts.isEmpty {
+                                HealthAlertsSection(alerts: visibleAlerts, onDismiss: dismissAlert)
                                     .padding(.horizontal)
                                     .padding(.top, 20)
                                     .opacity(animationStage >= 3 ? 1 : 0)
@@ -315,65 +326,124 @@ private struct HealthPageHeader: View {
 // MARK: - Health Alerts Section (styled as Insights)
 private struct HealthAlertsSection: View {
     let alerts: [HealthAlert]
+    let onDismiss: (UUID) -> Void
 
     private let cardBg = Color(hex: "161616")
 
     var body: some View {
         VStack(spacing: 12) {
             ForEach(alerts) { alert in
-                VStack(alignment: .leading, spacing: 12) {
-                    // Insight badge
-                    HStack(spacing: 6) {
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 12))
-                        Text("RECOVERY INSIGHT")
-                            .font(.caption2)
-                            .fontWeight(.bold)
-                            .tracking(1)
-                    }
-                    .foregroundStyle(alert.type.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(alert.type.color.opacity(0.15))
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule()
-                            .stroke(alert.type.color.opacity(0.3), lineWidth: 1)
-                    )
-
-                    // Content
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(alert.title.uppercased())
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-
-                        Text(alert.message)
-                            .font(.subheadline)
-                            .foregroundStyle(.white.opacity(0.7))
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(cardBg)
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .overlay(
-                    // Accent bar at top
-                    VStack {
-                        alert.type.color
-                            .frame(height: 3)
-                        Spacer()
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+                SwipeableInsightCard(alert: alert, onDismiss: { onDismiss(alert.id) })
             }
         }
+    }
+}
+
+private struct SwipeableInsightCard: View {
+    let alert: HealthAlert
+    let onDismiss: () -> Void
+
+    @State private var offset: CGFloat = 0
+    @State private var isDragging = false
+
+    private let cardBg = Color(hex: "161616")
+    private let dismissThreshold: CGFloat = 100
+
+    var body: some View {
+        ZStack(alignment: .trailing) {
+            // Delete background
+            HStack {
+                Spacer()
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.white)
+                    .padding(.trailing, 20)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: "ef4444").opacity(min(1, abs(offset) / dismissThreshold)))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+
+            // Card content
+            VStack(alignment: .leading, spacing: 12) {
+                // Insight badge
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 12))
+                    Text("RECOVERY INSIGHT")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .tracking(1)
+                }
+                .foregroundStyle(alert.type.color)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(alert.type.color.opacity(0.15))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(alert.type.color.opacity(0.3), lineWidth: 1)
+                )
+
+                // Content
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(alert.title.uppercased())
+                        .font(.subheadline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+
+                    Text(alert.message)
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(cardBg)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                // Accent bar at top
+                VStack {
+                    alert.type.color
+                        .frame(height: 3)
+                    Spacer()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+            .offset(x: offset)
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        isDragging = true
+                        // Only allow swiping left
+                        if value.translation.width < 0 {
+                            offset = value.translation.width
+                        }
+                    }
+                    .onEnded { value in
+                        isDragging = false
+                        if abs(offset) > dismissThreshold {
+                            // Dismiss
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                offset = -UIScreen.main.bounds.width
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                onDismiss()
+                            }
+                        } else {
+                            // Snap back
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                offset = 0
+                            }
+                        }
+                    }
+            )
+        }
+        .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
     }
 }
 
