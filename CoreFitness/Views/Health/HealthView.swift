@@ -1579,14 +1579,24 @@ struct HealthMetricDetailView: View {
                             .frame(height: chartHeight)
                             .contentShape(Rectangle())
                             .gesture(
-                                DragGesture(minimumDistance: 0)
+                                LongPressGesture(minimumDuration: 0.2)
+                                    .sequenced(before: DragGesture(minimumDistance: 0))
                                     .onChanged { value in
                                         guard selectedPeriod != .day else { return }
-                                        let stepX = (UIScreen.main.bounds.width - 100) / CGFloat(data.count - 1)
-                                        let index = Int((value.location.x / stepX).rounded())
-                                        let clampedIndex = max(0, min(data.count - 1, index))
-                                        scrubberIndex = clampedIndex
-                                        isScrubbing = true
+                                        switch value {
+                                        case .first(true):
+                                            // Long press detected, ready to scrub
+                                            isScrubbing = true
+                                        case .second(true, let drag):
+                                            if let drag = drag {
+                                                let stepX = (UIScreen.main.bounds.width - 100) / CGFloat(data.count - 1)
+                                                let index = Int((drag.location.x / stepX).rounded())
+                                                let clampedIndex = max(0, min(data.count - 1, index))
+                                                scrubberIndex = clampedIndex
+                                            }
+                                        default:
+                                            break
+                                        }
                                     }
                                     .onEnded { _ in
                                         isScrubbing = false
