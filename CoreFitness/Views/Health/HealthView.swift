@@ -1338,13 +1338,13 @@ struct HealthMetricDetailView: View {
                         MetricStatBox(label: "Low", value: formatValue(minVal), color: Color(hex: "ef4444"))
                     }
                     .padding(.horizontal)
-                    .animation(.easeInOut(duration: 0.3), value: average)
+                    .animation(.easeInOut(duration: 0.5), value: average)
 
                     // Time period picker
                     HStack(spacing: 8) {
                         ForEach(TimePeriod.allCases, id: \.self) { period in
                             Button {
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                                withAnimation(.easeInOut(duration: 0.5)) {
                                     selectedPeriod = period
                                 }
                             } label: {
@@ -1625,7 +1625,8 @@ struct HealthMetricDetailView: View {
                     .background(.regularMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                     .padding(.horizontal)
-                    .animation(.easeInOut(duration: 0.4), value: selectedPeriod)
+                    .animation(.easeInOut(duration: 0.6), value: selectedPeriod)
+                    .animation(.easeInOut(duration: 0.5), value: historicalData)
                 }
                 .padding(.bottom, 40)
             }
