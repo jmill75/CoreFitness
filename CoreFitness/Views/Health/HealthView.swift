@@ -1320,6 +1320,10 @@ struct HealthMetricDetailView: View {
                                 let width = geometry.size.width
                                 let stepX = data.count > 1 ? width / CGFloat(data.count - 1) : width
 
+                                // For 1D view, use a flat line at today's value
+                                let isTodayView = selectedPeriod == .day
+                                let flatValue = average > 0 ? average : (data.first { $0 > 0 } ?? yRange.min)
+
                                 ZStack {
                                     // Grid
                                     VStack(spacing: 0) {
@@ -1330,43 +1334,75 @@ struct HealthMetricDetailView: View {
                                         }
                                     }
 
-                                    // Gradient fill
-                                    Path { path in
-                                        path.move(to: CGPoint(x: 0, y: chartHeight))
-                                        for (index, value) in data.enumerated() {
-                                            let x = CGFloat(index) * stepX
-                                            let normalizedY = (value - yRange.min) / (yRange.max - yRange.min)
-                                            let y = chartHeight - CGFloat(normalizedY) * chartHeight
-                                            path.addLine(to: CGPoint(x: x, y: y))
-                                        }
-                                        path.addLine(to: CGPoint(x: width, y: chartHeight))
-                                        path.closeSubpath()
-                                    }
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [metricType.color.opacity(0.4), metricType.color.opacity(0.05)],
-                                            startPoint: .top,
-                                            endPoint: .bottom
-                                        )
-                                    )
+                                    if isTodayView {
+                                        // Flat line for today's view
+                                        let normalizedY = (flatValue - yRange.min) / (yRange.max - yRange.min)
+                                        let y = chartHeight - CGFloat(normalizedY) * chartHeight
 
-                                    // Line
-                                    Path { path in
-                                        for (index, value) in data.enumerated() {
-                                            let x = CGFloat(index) * stepX
-                                            let normalizedY = (value - yRange.min) / (yRange.max - yRange.min)
-                                            let y = chartHeight - CGFloat(normalizedY) * chartHeight
-                                            if index == 0 {
-                                                path.move(to: CGPoint(x: x, y: y))
-                                            } else {
+                                        // Gradient fill
+                                        Path { path in
+                                            path.move(to: CGPoint(x: 0, y: chartHeight))
+                                            path.addLine(to: CGPoint(x: 0, y: y))
+                                            path.addLine(to: CGPoint(x: width, y: y))
+                                            path.addLine(to: CGPoint(x: width, y: chartHeight))
+                                            path.closeSubpath()
+                                        }
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [metricType.color.opacity(0.4), metricType.color.opacity(0.05)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+
+                                        // Flat line
+                                        Path { path in
+                                            path.move(to: CGPoint(x: 0, y: y))
+                                            path.addLine(to: CGPoint(x: width, y: y))
+                                        }
+                                        .stroke(
+                                            metricType.color,
+                                            style: StrokeStyle(lineWidth: 2.5, lineCap: .round)
+                                        )
+                                    } else {
+                                        // Gradient fill for multi-day views
+                                        Path { path in
+                                            path.move(to: CGPoint(x: 0, y: chartHeight))
+                                            for (index, value) in data.enumerated() {
+                                                let x = CGFloat(index) * stepX
+                                                let normalizedY = (value - yRange.min) / (yRange.max - yRange.min)
+                                                let y = chartHeight - CGFloat(normalizedY) * chartHeight
                                                 path.addLine(to: CGPoint(x: x, y: y))
                                             }
+                                            path.addLine(to: CGPoint(x: width, y: chartHeight))
+                                            path.closeSubpath()
                                         }
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [metricType.color.opacity(0.4), metricType.color.opacity(0.05)],
+                                                startPoint: .top,
+                                                endPoint: .bottom
+                                            )
+                                        )
+
+                                        // Line for multi-day views
+                                        Path { path in
+                                            for (index, value) in data.enumerated() {
+                                                let x = CGFloat(index) * stepX
+                                                let normalizedY = (value - yRange.min) / (yRange.max - yRange.min)
+                                                let y = chartHeight - CGFloat(normalizedY) * chartHeight
+                                                if index == 0 {
+                                                    path.move(to: CGPoint(x: x, y: y))
+                                                } else {
+                                                    path.addLine(to: CGPoint(x: x, y: y))
+                                                }
+                                            }
+                                        }
+                                        .stroke(
+                                            metricType.color,
+                                            style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
+                                        )
                                     }
-                                    .stroke(
-                                        metricType.color,
-                                        style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
-                                    )
                                 }
                             }
                             .frame(height: chartHeight)
