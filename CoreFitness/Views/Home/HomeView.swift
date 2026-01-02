@@ -164,13 +164,6 @@ struct HomeView: View {
                 )
                 .ignoresSafeArea()
             }
-
-            // Quick Actions FAB
-            QuickActionsFAB(
-                selectedTab: $selectedTab,
-                onCheckIn: { showDailyCheckIn = true },
-                onWaterIntake: { showWaterIntake = true }
-            )
         }
         .fullScreenCover(isPresented: $showWorkoutExecution) {
             if let workout = selectedWorkoutForPopup {
@@ -202,8 +195,7 @@ struct WelcomeHeader: View {
     var onCheckIn: () -> Void
     var onWaterIntake: () -> Void
 
-    @State private var hasNotifications = true // TODO: Connect to actual notification state
-    @State private var showNotifications = false
+    @State private var showQuickActions = false
 
     private var firstName: String {
         userName.components(separatedBy: " ").first ?? userName
@@ -245,49 +237,144 @@ struct WelcomeHeader: View {
 
             Spacer()
 
-            // AI Insights Button - dark style
+            // Quick Actions Button
             Button {
-                showNotifications = true
+                showQuickActions = true
             } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(Color(hex: "feca57"))
-
-                    // Coral notification badge
-                    if hasNotifications {
+                Image(systemName: "plus")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(Color(hex: "00d2d3"))
+                    .frame(width: 44, height: 44)
+                    .background(Color(hex: "141414"))
+                    .clipShape(Circle())
+                    .overlay(
                         Circle()
-                            .fill(Color(hex: "ff6b6b"))
-                            .frame(width: 10, height: 10)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color(hex: "0a0a0a"), lineWidth: 2)
-                            )
-                            .offset(x: 2, y: -2)
-                    }
-                }
-                .frame(width: 44, height: 44)
-                .background(Color(hex: "161616"))
-                .clipShape(Circle())
-                .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                )
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    )
             }
-            .accessibilityLabel("AI Insights")
-            .accessibilityHint(hasNotifications ? "You have unread notifications" : "No new notifications")
+            .accessibilityLabel("Quick Actions")
         }
         .padding(.top, 16)
         .padding(.bottom, 8)
-        .sheet(isPresented: $showNotifications) {
-            NotificationsSheet(
+        .sheet(isPresented: $showQuickActions) {
+            QuickActionsSheet(
                 selectedTab: $selectedTab,
                 onCheckIn: onCheckIn,
                 onWaterIntake: onWaterIntake
             )
-            .presentationDetents([.medium, .large])
+            .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
         }
+    }
+}
+
+// MARK: - Quick Actions Sheet
+struct QuickActionsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedTab: Tab
+    var onCheckIn: () -> Void
+    var onWaterIntake: () -> Void
+
+    private let teal = Color(hex: "00d2d3")
+    private let coral = Color(hex: "ff6b6b")
+    private let purple = Color(hex: "a55eea")
+    private let gold = Color(hex: "feca57")
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ], spacing: 12) {
+                    SheetQuickActionButton(
+                        icon: "figure.run",
+                        label: "Start Workout",
+                        color: teal
+                    ) {
+                        dismiss()
+                        selectedTab = .programs
+                    }
+
+                    SheetQuickActionButton(
+                        icon: "drop.fill",
+                        label: "Log Water",
+                        color: Color(hex: "54a0ff")
+                    ) {
+                        dismiss()
+                        onWaterIntake()
+                    }
+
+                    SheetQuickActionButton(
+                        icon: "heart.text.square.fill",
+                        label: "Check In",
+                        color: coral
+                    ) {
+                        dismiss()
+                        onCheckIn()
+                    }
+
+                    SheetQuickActionButton(
+                        icon: "trophy.fill",
+                        label: "Challenges",
+                        color: gold
+                    ) {
+                        dismiss()
+                        selectedTab = .programs
+                    }
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.top, 20)
+            .navigationTitle("Quick Actions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(teal)
+                }
+            }
+        }
+    }
+}
+
+private struct SheetQuickActionButton: View {
+    let icon: String
+    let label: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+
+                Text(label)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
+            .background(Color(hex: "141414"))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
