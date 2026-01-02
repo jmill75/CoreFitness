@@ -51,12 +51,18 @@ struct HealthView: View {
                             HealthViewSkeleton()
                                 .padding(.horizontal)
                         } else {
-                            // Recovery Hero Card (shared component)
-                            RecoveryCard()
-                                .padding(.horizontal)
-                                .padding(.top, 20)
-                                .opacity(animationStage >= 2 ? 1 : 0)
-                                .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
+                            // Recovery Section
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Recovery")
+                                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
+                                    .foregroundStyle(.white)
+
+                                RecoveryCard()
+                            }
+                            .padding(.horizontal)
+                            .padding(.top, 20)
+                            .opacity(animationStage >= 2 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
 
                             // Health Alerts (if any)
                             if !visibleAlerts.isEmpty {
