@@ -1587,11 +1587,19 @@ struct HealthMetricDetailView: View {
                                         case .first(true):
                                             // Long press detected, ready to scrub
                                             isScrubbing = true
+                                            // Initial haptic
+                                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                                            generator.impactOccurred()
                                         case .second(true, let drag):
                                             if let drag = drag {
                                                 let stepX = (UIScreen.main.bounds.width - 100) / CGFloat(data.count - 1)
                                                 let index = Int((drag.location.x / stepX).rounded())
                                                 let clampedIndex = max(0, min(data.count - 1, index))
+                                                // Only trigger haptic when index changes
+                                                if clampedIndex != scrubberIndex {
+                                                    let generator = UIImpactFeedbackGenerator(style: .light)
+                                                    generator.impactOccurred()
+                                                }
                                                 scrubberIndex = clampedIndex
                                             }
                                         default:
