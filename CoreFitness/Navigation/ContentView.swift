@@ -44,42 +44,33 @@ struct MainTabView: View {
 
     @Binding var selectedTab: Tab
     @EnvironmentObject var navigationState: NavigationState
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            HomeView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(Tab.home.rawValue, systemImage: Tab.home.icon)
+        ZStack(alignment: .bottom) {
+            // Tab content
+            Group {
+                switch selectedTab {
+                case .home:
+                    HomeView(selectedTab: $selectedTab)
+                case .programs:
+                    ProgramsView(selectedTab: $selectedTab)
+                case .progress:
+                    ProgressTabView(selectedTab: $selectedTab)
+                case .health:
+                    HealthView(selectedTab: $selectedTab)
+                case .settings:
+                    SettingsView(selectedTab: $selectedTab)
                 }
-                .tag(Tab.home)
+            }
 
-            ProgramsView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(Tab.programs.rawValue, systemImage: Tab.programs.icon)
-                }
-                .tag(Tab.programs)
-
-            ProgressTabView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(Tab.progress.rawValue, systemImage: Tab.progress.icon)
-                }
-                .tag(Tab.progress)
-
-            HealthView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(Tab.health.rawValue, systemImage: Tab.health.icon)
-                }
-                .tag(Tab.health)
-
-            SettingsView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(Tab.settings.rawValue, systemImage: Tab.settings.icon)
-                }
-                .tag(Tab.settings)
+            // Custom Tab Bar
+            CustomTabBar(
+                selectedTab: $selectedTab,
+                hasProgramActivity: activeProgramManager.hasCurrentWorkout || activeProgramManager.hasActiveProgram
+            )
         }
-        .safeAreaInset(edge: .bottom, spacing: -10) {
-            Color.clear.frame(height: 0)
-        }
+        .ignoresSafeArea(.keyboard)
         .sheet(isPresented: $navigationState.showInvitationResponse) {
             if let inviteCode = navigationState.pendingInvitationCode {
                 InvitationResponseView(inviteCode: inviteCode)
@@ -91,10 +82,91 @@ struct MainTabView: View {
     }
 }
 
+// MARK: - Custom Tab Bar
+struct CustomTabBar: View {
+    @Binding var selectedTab: Tab
+    let hasProgramActivity: Bool
+
+    private let tabBarBackground = Color(hex: "0A0A0A")
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                TabBarButton(
+                    tab: tab,
+                    isSelected: selectedTab == tab,
+                    isInactive: tab == .programs && !hasProgramActivity
+                ) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        selectedTab = tab
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
+        .padding(.bottom, 28)
+        .background(
+            tabBarBackground
+                .overlay(
+                    Rectangle()
+                        .fill(Color.white.opacity(0.06))
+                        .frame(height: 0.5),
+                    alignment: .top
+                )
+        )
+    }
+}
+
+// MARK: - Tab Bar Button
+struct TabBarButton: View {
+    let tab: Tab
+    let isSelected: Bool
+    let isInactive: Bool
+    let action: () -> Void
+
+    private var iconColor: Color {
+        if isSelected {
+            return .white
+        } else if isInactive {
+            return Color(hex: "333333")
+        } else {
+            return Color(hex: "666666")
+        }
+    }
+
+    private var labelColor: Color {
+        if isSelected {
+            return .white
+        } else if isInactive {
+            return Color(hex: "333333")
+        } else {
+            return Color(hex: "666666")
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(iconColor)
+
+                Text(tab.rawValue)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(labelColor)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 #Preview {
     ContentView()
         .environmentObject(AuthManager())
         .environmentObject(ThemeManager())
         .environmentObject(HealthKitManager())
         .environmentObject(NavigationState())
+        .environmentObject(ActiveProgramManager.shared)
 }
