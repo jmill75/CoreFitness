@@ -233,6 +233,12 @@ struct ProgramsView: View {
             .sheet(item: $selectedProgram) { program in
                 ProgramDetailView(program: program, activeProgram: activeUserProgram)
             }
+            .onChange(of: navigationState.showProgramBrowser) { _, newValue in
+                if newValue {
+                    showProgramBrowser = true
+                    navigationState.showProgramBrowser = false
+                }
+            }
             .onChange(of: navigationState.showChallenges) { _, newValue in
                 if newValue {
                     showChallenges = true

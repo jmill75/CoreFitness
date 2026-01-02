@@ -10,6 +10,7 @@ class NavigationState: ObservableObject {
     @Published var showDailyCheckIn: Bool = false
     @Published var showChallenges: Bool = false
     @Published var showExercises: Bool = false
+    @Published var showProgramBrowser: Bool = false
     @Published var pendingDeepLink: DeepLinkDestination?
 
     // Workout invitation handling
@@ -82,6 +83,7 @@ struct CoreFitnessApp: App {
     @StateObject private var socialSharingService = SocialSharingService()
     @StateObject private var waterIntakeManager = WaterIntakeManager()
     @StateObject private var navigationState = NavigationState.shared
+    @StateObject private var activeProgramManager = ActiveProgramManager.shared
 
     // MARK: - SwiftData Container
     var sharedModelContainer: ModelContainer = {
@@ -166,6 +168,7 @@ struct CoreFitnessApp: App {
                 .environmentObject(socialSharingService)
                 .environmentObject(waterIntakeManager)
                 .environmentObject(navigationState)
+                .environmentObject(activeProgramManager)
                 .preferredColorScheme(themeManager.colorScheme)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
@@ -190,6 +193,8 @@ struct CoreFitnessApp: App {
                     ExerciseData.seedExercises(in: context)
                     // Seed workout programs on first launch
                     ProgramData.seedPrograms(in: context)
+                    // Configure ActiveProgramManager for cross-view sync
+                    activeProgramManager.configure(with: context)
                 }
                 .task {
                     // Request HealthKit authorization on first launch

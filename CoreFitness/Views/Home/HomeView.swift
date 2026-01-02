@@ -271,63 +271,111 @@ struct WelcomeHeader: View {
 // MARK: - Quick Actions Sheet
 struct QuickActionsSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
+    @EnvironmentObject var navigationState: NavigationState
     @Binding var selectedTab: Tab
     var onCheckIn: () -> Void
     var onWaterIntake: () -> Void
+
+    @State private var showNoProgramToast = false
 
     private let teal = Color(hex: "00d2d3")
     private let coral = Color(hex: "ff6b6b")
     private let purple = Color(hex: "a55eea")
     private let gold = Color(hex: "feca57")
 
+    private var hasActiveProgram: Bool {
+        activeProgramManager.hasCurrentWorkout || activeProgramManager.hasActiveProgram
+    }
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)
-                ], spacing: 12) {
-                    SheetQuickActionButton(
-                        icon: "figure.run",
-                        label: "Start Workout",
-                        color: teal
-                    ) {
-                        dismiss()
-                        selectedTab = .programs
-                    }
+            ZStack {
+                VStack(spacing: 16) {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ], spacing: 12) {
+                        SheetQuickActionButton(
+                            icon: "figure.run",
+                            label: "Start Workout",
+                            color: teal
+                        ) {
+                            if hasActiveProgram {
+                                dismiss()
+                                selectedTab = .programs
+                            } else {
+                                showNoProgramToast = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showNoProgramToast = false
+                                    dismiss()
+                                    selectedTab = .programs
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        navigationState.showProgramBrowser = true
+                                    }
+                                }
+                            }
+                        }
 
-                    SheetQuickActionButton(
-                        icon: "drop.fill",
-                        label: "Log Water",
-                        color: Color(hex: "54a0ff")
-                    ) {
-                        dismiss()
-                        onWaterIntake()
-                    }
+                        SheetQuickActionButton(
+                            icon: "drop.fill",
+                            label: "Log Water",
+                            color: Color(hex: "54a0ff")
+                        ) {
+                            dismiss()
+                            onWaterIntake()
+                        }
 
-                    SheetQuickActionButton(
-                        icon: "heart.text.square.fill",
-                        label: "Check In",
-                        color: coral
-                    ) {
-                        dismiss()
-                        onCheckIn()
-                    }
+                        SheetQuickActionButton(
+                            icon: "heart.text.square.fill",
+                            label: "Check In",
+                            color: coral
+                        ) {
+                            dismiss()
+                            onCheckIn()
+                        }
 
-                    SheetQuickActionButton(
-                        icon: "trophy.fill",
-                        label: "Challenges",
-                        color: gold
-                    ) {
-                        dismiss()
-                        selectedTab = .programs
+                        SheetQuickActionButton(
+                            icon: "trophy.fill",
+                            label: "Challenges",
+                            color: gold
+                        ) {
+                            dismiss()
+                            selectedTab = .programs
+                        }
                     }
+                    .padding(.horizontal)
+
+                    Spacer()
                 }
-                .padding(.horizontal)
+                .padding(.top, 20)
 
-                Spacer()
+                // No Program Toast
+                if showNoProgramToast {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 12) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text("No program selected")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(Color(hex: "1a1a1a"))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                        .padding(.bottom, 40)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.spring(response: 0.3), value: showNoProgramToast)
+                }
             }
-            .padding(.top, 20)
             .navigationTitle("Quick Actions")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
