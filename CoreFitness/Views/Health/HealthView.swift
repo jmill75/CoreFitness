@@ -275,7 +275,7 @@ private struct HealthPageHeader: View {
                     .foregroundStyle(Color(hex: "666666"))
 
                 Text("Health")
-                    .font(.system(size: 28, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 28).weight(.light))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.white, teal, sage],
@@ -465,7 +465,7 @@ private struct MyHealthMetricsSection: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("My Health")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
 
                 Spacer()
@@ -713,7 +713,7 @@ private struct LifestyleCardsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Lifestyle")
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
 
             HStack(spacing: 12) {
@@ -945,7 +945,7 @@ private struct WeeklyRecoveryTrendSection: View {
             // Header
             HStack {
                 Text("Recovery Trend")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
 
                 Spacer()

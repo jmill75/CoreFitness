@@ -166,7 +166,7 @@ private struct ProgressHeader: View {
                         .foregroundStyle(Color(hex: "666666"))
 
                     Text("Progress")
-                        .font(.system(size: 28, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 28).weight(.light))
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [.white, goldStart, goldEnd],
@@ -185,7 +185,7 @@ private struct ProgressHeader: View {
                 // Section Header with Segmented Control
                 HStack {
                     Text("Summary")
-                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 20).weight(.light))
                         .foregroundStyle(.white)
 
                     Spacer()
@@ -304,7 +304,7 @@ private struct ActiveProgramProgressSection: View {
                 // Section header
                 HStack {
                     Text("Active Program")
-                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 20).weight(.light))
                         .foregroundStyle(.white)
 
                     Spacer()
@@ -561,7 +561,7 @@ private struct FeaturedAchievementSection: View {
             // Section header
             HStack {
                 Text("Next Trophy")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
 
                 Spacer()
@@ -780,7 +780,7 @@ private struct TrophyCaseSection: View {
             // Section header
             HStack {
                 Text("Achievements")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
 
                 Spacer()
@@ -949,7 +949,7 @@ private struct InProgressSection: View {
             VStack(alignment: .leading, spacing: 16) {
                 // Section header
                 Text("In Progress")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
 
                 VStack(spacing: 10) {
@@ -1084,7 +1084,7 @@ private struct RecentWorkoutsSection: View {
         VStack(alignment: .leading, spacing: 16) {
             // Section header
             Text("Recent Workouts")
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
 
             if recentWorkouts.isEmpty {

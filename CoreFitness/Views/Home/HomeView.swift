@@ -1423,7 +1423,7 @@ struct CurrentActivitySection: View {
         VStack(alignment: .leading, spacing: 16) {
             // Section Header
             Text("Today's Workout")
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -1560,7 +1560,7 @@ struct TodaysWorkoutCard: View {
                     if let workout = currentWorkout {
                         // Title
                         Text(workout.name)
-                            .font(.system(size: 22, weight: .regular, design: .serif))
+                            .font(.custom("Helvetica Neue", size: 22).weight(.light))
                             .foregroundStyle(.white)
 
                         // Subtitle
@@ -1595,7 +1595,7 @@ struct TodaysWorkoutCard: View {
                     } else {
                         // No workout state
                         Text("No Workout Scheduled")
-                            .font(.system(size: 22, weight: .regular, design: .serif))
+                            .font(.custom("Helvetica Neue", size: 22).weight(.light))
                             .foregroundStyle(.white)
 
                         Text("Choose from your saved programs or workouts")
@@ -1643,7 +1643,7 @@ struct WorkoutStatItem: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
             Text(label)
                 .font(.system(size: 11, weight: .medium))
@@ -1748,7 +1748,7 @@ struct TodaysChallengeCard: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Title (serif font like workout card)
                     Text(challenge.name)
-                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 22).weight(.light))
                         .foregroundStyle(.white)
 
                     // Subtitle
@@ -1799,7 +1799,7 @@ private struct HomeChallengeStatItem: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
             Text(label)
                 .font(.system(size: 11, weight: .medium))
@@ -3602,7 +3602,7 @@ struct DashboardStatCard: View {
 
                 // Value
                 Text(value)
-                    .font(.system(size: 28, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 28).weight(.light))
                     .foregroundStyle(iconColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -3709,7 +3709,7 @@ struct WeeklyActivitySection: View {
             // Section Header
             HStack {
                 Text("Weekly Activity")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(textPrimary)
 
                 Spacer()
@@ -3786,7 +3786,7 @@ struct ChartStat: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.system(size: 24, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 24).weight(.light))
                 .foregroundStyle(.white)
 
             Text(label)
