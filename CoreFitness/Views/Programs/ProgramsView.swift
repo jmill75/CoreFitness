@@ -287,7 +287,7 @@ struct ProgramsView: View {
                     .foregroundStyle(Color(hex: "666666"))
 
                 Text("Programs")
-                    .font(.system(size: 28, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 28).weight(.light))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.white, gold, Color(hex: "ff9f43")],
@@ -408,7 +408,7 @@ struct ProgramsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Title
                     Text(workout.name)
-                        .font(.system(size: 22, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 22).weight(.light))
                         .foregroundStyle(.white)
 
                     // Program name and progress info
@@ -457,7 +457,7 @@ struct ProgramsView: View {
 
                     // Stats row
                     HStack(spacing: 20) {
-                        ProgramStatItem(value: "\(workout.completedSessionsCount)", label: "DONE")
+                        ProgramStatItem(value: "\(workout.completedSessionsCount)", label: "COMPLETE")
                         ProgramStatItem(value: formatDuration(workout.totalMinutesCompleted * 60), label: "HOURS")
                         ProgramStatItem(value: "\(workout.totalSessions)", label: "TOTAL")
                     }
@@ -497,7 +497,7 @@ struct ProgramsView: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .font(.custom("Helvetica Neue", size: 20).weight(.light))
                     .foregroundStyle(.white)
                 Text(label)
                     .font(.system(size: 11, weight: .medium))
@@ -590,7 +590,7 @@ struct ProgramsView: View {
             HStack {
                 HStack(spacing: 8) {
                     Text("My Programs")
-                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .font(.custom("Helvetica Neue", size: 20).weight(.light))
                         .foregroundStyle(.white)
 
                     if !importedPrograms.isEmpty {
@@ -1010,12 +1010,12 @@ struct ProgramsView: View {
         }
     }
 
-    // MARK: - Quick Actions Section (2x2 grid - matches HealthView style)
+    // MARK: - Create Workout Section (2x2 grid - matches HealthView style)
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Section header
-            Text("Quick Actions")
-                .font(.system(size: 20, weight: .regular, design: .serif))
+            Text("Create Workout")
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
 
             LazyVGrid(columns: [
@@ -1058,7 +1058,7 @@ struct ProgramsView: View {
                             .fill(color.opacity(0.15))
                             .frame(width: 48, height: 48)
                         Image(systemName: icon)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 20).weight(.light))
                             .foregroundStyle(color)
                     }
 
@@ -1102,7 +1102,7 @@ struct ProgramsView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Section header
             Text("Discover")
-                .font(.system(size: 20, weight: .regular, design: .serif))
+                .font(.custom("Helvetica Neue", size: 20).weight(.light))
                 .foregroundStyle(.white)
 
             LazyVGrid(columns: [
@@ -1772,7 +1772,7 @@ private struct DiscoverRow: View {
                     .frame(width: 48, height: 48)
                     .overlay(
                         Image(systemName: icon)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 20).weight(.light))
                             .foregroundStyle(.white)
                     )
 
@@ -1849,7 +1849,7 @@ private struct DiscoverProgramsCard: View {
                         .frame(width: 52, height: 52)
 
                     Image(systemName: "square.grid.2x2.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.custom("Helvetica Neue", size: 22).weight(.light))
                         .foregroundStyle(.white)
                 }
 
@@ -2246,7 +2246,7 @@ private struct QuickCreateButton: View {
                         .shadow(color: gradient[0].opacity(0.4), radius: 8, y: 4)
 
                     Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.custom("Helvetica Neue", size: 20).weight(.light))
                         .foregroundStyle(.white)
                 }
 
@@ -2338,7 +2338,7 @@ private struct ActiveWorkoutHeroCard: View {
                             .frame(width: 50, height: 50)
 
                         Image(systemName: workout.goal.icon)
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 22).weight(.light))
                             .foregroundStyle(.white)
                     }
 
@@ -2576,7 +2576,7 @@ private struct ActiveChallengeHeroCard: View {
                         .frame(width: 50, height: 50)
 
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.custom("Helvetica Neue", size: 22).weight(.light))
                         .foregroundStyle(.white)
                 }
 
@@ -3575,7 +3575,7 @@ struct SavedWorkoutCard: View {
                             .fill(Color.white.opacity(0.2))
                             .frame(width: 52, height: 52)
                         Image(systemName: workout.goal.icon)
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 22).weight(.light))
                             .foregroundStyle(.white)
                     }
 
@@ -5678,7 +5678,7 @@ private struct CategoryCard: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: category.icon)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 20).weight(.light))
                             .foregroundStyle(.white)
                     }
 
@@ -6653,7 +6653,7 @@ private struct RefinedLibraryCard: View {
                     .frame(width: 50, height: 50)
                     .overlay(
                         Image(systemName: icon)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.custom("Helvetica Neue", size: 20).weight(.light))
                             .foregroundStyle(.white)
                     )
 
