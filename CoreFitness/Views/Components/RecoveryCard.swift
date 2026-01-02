@@ -122,26 +122,39 @@ struct RecoveryCard: View {
         .foregroundStyle(.white)
         .padding(20)
         .frame(maxWidth: .infinity)
-        .background(cardBg)
+        .background(
+            ZStack {
+                // Base card background
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(cardBg)
+
+                // Subtle top edge highlight for 3D effect
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.08), Color.clear],
+                            startPoint: .top,
+                            endPoint: .center
+                        )
+                    )
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 24))
         .overlay(
-            // Coral accent bar at top
-            VStack {
-                LinearGradient(
-                    colors: [coralStart, coralEnd, Color(hex: "ff9f43")],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(height: 3)
-                Spacer()
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 24))
-        )
-        .overlay(
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.12), Color.white.opacity(0.04)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 1
+                )
         )
-        .shadow(color: Color.black.opacity(0.3), radius: 12, y: 6)
+        // Layered shadows for 3D raised effect
+        .shadow(color: Color.black.opacity(0.5), radius: 1, y: 1)
+        .shadow(color: Color.black.opacity(0.3), radius: 8, y: 4)
+        .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
         .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.98 : 1.0))
         .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.6), value: isPressed)
     }

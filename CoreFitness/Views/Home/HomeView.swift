@@ -20,7 +20,7 @@ struct HomeView: View {
     private var activeChallenges: [Challenge]
 
     // MARK: - State
-    @State private var showDailyCheckIn = false
+    @State private var showMoodTracker = false
     @State private var showWaterIntake = false
     @State private var showWorkoutPopup = false
     @State private var selectedWorkoutForPopup: Workout?
@@ -45,7 +45,7 @@ struct HomeView: View {
                             WelcomeHeader(
                                 userName: "Jeff",
                                 selectedTab: $selectedTab,
-                                onCheckIn: { showDailyCheckIn = true },
+                                onCheckIn: { showMoodTracker = true },
                                 onWaterIntake: { showWaterIntake = true }
                             )
                             .id("top")
@@ -82,7 +82,7 @@ struct HomeView: View {
                             // AI Insights Section
                             AIInsightsSection(
                                 selectedTab: $selectedTab,
-                                onCheckIn: { showDailyCheckIn = true },
+                                onCheckIn: { showMoodTracker = true },
                                 onWaterIntake: { showWaterIntake = true }
                             )
                             .opacity(animationStage >= 5 ? 1 : 0)
@@ -113,13 +113,11 @@ struct HomeView: View {
                         }
                     }
                 }
-                .fullScreenCover(isPresented: $showDailyCheckIn) {
-                    DailyCheckInView()
-                        .background(.ultraThinMaterial)
+                .fullScreenCover(isPresented: $showMoodTracker) {
+                    MoodTrackerView()
                 }
                 .fullScreenCover(isPresented: $showWaterIntake) {
-                    QuickWaterIntakeView()
-                        .background(.ultraThinMaterial)
+                    WaterTrackerView()
                 }
                 .task {
                     // Refresh health data when view appears
@@ -134,7 +132,7 @@ struct HomeView: View {
                 }
                 .onChange(of: navigationState.showDailyCheckIn) { _, newValue in
                     if newValue {
-                        showDailyCheckIn = true
+                        showMoodTracker = true
                         // Reset navigation state
                         navigationState.showDailyCheckIn = false
                     }
@@ -328,7 +326,7 @@ struct QuickActionsSheet: View {
 
                         SheetQuickActionButton(
                             icon: "heart.text.square.fill",
-                            label: "Check In",
+                            label: "Mood Tracker",
                             color: coral
                         ) {
                             dismiss()
@@ -617,7 +615,7 @@ enum QuickActionType: String, CaseIterable, Codable, Identifiable {
 
     var title: String {
         switch self {
-        case .checkIn: return "Check-In"
+        case .checkIn: return "Mood Tracker"
         case .water: return "Water"
         case .exercises: return "Exercises"
         case .progress: return "Progress"
@@ -1494,14 +1492,14 @@ struct TodaysWorkoutCard: View {
         } label: {
             VStack(spacing: 0) {
                 // Gradient Header
-                ZStack(alignment: .bottomLeading) {
+                ZStack {
                     // Gradient background
                     LinearGradient(
                         colors: [tealDark, teal, sage],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    .frame(height: 140)
+                    .frame(height: 60)
 
                     // Clean shine overlay
                     ZStack {
@@ -1527,26 +1525,10 @@ struct TodaysWorkoutCard: View {
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
-                            .frame(height: 70)
+                            .frame(height: 25)
                             Spacer()
                         }
                     }
-
-                    // Badge
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(sage)
-                            .frame(width: 8, height: 8)
-                        Text(isWorkoutInProgress ? "In Progress" : "Up Next")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.black.opacity(0.6))
-                    .background(.ultraThinMaterial.opacity(0.3))
-                    .clipShape(Capsule())
-                    .padding(16)
                 }
                 .clipShape(
                     UnevenRoundedRectangle(
@@ -1683,14 +1665,14 @@ struct TodaysChallengeCard: View {
         } label: {
             VStack(spacing: 0) {
                 // Gradient Header (matching workout card)
-                ZStack(alignment: .bottomLeading) {
+                ZStack {
                     // Gradient background
                     LinearGradient(
                         colors: [goldDark, goldAccent, orange],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    .frame(height: 140)
+                    .frame(height: 60)
 
                     // Clean shine overlay
                     ZStack {
@@ -1716,26 +1698,10 @@ struct TodaysChallengeCard: View {
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
-                            .frame(height: 70)
+                            .frame(height: 25)
                             Spacer()
                         }
                     }
-
-                    // Badge
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(orange)
-                            .frame(width: 8, height: 8)
-                        Text("Day \(challenge.currentDay) of \(challenge.durationDays)")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.black.opacity(0.6))
-                    .background(.ultraThinMaterial.opacity(0.3))
-                    .clipShape(Capsule())
-                    .padding(16)
                 }
                 .clipShape(
                     UnevenRoundedRectangle(
@@ -3655,6 +3621,9 @@ struct WeeklyActivitySection: View {
     @EnvironmentObject var workoutManager: WorkoutManager
     @Binding var selectedTab: Tab
 
+    // Force refresh on appear
+    @State private var refreshTrigger = false
+
     private let cardBg = Color(hex: "141414")
     private let cardBorder = Color.white.opacity(0.06)
     private let teal = Color(hex: "00d2d3")
@@ -3705,7 +3674,7 @@ struct WeeklyActivitySection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 4) {
             // Section Header
             HStack {
                 Text("Weekly Activity")
@@ -3775,6 +3744,13 @@ struct WeeklyActivitySection: View {
                 RoundedRectangle(cornerRadius: 24)
                     .stroke(cardBorder, lineWidth: 1)
             )
+        }
+        .id(refreshTrigger) // Force view refresh when trigger changes
+        .onAppear {
+            // Delay slightly to ensure model context is ready
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                refreshTrigger.toggle()
+            }
         }
     }
 }
@@ -4004,8 +3980,8 @@ struct QuickActionsFAB: View {
     private var actions: [FABAction] {
         [
             FABAction(
-                icon: "checkmark.circle.fill",
-                label: "Check-In",
+                icon: "face.smiling.fill",
+                label: "Mood Tracker",
                 color: Color(hex: "ff6b6b"),
                 action: {
                     themeManager.mediumImpact()

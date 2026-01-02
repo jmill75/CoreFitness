@@ -112,8 +112,8 @@ class NotificationManager: ObservableObject {
 
         // Create notification content
         let content = UNMutableNotificationContent()
-        content.title = "Daily Check-In"
-        content.body = "How are you feeling today? Take a moment to log your mood, stress, and recovery."
+        content.title = "Mood Tracker"
+        content.body = "How are you feeling today? Take a moment to log your mood."
         content.sound = .default
         content.badge = 1
 

@@ -15,7 +15,7 @@ struct HealthView: View {
     // MARK: - State
     @State private var showWaterIntake = false
     @State private var showMoodDetail = false
-    @State private var showDailyCheckIn = false
+    @State private var showMoodTracker = false
     @State private var isInitialLoad = true
     @State private var animationStage = 0
     @State private var selectedMetric: HealthMetricType?
@@ -40,7 +40,7 @@ struct HealthView: View {
                         // Header
                         HealthPageHeader(
                             onLogWater: { showWaterIntake = true },
-                            onCheckIn: { showDailyCheckIn = true }
+                            onCheckIn: { showMoodTracker = true }
                         )
                         .id("top")
                         .padding(.horizontal)
@@ -123,15 +123,14 @@ struct HealthView: View {
                 }
             }
             .fullScreenCover(isPresented: $showWaterIntake) {
-                QuickWaterIntakeView()
+                WaterTrackerView()
             }
             .fullScreenCover(isPresented: $showMoodDetail) {
                 MoodDetailView()
                     .background(.ultraThinMaterial)
             }
-            .fullScreenCover(isPresented: $showDailyCheckIn) {
-                DailyCheckInView()
-                    .background(.ultraThinMaterial)
+            .fullScreenCover(isPresented: $showMoodTracker) {
+                MoodTrackerView()
             }
             .sheet(item: $selectedMetric) { metric in
                 HealthMetricDetailView(metricType: metric)
@@ -349,7 +348,7 @@ private struct HealthQuickActionsSheet: View {
 
                     HealthSheetActionButton(
                         icon: "heart.text.square.fill",
-                        label: "Check In",
+                        label: "Mood Tracker",
                         color: coral
                     ) {
                         dismiss()
@@ -1031,7 +1030,7 @@ private struct WeeklyRecoveryTrendSection: View {
     private let cardBg = Color(hex: "161616")
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 4) {
             // Header
             HStack {
                 Text("Recovery Trend")

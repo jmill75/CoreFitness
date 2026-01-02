@@ -461,10 +461,10 @@ struct NotificationSettingsView: View {
 
     var body: some View {
         List {
-            // Daily Check-In Section
+            // Daily Mood Tracker Section
             Section {
                 Toggle(isOn: $userProfileManager.dailyCheckInReminderEnabled) {
-                    Label("Daily Check-In Reminder", systemImage: "bell.badge.fill")
+                    Label("Daily Mood Reminder", systemImage: "bell.badge.fill")
                 }
                 .onChange(of: userProfileManager.dailyCheckInReminderEnabled) { _, newValue in
                     if newValue && !notificationManager.isAuthorized {
@@ -506,9 +506,9 @@ struct NotificationSettingsView: View {
                     .pickerStyle(.navigationLink)
                 }
             } header: {
-                Text("Daily Check-In")
+                Text("Mood Tracker")
             } footer: {
-                Text("Get a daily reminder to log your mood, stress, and recovery levels.")
+                Text("Get a daily reminder to log your mood.")
             }
 
             // Summaries Section

@@ -399,12 +399,12 @@ class AIInsightsService: ObservableObject {
 
             return AIInsight(
                 type: .checkInReminder,
-                title: "Daily Check-In",
-                message: "How are you feeling today? A quick check-in helps track your wellness trends and keeps your streak alive!",
+                title: "Mood Tracker",
+                message: "How are you feeling today? Tracking your mood helps understand your wellness trends!",
                 icon: "face.smiling",
                 color: .yellow,
                 priority: .low,
-                actionLabel: "Check In"
+                actionLabel: "Track Mood"
             )
         }
 

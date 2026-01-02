@@ -337,14 +337,14 @@ struct ProgramsView: View {
         } label: {
             VStack(spacing: 0) {
                 // Gradient Header
-                ZStack(alignment: .bottomLeading) {
+                ZStack {
                     // Gradient background
                     LinearGradient(
                         colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [Color(hex: "01a3a4"), teal, sage],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    .frame(height: 140)
+                    .frame(height: 60)
 
                     // Clean shine overlay
                     ZStack {
@@ -370,26 +370,10 @@ struct ProgramsView: View {
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
-                            .frame(height: 70)
+                            .frame(height: 25)
                             Spacer()
                         }
                     }
-
-                    // Badge
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(sage)
-                            .frame(width: 8, height: 8)
-                        Text(isWorkoutInProgress ? "In Progress" : "Current Program")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.black.opacity(0.6))
-                    .background(.ultraThinMaterial.opacity(0.3))
-                    .clipShape(Capsule())
-                    .padding(16)
                 }
                 .clipShape(
                     UnevenRoundedRectangle(
@@ -474,12 +458,39 @@ struct ProgramsView: View {
                 }
                 .padding(20)
             }
-            .background(cardBg)
+            .background(
+                ZStack {
+                    // Base card background
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(cardBg)
+
+                    // Subtle top edge highlight for 3D effect
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.08), Color.clear],
+                                startPoint: .top,
+                                endPoint: .center
+                            )
+                        )
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(cardBorder, lineWidth: 1)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0.12), Color.white.opacity(0.04)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1
+                    )
             )
+            // Layered shadows for 3D raised effect
+            .shadow(color: Color.black.opacity(0.5), radius: 1, y: 1)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, y: 4)
+            .shadow(color: Color.black.opacity(0.2), radius: 16, y: 8)
         }
         .buttonStyle(.plain)
     }
