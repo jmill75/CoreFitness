@@ -13,6 +13,7 @@ struct ProgramBrowserView: View {
     @State private var selectedCategory: ExerciseCategory?
     @State private var selectedDifficulty: Difficulty?
     @State private var selectedGoal: ProgramGoal?
+    @State private var showUserCreatedOnly = false
     @State private var showFilters = false
     @State private var selectedProgram: ProgramTemplate?
 
@@ -45,7 +46,10 @@ struct ProgramBrowserView: View {
             // Goal filter
             let matchesGoal = selectedGoal == nil || program.goal == selectedGoal
 
-            return matchesSearch && matchesCategory && matchesDifficulty && matchesGoal
+            // User created filter (AI created, manual added, uploaded)
+            let matchesUserCreated = !showUserCreatedOnly || program.isUserProgram
+
+            return matchesSearch && matchesCategory && matchesDifficulty && matchesGoal && matchesUserCreated
         }
     }
 
@@ -127,10 +131,19 @@ struct ProgramBrowserView: View {
                             HStack(spacing: 10) {
                                 QuickFilterPill(
                                     label: "All",
-                                    isSelected: selectedCategory == nil,
+                                    isSelected: selectedCategory == nil && !showUserCreatedOnly,
                                     color: cyan
                                 ) {
                                     selectedCategory = nil
+                                    showUserCreatedOnly = false
+                                }
+
+                                QuickFilterPill(
+                                    label: "My Programs",
+                                    isSelected: showUserCreatedOnly,
+                                    color: gold
+                                ) {
+                                    showUserCreatedOnly.toggle()
                                 }
 
                                 ForEach(ExerciseCategory.allCases, id: \.self) { category in
@@ -150,6 +163,11 @@ struct ProgramBrowserView: View {
                         if hasActiveFilters {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 8) {
+                                    if showUserCreatedOnly {
+                                        FilterChip(label: "My Programs", color: gold) {
+                                            showUserCreatedOnly = false
+                                        }
+                                    }
                                     if let category = selectedCategory {
                                         FilterChip(label: category.displayName, color: categoryColor(category)) {
                                             selectedCategory = nil
@@ -292,7 +310,8 @@ struct ProgramBrowserView: View {
                 FilterSheet(
                     selectedCategory: $selectedCategory,
                     selectedDifficulty: $selectedDifficulty,
-                    selectedGoal: $selectedGoal
+                    selectedGoal: $selectedGoal,
+                    showUserCreatedOnly: $showUserCreatedOnly
                 )
             }
             .sheet(item: $selectedProgram) { program in
@@ -303,11 +322,12 @@ struct ProgramBrowserView: View {
     }
 
     private var hasActiveFilters: Bool {
-        selectedCategory != nil || selectedDifficulty != nil || selectedGoal != nil
+        selectedCategory != nil || selectedDifficulty != nil || selectedGoal != nil || showUserCreatedOnly
     }
 
     private var activeFilterCount: Int {
         var count = 0
+        if showUserCreatedOnly { count += 1 }
         if selectedCategory != nil { count += 1 }
         if selectedDifficulty != nil { count += 1 }
         if selectedGoal != nil { count += 1 }
@@ -318,6 +338,7 @@ struct ProgramBrowserView: View {
         selectedCategory = nil
         selectedDifficulty = nil
         selectedGoal = nil
+        showUserCreatedOnly = false
     }
 
     private func categoryColor(_ category: ExerciseCategory) -> Color {
@@ -747,6 +768,9 @@ struct FilterSheet: View {
     @Binding var selectedCategory: ExerciseCategory?
     @Binding var selectedDifficulty: Difficulty?
     @Binding var selectedGoal: ProgramGoal?
+    @Binding var showUserCreatedOnly: Bool
+
+    private let gold = Color(hex: "feca57")
 
     var body: some View {
         NavigationStack {
@@ -755,6 +779,43 @@ struct FilterSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
+                        // My Programs Toggle
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Source")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+
+                            Button {
+                                showUserCreatedOnly.toggle()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "person.fill")
+                                        .font(.system(size: 16))
+                                    Text("My Programs")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    Spacer()
+                                    if showUserCreatedOnly {
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                }
+                                .foregroundStyle(showUserCreatedOnly ? .white : .white.opacity(0.6))
+                                .padding()
+                                .background(showUserCreatedOnly ? gold.opacity(0.2) : Color(hex: "1a1a1a"))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(showUserCreatedOnly ? gold : Color.white.opacity(0.1), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            Text("AI generated, manually added, or uploaded programs")
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.5))
+                        }
+
                         // Category Filter
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Category")
