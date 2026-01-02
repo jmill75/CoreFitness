@@ -1423,21 +1423,10 @@ struct CurrentActivitySection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Section Header
-            HStack {
-                Text("Today's Workout")
-                    .font(.system(size: 20, weight: .regular, design: .serif))
-                    .foregroundStyle(.white)
-
-                Spacer()
-
-                Button {
-                    selectedTab = .programs
-                } label: {
-                    Text("Browse")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(teal)
-                }
-            }
+            Text("Today's Workout")
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             // Workout Card
             TodaysWorkoutCard(
