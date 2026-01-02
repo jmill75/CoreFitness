@@ -38,7 +38,10 @@ struct HealthView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // Header
-                        HealthPageHeader()
+                        HealthPageHeader(
+                            onLogWater: { showWaterIntake = true },
+                            onCheckIn: { showDailyCheckIn = true }
+                        )
                         .id("top")
                         .padding(.horizontal)
                         .opacity(animationStage >= 1 ? 1 : 0)
@@ -258,6 +261,11 @@ struct HealthAlert: Identifiable {
 
 // MARK: - Health Page Header
 private struct HealthPageHeader: View {
+    let onLogWater: () -> Void
+    let onCheckIn: () -> Void
+
+    @State private var showQuickActions = false
+
     private let teal = Color(hex: "00d2d3")
     private let sage = Color(hex: "1dd1a1")
 
@@ -268,24 +276,137 @@ private struct HealthPageHeader: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(dateString)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color(hex: "666666"))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(dateString)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color(hex: "666666"))
 
-            Text("Health")
-                .font(.custom("Helvetica Neue", size: 28).weight(.light))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.white, teal, sage],
-                        startPoint: .leading,
-                        endPoint: .trailing
+                Text("Health")
+                    .font(.custom("Helvetica Neue", size: 28).weight(.light))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, teal, sage],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
+            }
+
+            Spacer()
+
+            // Quick Actions Button
+            Button {
+                showQuickActions = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(teal)
+                    .frame(width: 44, height: 44)
+                    .background(Color(hex: "141414"))
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            }
+            .accessibilityLabel("Quick Actions")
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 16)
         .padding(.bottom, 8)
+        .sheet(isPresented: $showQuickActions) {
+            HealthQuickActionsSheet(
+                onLogWater: onLogWater,
+                onCheckIn: onCheckIn
+            )
+            .presentationDetents([.height(280)])
+            .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+// MARK: - Health Quick Actions Sheet
+private struct HealthQuickActionsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var onLogWater: () -> Void
+    var onCheckIn: () -> Void
+
+    private let teal = Color(hex: "00d2d3")
+    private let coral = Color(hex: "ff6b6b")
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                HStack(spacing: 12) {
+                    HealthSheetActionButton(
+                        icon: "drop.fill",
+                        label: "Log Water",
+                        color: Color(hex: "54a0ff")
+                    ) {
+                        dismiss()
+                        onLogWater()
+                    }
+
+                    HealthSheetActionButton(
+                        icon: "heart.text.square.fill",
+                        label: "Check In",
+                        color: coral
+                    ) {
+                        dismiss()
+                        onCheckIn()
+                    }
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.top, 20)
+            .navigationTitle("Quick Actions")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(teal)
+                }
+            }
+        }
+    }
+}
+
+private struct HealthSheetActionButton: View {
+    let icon: String
+    let label: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+
+                Text(label)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 120)
+            .background(Color(hex: "141414"))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+            )
+        }
     }
 }
 
