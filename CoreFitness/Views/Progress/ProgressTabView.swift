@@ -4,6 +4,14 @@ import SwiftData
 struct ProgressTabView: View {
 
     @Binding var selectedTab: Tab
+    @EnvironmentObject var activeProgramManager: ActiveProgramManager
+
+    // MARK: - Centralized Queries (Performance: query once, pass to children)
+    // Limit workoutSessions to prevent slow queries as data grows
+    @Query(sort: \WorkoutSession.startedAt, order: .reverse)
+    private var workoutSessions: [WorkoutSession]
+    @Query private var userAchievements: [UserAchievement]
+    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
 
     var body: some View {
         NavigationStack {
@@ -11,31 +19,45 @@ struct ProgressTabView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // Header with stats strip
-                        ProgressHeader()
-                            .id("top")
+                        ProgressHeader(
+                            activeProgram: activeProgramManager.activeProgram,
+                            workoutSessions: workoutSessions,
+                            userAchievements: userAchievements,
+                            achievements: achievements
+                        )
+                        .id("top")
 
                         // Active Program Progress
-                        ActiveProgramProgressSection()
+                        ActiveProgramProgressSection(activeProgram: activeProgramManager.activeProgram)
                             .padding(.top, 24)
                             .padding(.horizontal)
 
                         // Featured Achievement - Next to Earn
-                        FeaturedAchievementSection()
-                            .padding(.top, 24)
-                            .padding(.horizontal)
+                        FeaturedAchievementSection(
+                            achievements: achievements,
+                            userAchievements: userAchievements
+                        )
+                        .padding(.top, 24)
+                        .padding(.horizontal)
 
                         // Trophy Case - Earned Achievements
-                        TrophyCaseSection()
-                            .padding(.top, 28)
-                            .padding(.horizontal)
+                        TrophyCaseSection(
+                            achievements: achievements,
+                            userAchievements: userAchievements
+                        )
+                        .padding(.top, 28)
+                        .padding(.horizontal)
 
                         // In Progress Achievements
-                        InProgressSection()
-                            .padding(.top, 28)
-                            .padding(.horizontal)
+                        InProgressSection(
+                            achievements: achievements,
+                            userAchievements: userAchievements
+                        )
+                        .padding(.top, 28)
+                        .padding(.horizontal)
 
                         // Weekly Activity & Recent Workouts
-                        ActivitySection()
+                        ActivitySection(workoutSessions: workoutSessions)
                             .padding(.top, 28)
                             .padding(.horizontal)
                             .padding(.bottom, 100)
@@ -61,10 +83,10 @@ struct ProgressTabView: View {
 
 // MARK: - Progress Header
 private struct ProgressHeader: View {
-    @Query private var workoutSessions: [WorkoutSession]
-    @Query private var userAchievements: [UserAchievement]
-    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
-    @Query private var userPrograms: [UserProgram]
+    let activeProgram: UserProgram?
+    let workoutSessions: [WorkoutSession]
+    let userAchievements: [UserAchievement]
+    let achievements: [Achievement]
 
     @State private var selectedSummary: SummaryTab = .allTime
 
@@ -81,10 +103,6 @@ private struct ProgressHeader: View {
 
     private var completedSessions: [WorkoutSession] {
         workoutSessions.filter { $0.status == .completed }
-    }
-
-    private var activeProgram: UserProgram? {
-        userPrograms.first { $0.status == .active }
     }
 
     // Program-specific sessions
@@ -140,33 +158,43 @@ private struct ProgressHeader: View {
         selectedSummary == .allTime ? completedSessions.count : programSessions.count
     }
 
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d"
+        return formatter.string(from: Date())
+    }
+
     var body: some View {
         VStack(spacing: 20) {
-            // Title with gradient
-            HStack {
-                Text("PROGRESS")
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.white, goldStart],
-                            startPoint: .leading,
-                            endPoint: .trailing
+            // Title with date
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(dateString)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(Color(hex: "666666"))
+
+                    Text("Progress")
+                        .font(.system(size: 28, weight: .regular, design: .serif))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.white, goldStart, goldEnd],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
                         )
-                    )
+                }
                 Spacer()
             }
             .padding(.horizontal)
-            .padding(.top, 8)
+            .padding(.top, 16)
 
             // Summary Section
             VStack(spacing: 16) {
                 // Section Header with Segmented Control
                 HStack {
-                    Text("SUMMARY")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .tracking(1.5)
-                        .foregroundStyle(.white.opacity(0.5))
+                    Text("Summary")
+                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .foregroundStyle(.white)
 
                     Spacer()
 
@@ -179,14 +207,13 @@ private struct ProgressHeader: View {
                                 }
                             } label: {
                                 Text(tab.rawValue)
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(selectedSummary == tab ? .white : .white.opacity(0.5))
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(selectedSummary == tab ? .black : Color(hex: "666666"))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(
                                         selectedSummary == tab ?
-                                        Color.white.opacity(0.15) : Color.clear
+                                        Color.white : Color.clear
                                     )
                                     .clipShape(Capsule())
                             }
@@ -275,40 +302,18 @@ private struct ProgressStatCard: View {
 
 // MARK: - Active Program Progress Section
 private struct ActiveProgramProgressSection: View {
-    @Query private var userPrograms: [UserProgram]
+    let activeProgram: UserProgram?
 
-    private let cyanColor = Color(hex: "54a0ff")
-
-    private var activeProgram: UserProgram? {
-        userPrograms.first { $0.status == .active }
-    }
+    private let teal = Color(hex: "00d2d3")
 
     var body: some View {
         if let program = activeProgram, let template = program.template {
             VStack(alignment: .leading, spacing: 16) {
-                // Section header with colored icon
+                // Section header
                 HStack {
-                    HStack(spacing: 10) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [cyanColor, cyanColor.opacity(0.7)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 28, height: 28)
-                            Image(systemName: "figure.run.circle.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white)
-                        }
-                        Text("ACTIVE PROGRAM")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white.opacity(0.7))
-                            .tracking(1.5)
-                    }
+                    Text("Active Program")
+                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .foregroundStyle(.white)
 
                     Spacer()
 
@@ -318,14 +323,9 @@ private struct ActiveProgramProgressSection: View {
                             activeProgram: program
                         )
                     } label: {
-                        HStack(spacing: 4) {
-                            Text("View")
-                            Image(systemName: "chevron.right")
-                                .font(.caption2)
-                        }
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(cyanColor)
+                        Text("View")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(teal)
                     }
                 }
 
@@ -519,8 +519,8 @@ private struct ActiveProgramCard: View {
 
 // MARK: - Featured Achievement Section
 private struct FeaturedAchievementSection: View {
-    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
-    @Query private var userAchievements: [UserAchievement]
+    let achievements: [Achievement]
+    let userAchievements: [UserAchievement]
 
     private let goldColor = Color(hex: "feca57")
     private let cyanColor = Color(hex: "54a0ff")
@@ -553,49 +553,33 @@ private struct FeaturedAchievementSection: View {
         return closest
     }
 
-    private func isEarned(_ id: String) -> Bool {
-        userAchievements.first { $0.achievementId == id }?.isComplete ?? false
+    // O(n) lookup dictionary for isEarned checks
+    private var completedAchievementIds: Set<String> {
+        Set(userAchievements.filter { $0.isComplete }.map { $0.achievementId })
     }
+
+    private func isEarned(_ id: String) -> Bool {
+        completedAchievementIds.contains(id)
+    }
+
+    private let teal = Color(hex: "00d2d3")
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header with colored icon
+            // Section header
             HStack {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [goldColor, Color(hex: "ff9f43")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    Text("NEXT TROPHY")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .tracking(1.5)
-                }
+                Text("Next Trophy")
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 NavigationLink {
                     AchievementWallView()
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("View All")
-                        Image(systemName: "chevron.right")
-                            .font(.caption2)
-                    }
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(cyanColor)
+                    Text("View All")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(teal)
                 }
             }
 
@@ -774,16 +758,20 @@ private struct AllAchievementsEarnedCard: View {
 
 // MARK: - Trophy Case Section
 private struct TrophyCaseSection: View {
-    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
-    @Query private var userAchievements: [UserAchievement]
+    let achievements: [Achievement]
+    let userAchievements: [UserAchievement]
 
     private let goldColor = Color(hex: "feca57")
     private let cardBg = Color(hex: "161616")
 
+    // O(n) lookup dictionary instead of O(n^2) repeated .first calls
+    private var userAchievementLookup: [String: UserAchievement] {
+        Dictionary(uniqueKeysWithValues: userAchievements.map { ($0.achievementId, $0) })
+    }
+
     private var earnedAchievements: [Achievement] {
-        achievements.filter { achievement in
-            userAchievements.first { $0.achievementId == achievement.id }?.isComplete ?? false
-        }
+        let lookup = userAchievementLookup
+        return achievements.filter { lookup[$0.id]?.isComplete ?? false }
     }
 
     private let columns = [
@@ -795,35 +783,17 @@ private struct TrophyCaseSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header with colored icon
+            // Section header
             HStack {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [goldColor, Color(hex: "ff9f43")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    Text("TROPHY CASE")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .tracking(1.5)
-                }
+                Text("Trophy Case")
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 Text("\(earnedAchievements.count) earned")
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.4))
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(hex: "666666"))
             }
 
             if earnedAchievements.isEmpty {
@@ -847,10 +817,11 @@ private struct TrophyCaseSection: View {
             } else {
                 // Trophy grid
                 LazyVGrid(columns: columns, spacing: 12) {
-                    ForEach(earnedAchievements.prefix(8), id: \.id) { achievement in
+                    let lookup = userAchievementLookup
+                    ForEach(earnedAchievements.prefix(8), id: \.persistentId) { achievement in
                         TrophyBadge(
                             achievement: achievement,
-                            userAchievement: userAchievements.first { $0.achievementId == achievement.id }
+                            userAchievement: lookup[achievement.id]
                         )
                     }
                 }
@@ -974,8 +945,8 @@ private struct TrophyBadge: View {
 
 // MARK: - In Progress Section
 private struct InProgressSection: View {
-    @Query(sort: \Achievement.points, order: .reverse) private var achievements: [Achievement]
-    @Query private var userAchievements: [UserAchievement]
+    let achievements: [Achievement]
+    let userAchievements: [UserAchievement]
 
     private let cyanColor = Color(hex: "54a0ff")
 
@@ -998,31 +969,13 @@ private struct InProgressSection: View {
     var body: some View {
         if !inProgressAchievements.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
-                // Section header with colored icon
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [cyanColor, cyanColor.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    Text("IN PROGRESS")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .tracking(1.5)
-                }
+                // Section header
+                Text("In Progress")
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
 
                 VStack(spacing: 10) {
-                    ForEach(inProgressAchievements.prefix(3), id: \.achievement.id) { item in
+                    ForEach(inProgressAchievements.prefix(3), id: \.achievement.persistentId) { item in
                         InProgressRow(
                             achievement: item.achievement,
                             progress: item.progress
@@ -1112,15 +1065,17 @@ private struct InProgressRow: View {
 
 // MARK: - Activity Section (Recent Workouts)
 private struct ActivitySection: View {
+    let workoutSessions: [WorkoutSession]
+
     var body: some View {
         VStack(spacing: 20) {
-            RecentWorkoutsSection()
+            RecentWorkoutsSection(workoutSessions: workoutSessions)
         }
     }
 }
 
 private struct RecentWorkoutsSection: View {
-    @Query(sort: \WorkoutSession.startedAt, order: .reverse) private var workoutSessions: [WorkoutSession]
+    let workoutSessions: [WorkoutSession]
 
     private let cyanColor = Color(hex: "54a0ff")
     private let cardBg = Color(hex: "161616")
@@ -1149,28 +1104,10 @@ private struct RecentWorkoutsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header with colored icon
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [cyanColor, Color(hex: "2e86de")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                Text("RECENT WORKOUTS")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .tracking(1.5)
-            }
+            // Section header
+            Text("Recent Workouts")
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
 
             if recentWorkouts.isEmpty {
                 VStack(spacing: 12) {

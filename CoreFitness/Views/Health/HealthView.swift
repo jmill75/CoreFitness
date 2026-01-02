@@ -245,104 +245,131 @@ private struct HealthPageHeader: View {
     let onCheckIn: () -> Void
     let onLogWater: () -> Void
 
-    private let tealColor = Color(hex: "00d2d3")
-    private let cyanColor = Color(hex: "54a0ff")
+    private let teal = Color(hex: "00d2d3")
+    private let sage = Color(hex: "1dd1a1")
+
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d"
+        return formatter.string(from: Date())
+    }
 
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("HEALTH")
-                    .font(.system(size: 34, weight: .bold))
+                Text(dateString)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color(hex: "666666"))
+
+                Text("Health")
+                    .font(.system(size: 28, weight: .regular, design: .serif))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.white, tealColor],
+                            colors: [.white, teal, sage],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                Text("Your wellness dashboard")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.5))
             }
 
             Spacer()
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Button(action: onLogWater) {
                     Image(systemName: "drop.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            LinearGradient(
-                                colors: [cyanColor, Color(hex: "2e86de")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(Color(hex: "54a0ff"))
+                        .frame(width: 44, height: 44)
+                        .background(Color(hex: "141414"))
                         .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                        )
                 }
 
                 Button(action: onCheckIn) {
                     Image(systemName: "heart.text.square.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            LinearGradient(
-                                colors: [Color(hex: "1dd1a1"), Color(hex: "10ac84")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(sage)
+                        .frame(width: 44, height: 44)
+                        .background(Color(hex: "141414"))
                         .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                        )
                 }
             }
         }
-        .padding(.top, 8)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 }
 
 // MARK: - Recovery Hero Card
 // RecoveryHeroCard removed - now using shared RecoveryCard component from Components/RecoveryCard.swift
 
-// MARK: - Health Alerts Section
+// MARK: - Health Alerts Section (styled as Insights)
 private struct HealthAlertsSection: View {
     let alerts: [HealthAlert]
 
+    private let cardBg = Color(hex: "161616")
+
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             ForEach(alerts) { alert in
-                HStack(spacing: 12) {
-                    Image(systemName: alert.type.icon)
-                        .font(.title3)
-                        .foregroundStyle(alert.type.color)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(alert.title)
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.white)
-                        Text(alert.message)
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
+                VStack(alignment: .leading, spacing: 12) {
+                    // Insight badge
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12))
+                        Text("RECOVERY INSIGHT")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .tracking(1)
                     }
+                    .foregroundStyle(alert.type.color)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(alert.type.color.opacity(0.15))
+                    .clipShape(Capsule())
+                    .overlay(
+                        Capsule()
+                            .stroke(alert.type.color.opacity(0.3), lineWidth: 1)
+                    )
 
-                    Spacer()
+                    // Content
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(alert.title.uppercased())
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
 
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.3))
+                        Text(alert.message)
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
-                .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(alert.type.color.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(alert.type.color.opacity(0.3), lineWidth: 1)
-                        )
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(cardBg)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    // Accent bar at top
+                    VStack {
+                        alert.type.color
+                            .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
             }
         }
     }
@@ -355,7 +382,7 @@ private struct MyHealthMetricsSection: View {
 
     @State private var metricTrends: [HealthMetricType: TrendData] = [:]
 
-    private let coralColor = Color(hex: "ff6b6b")
+    private let teal = Color(hex: "00d2d3")
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -365,33 +392,15 @@ private struct MyHealthMetricsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [coralColor, Color(hex: "ee5a5a")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "heart.text.clipboard.fill")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    Text("MY HEALTH")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .tracking(1.5)
-                }
+                Text("My Health")
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 Text("Tap for details")
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.4))
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color(hex: "666666"))
             }
 
             LazyVGrid(columns: columns, spacing: 12) {
@@ -629,31 +638,11 @@ private struct LifestyleCardsSection: View {
     @Binding var showWaterDetail: Bool
     @Binding var showMoodDetail: Bool
 
-    private let limeColor = Color(hex: "1dd1a1")
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [limeColor, Color(hex: "10ac84")],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "leaf.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                Text("LIFESTYLE")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .tracking(1.5)
-            }
+            Text("Lifestyle")
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
 
             HStack(spacing: 12) {
                 WaterCard(showDetail: $showWaterDetail)
@@ -881,46 +870,22 @@ private struct WeeklyRecoveryTrendSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header with colored icon
+            // Header
             HStack {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [cyanColor, Color(hex: "2e86de")],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 28, height: 28)
-                        Image(systemName: "chart.line.uptrend.xyaxis")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    Text("RECOVERY TREND")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(.white.opacity(0.7))
-                        .tracking(1.5)
-                }
+                Text("Recovery Trend")
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
 
                 Spacer()
 
                 if hasData {
                     HStack(spacing: 4) {
                         Image(systemName: trendPercentage >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.caption)
-                            .fontWeight(.bold)
+                            .font(.system(size: 11, weight: .bold))
                         Text("\(trendPercentage >= 0 ? "+" : "")\(trendPercentage)%")
-                            .font(.caption)
-                            .fontWeight(.bold)
+                            .font(.system(size: 12, weight: .semibold))
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(trendPercentage >= 0 ? Color(hex: "1dd1a1") : Color(hex: "feca57"))
-                    .clipShape(Capsule())
+                    .foregroundStyle(trendPercentage >= 0 ? Color(hex: "1dd1a1") : Color(hex: "ff6b6b"))
                 }
             }
 

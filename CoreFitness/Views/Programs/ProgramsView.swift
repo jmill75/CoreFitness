@@ -56,6 +56,7 @@ struct ProgramsView: View {
     @State private var showExerciseLibrary = false
     @State private var showChallenges = false
     @State private var showSavedPrograms = false
+    @State private var showAllPrograms = false
     @State private var showProgramBrowser = false
     @State private var showCreateMenu = false
     @State private var animationStage = 0
@@ -112,10 +113,8 @@ struct ProgramsView: View {
         workouts.filter { $0.sourceProgramId == nil }
     }
 
-    // Colors matching HTML design
-    private let bgPage = Color(hex: "050505")
-    private let bgCard = Color(hex: "111111")
-    private let bgElevated = Color(hex: "1a1a1a")
+    // Colors matching HealthView design
+    private let bgCard = Color(hex: "161616")
     private let cyan = Color(hex: "54a0ff")
     private let lime = Color(hex: "1dd1a1")
     private let teal = Color(hex: "00d2d3")
@@ -125,65 +124,71 @@ struct ProgramsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                bgPage.ignoresSafeArea()
-
+            ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 0) {
-                        // MARK: - Clean Header
-                        cleanHeader
-                            .padding(.horizontal, 24)
-                            .padding(.top, 8)
-                            .padding(.bottom, 32)
+                        // MARK: - Header (matches HealthView)
+                        programsHeader
+                            .id("top")
+                            .padding(.horizontal)
+                            .opacity(animationStage >= 1 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 1 ? 0 : 10))
 
-                        // MARK: - Active Workout Hero or Empty State
+                        // MARK: - Current Workout Hero or Empty State
                         if let workout = currentWorkout {
-                            activeWorkoutHero(workout: workout)
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 48)
+                            currentWorkoutCard(workout: workout)
+                                .padding(.horizontal)
+                                .padding(.top, 20)
+                                .opacity(animationStage >= 2 ? 1 : 0)
+                                .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
                         } else {
-                            emptyStateHero
-                                .padding(.horizontal, 24)
-                                .padding(.bottom, 48)
+                            emptyStateCard
+                                .padding(.horizontal)
+                                .padding(.top, 20)
+                                .opacity(animationStage >= 2 ? 1 : 0)
+                                .offset(y: reduceMotion ? 0 : (animationStage >= 2 ? 0 : 15))
                         }
 
-                        // MARK: - My Programs (horizontal scroll) - shows Workouts
-                        myProgramsSection
-                            .padding(.bottom, 48)
-
-                        // MARK: - Imported Programs (horizontal scroll) - shows ProgramTemplates
-                        if !importedPrograms.isEmpty {
-                            importedProgramsSection
-                                .padding(.bottom, 48)
-                        }
-
-                        // MARK: - Featured Programs (horizontal scroll)
-                        if !featuredPrograms.isEmpty {
-                            featuredProgramsSection
-                                .padding(.bottom, 48)
-                        }
-
-                        // MARK: - Quick Actions (4x grid)
+                        // MARK: - Quick Actions Section (2x2 grid)
                         quickActionsSection
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 48)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                            .opacity(animationStage >= 3 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 3 ? 0 : 15))
 
-                        // MARK: - Discover
+                        // MARK: - My Programs Section
+                        myProgramsSection
+                            .padding(.top, 24)
+                            .opacity(animationStage >= 4 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 4 ? 0 : 15))
+
+                        // MARK: - Discover Section
                         discoverSection
-                            .padding(.horizontal, 24)
-                            .padding(.bottom, 120)
+                            .padding(.horizontal)
+                            .padding(.top, 24)
+                            .padding(.bottom, 100)
+                            .opacity(animationStage >= 6 ? 1 : 0)
+                            .offset(y: reduceMotion ? 0 : (animationStage >= 6 ? 0 : 15))
                     }
+                    .padding(.top, 8)
                 }
                 .scrollIndicators(.hidden)
+                .background(Color.black.ignoresSafeArea())
+                .onChange(of: selectedTab) { _, newTab in
+                    if newTab == .programs {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo("top", anchor: .top)
+                        }
+                    }
+                }
             }
             .toolbar(.hidden, for: .navigationBar)
             .onAppear {
                 if reduceMotion {
-                    animationStage = 5
+                    animationStage = 6
                 } else {
-                    // Single animation instead of 5 separate dispatches
-                    withAnimation(.easeOut(duration: 0.4)) {
-                        animationStage = 5
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        animationStage = 6
                     }
                 }
             }
@@ -207,6 +212,14 @@ struct ProgramsView: View {
             }
             .fullScreenCover(isPresented: $showProgramBrowser) {
                 ProgramBrowserView()
+            }
+            .sheet(isPresented: $showAllPrograms) {
+                AllProgramsSheet(programs: importedPrograms) { program in
+                    showAllPrograms = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        selectedProgram = program
+                    }
+                }
             }
             .fullScreenCover(isPresented: $showWorkoutExecution) {
                 if let workout = currentWorkout {
@@ -257,100 +270,154 @@ struct ProgramsView: View {
         }
     }
 
-    // MARK: - Clean Header (matches HTML)
-    private var cleanHeader: some View {
-        HStack(alignment: .center) {
-            Text("PROGRAMS")
-                .font(.system(size: 34, weight: .bold))
-                .tracking(-0.5)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.white, cyan],
-                        startPoint: .leading,
-                        endPoint: .trailing
+    // MARK: - Programs Header (matches HomeView style)
+    private var programsHeader: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(dateString)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Color(hex: "666666"))
+
+                Text("Programs")
+                    .font(.system(size: 28, weight: .regular, design: .serif))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, gold, Color(hex: "ff9f43")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
                     )
-                )
+            }
 
             Spacer()
 
-            // Search button - larger touch target
+            // Browse button
             Button {
                 showProgramBrowser = true
             } label: {
-                Circle()
-                    .fill(bgCard)
-                    .frame(width: 52, height: 52)
+                Image(systemName: "square.grid.2x2")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(gold)
+                    .frame(width: 44, height: 44)
+                    .background(Color(hex: "141414"))
+                    .clipShape(Circle())
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .overlay(
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
                     )
             }
         }
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
 
-    // MARK: - Active Workout Hero (matches HTML)
-    private func activeWorkoutHero(workout: Workout) -> some View {
-        VStack(spacing: 0) {
-            // Accent bar
-            LinearGradient(
-                colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [cyan, lime],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .frame(height: 3)
+    private var dateString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMMM d"
+        return formatter.string(from: Date())
+    }
 
-            VStack(alignment: .leading, spacing: 16) {
-                // Label with pulse dot
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(isWorkoutInProgress ? coral : cyan)
-                        .frame(width: 6, height: 6)
+    // MARK: - Current Workout Card (Featured Card Style)
+    private func currentWorkoutCard(workout: Workout) -> some View {
+        let cardBg = Color(hex: "141414")
+        let cardBorder = Color.white.opacity(0.06)
+        let sage = Color(hex: "1dd1a1")
+        let textMuted = Color(hex: "666666")
 
-                    Text(isWorkoutInProgress ? "IN PROGRESS" : "CURRENT WORKOUT")
-                        .font(.system(size: 11, weight: .semibold))
-                        .tracking(1.2)
-                        .foregroundStyle(isWorkoutInProgress ? coral : cyan)
+        return Button {
+            themeManager.mediumImpact()
+            if isWorkoutInProgress {
+                showWorkoutExecution = true
+            } else {
+                workoutManager.startWorkout(workout)
+                showWorkoutExecution = true
+            }
+        } label: {
+            VStack(spacing: 0) {
+                // Gradient Header
+                ZStack(alignment: .bottomLeading) {
+                    // Gradient background
+                    LinearGradient(
+                        colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [Color(hex: "01a3a4"), teal, sage],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .frame(height: 140)
+
+                    // Pattern overlay
+                    GeometryReader { geo in
+                        Path { path in
+                            let size: CGFloat = 60
+                            for x in stride(from: 0, to: geo.size.width + size, by: size) {
+                                for y in stride(from: 0, to: geo.size.height + size, by: size) {
+                                    path.move(to: CGPoint(x: x, y: y))
+                                    path.addQuadCurve(
+                                        to: CGPoint(x: x + size/2, y: y + size),
+                                        control: CGPoint(x: x - size/4, y: y + size/2)
+                                    )
+                                }
+                            }
+                        }
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                     }
 
-                    // Title & subtitle
+                    // Badge
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(sage)
+                            .frame(width: 8, height: 8)
+                        Text(isWorkoutInProgress ? "In Progress" : "Current Program")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.black.opacity(0.6))
+                    .background(.ultraThinMaterial.opacity(0.3))
+                    .clipShape(Capsule())
+                    .padding(16)
+                }
+                .clipShape(
+                    UnevenRoundedRectangle(
+                        topLeadingRadius: 24,
+                        topTrailingRadius: 24
+                    )
+                )
+
+                // Content
+                VStack(alignment: .leading, spacing: 16) {
+                    // Title
                     Text(workout.name)
-                        .font(.system(size: 24, weight: .bold))
-                        .tracking(-0.3)
+                        .font(.system(size: 22, weight: .regular, design: .serif))
                         .foregroundStyle(.white)
 
+                    // Subtitle
                     Text("Week \(workout.programWeekNumber + 1) of \(workout.totalWeeks) • Day \(workout.programDayNumber)")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.55))
+                        .font(.system(size: 13))
+                        .foregroundStyle(textMuted)
 
-                    // Progress
+                    // Progress bar
                     VStack(spacing: 8) {
                         HStack {
-                            Text("Overall Progress")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.white.opacity(0.35))
-
+                            Text("Progress")
+                                .font(.system(size: 12))
+                                .foregroundStyle(textMuted)
                             Spacer()
-
                             Text("\(Int(workout.progressPercentage))%")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
 
                         GeometryReader { geo in
                             ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color.white.opacity(0.08))
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white.opacity(0.1))
                                     .frame(height: 6)
 
-                                RoundedRectangle(cornerRadius: 3)
+                                RoundedRectangle(cornerRadius: 4)
                                     .fill(
                                         LinearGradient(
-                                            colors: [cyan, lime],
+                                            colors: [teal, sage],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -362,96 +429,55 @@ struct ProgramsView: View {
                     }
 
                     // Stats row
-                    HStack(spacing: 24) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(workout.completedSessionsCount)")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.white)
-                            Text("Workouts Done")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.white.opacity(0.35))
-                        }
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(formatDuration(workout.totalMinutesCompleted * 60))
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.white)
-                            Text("Total Hours")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.white.opacity(0.35))
-                        }
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(workout.totalSessions)")
-                                .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.white)
-                            Text("Sessions")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.white.opacity(0.35))
-                        }
+                    HStack(spacing: 20) {
+                        ProgramStatItem(value: "\(workout.completedSessionsCount)", label: "DONE")
+                        ProgramStatItem(value: formatDuration(workout.totalMinutesCompleted * 60), label: "HOURS")
+                        ProgramStatItem(value: "\(workout.totalSessions)", label: "TOTAL")
                     }
-                    .padding(.top, 8)
+                    .padding(.top, 4)
 
-                    // Action buttons
-                    HStack(spacing: 8) {
-                        Button {
-                            themeManager.mediumImpact()
-                            if isWorkoutInProgress {
-                                // Resume - go directly to execution view
-                                showWorkoutExecution = true
-                            } else {
-                                // Start new workout
-                                workoutManager.startWorkout(workout)
-                                showWorkoutExecution = true
-                            }
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: isWorkoutInProgress ? "play.circle.fill" : "play.fill")
-                                    .font(.system(size: 14))
-                                Text(isWorkoutInProgress ? "Resume" : "Start Workout")
-                                    .font(.system(size: 15, weight: .semibold))
-                            }
-                            .foregroundStyle(isWorkoutInProgress ? .white : .black)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                LinearGradient(
-                                    colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [lime, teal],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
+                    // Start button
+                    Text(isWorkoutInProgress ? "Resume Workout" : "Start Workout")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            LinearGradient(
+                                colors: isWorkoutInProgress ? [coral, Color(hex: "ff9f43")] : [Color(hex: "01a3a4"), teal],
+                                startPoint: .leading,
+                                endPoint: .trailing
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-
-                        if !isWorkoutInProgress {
-                            Button {
-                                // Schedule
-                            } label: {
-                                Text("Schedule")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.55))
-                                    .padding(.horizontal, 20)
-                                    .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.06))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                                    )
-                            }
-                        }
-                    }
-                    .padding(.top, 8)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .padding(24)
+                .padding(20)
             }
-            .background(bgCard)
+            .background(cardBg)
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(0.04), lineWidth: 1)
+                    .stroke(cardBorder, lineWidth: 1)
             )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private struct ProgramStatItem: View {
+        let value: String
+        let label: String
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.system(size: 20, weight: .regular, design: .serif))
+                    .foregroundStyle(.white)
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+                    .tracking(0.5)
+                    .foregroundStyle(Color(hex: "666666"))
+            }
+        }
     }
 
     private func formatDuration(_ seconds: Int) -> String {
@@ -459,26 +485,27 @@ struct ProgramsView: View {
         return String(format: "%.1f", hours)
     }
 
-    // MARK: - Empty State Hero (matches HTML)
-    private var emptyStateHero: some View {
+    // MARK: - Empty State Card (matches HealthView style)
+    private var emptyStateCard: some View {
         VStack(spacing: 16) {
             // Icon
-            Circle()
-                .fill(Color.white.opacity(0.04))
-                .frame(width: 64, height: 64)
-                .overlay(
-                    Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.35))
-                )
+            ZStack {
+                Circle()
+                    .fill(cyan.opacity(0.15))
+                    .frame(width: 64, height: 64)
+                Image(systemName: "dumbbell.fill")
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(cyan)
+            }
 
             Text("No Current Workout")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.55))
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
 
             Text("Start a program or create your own to begin tracking")
-                .font(.system(size: 14))
-                .foregroundStyle(.white.opacity(0.35))
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.5))
                 .multilineTextAlignment(.center)
 
             Button {
@@ -486,156 +513,409 @@ struct ProgramsView: View {
             } label: {
                 HStack(spacing: 8) {
                     Text("Browse Programs")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.caption)
+                        .fontWeight(.semibold)
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(.black)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
-                .background(cyan)
+                .background(
+                    LinearGradient(
+                        colors: [cyan, Color(hex: "2e86de")],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .padding(.top, 8)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 48)
+        .padding(.vertical, 40)
         .padding(.horizontal, 24)
         .background(bgCard)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.white.opacity(0.1), style: StrokeStyle(lineWidth: 1, dash: [8, 4]))
+            VStack {
+                LinearGradient(
+                    colors: [cyan, Color(hex: "2e86de")],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(height: 3)
+                Spacer()
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.06), lineWidth: 1)
         )
     }
 
-    // MARK: - My Programs Section (horizontal scroll)
+    // MARK: - My Programs Section (grid layout)
     private var myProgramsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
+            // Section header
             HStack {
-                Text("MY PROGRAMS")
-                    .font(.system(size: 13, weight: .semibold))
-                    .tracking(1)
-                    .foregroundStyle(.white.opacity(0.35))
+                HStack(spacing: 8) {
+                    Text("My Programs")
+                        .font(.system(size: 20, weight: .regular, design: .serif))
+                        .foregroundStyle(.white)
+
+                    if !importedPrograms.isEmpty {
+                        Text("(\(importedPrograms.count))")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Color(hex: "666666"))
+                    }
+                }
 
                 Spacer()
 
                 Button {
-                    showSavedPrograms = true
+                    showAllPrograms = true
                 } label: {
-                    HStack(spacing: 4) {
-                        Text("See All")
-                            .font(.system(size: 13, weight: .medium))
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10, weight: .semibold))
+                    Text("See All")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(teal)
+                }
+            }
+            .padding(.horizontal)
+
+            // Show imported programs
+            if importedPrograms.isEmpty {
+                // Empty state card
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(coral.opacity(0.15))
+                            .frame(width: 48, height: 48)
+                        Image(systemName: "folder.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(coral)
                     }
-                    .foregroundStyle(cyan)
-                }
-            }
-            .padding(.horizontal, 24)
-
-            // Show standalone workouts only (exclude program workouts)
-            if standaloneWorkouts.isEmpty {
-                // Empty state
-                Text("No workouts yet. Create one to get started!")
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.5))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 20)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 16) {
-                        ForEach(standaloneWorkouts.prefix(5)) { workout in
-                            MyProgramCard(workout: workout, accentColor: colorForIndex(standaloneWorkouts.firstIndex(of: workout) ?? 0))
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                }
-            }
-        }
-    }
-
-    // MARK: - Imported Programs Section
-    private var importedProgramsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack {
-                Text("IMPORTED PROGRAMS")
-                    .font(.system(size: 13, weight: .semibold))
-                    .tracking(1)
-                    .foregroundStyle(.white.opacity(0.35))
-
-                Spacer()
-
-                Text("\(importedPrograms.count) programs")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-            .padding(.horizontal, 24)
-
-            // Horizontal scroll
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(importedPrograms) { program in
-                        ImportedProgramCard(program: program, accentColor: lime)
-                            .onTapGesture {
-                                selectedProgram = program
-                            }
-                    }
-                }
-                .padding(.horizontal, 24)
-            }
-        }
-    }
-
-    // MARK: - Imported Program Card
-    private struct ImportedProgramCard: View {
-        let program: ProgramTemplate
-        let accentColor: Color
-
-        var body: some View {
-            VStack(alignment: .leading, spacing: 12) {
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(accentColor.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "doc.text.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(accentColor)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(program.name)
-                        .font(.system(size: 15, weight: .semibold))
+                    Text("No programs yet")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.white)
-                        .lineLimit(2)
-
-                    Text("\(program.workoutDefinitions.count) workouts • \(program.formattedDuration)")
-                        .font(.system(size: 12))
+                    Text("Import or create one to get started")
+                        .font(.caption)
                         .foregroundStyle(.white.opacity(0.5))
                 }
-
-                Spacer()
-
-                // Progress or status
-                HStack {
-                    Image(systemName: "arrow.down.doc.fill")
-                        .font(.system(size: 10))
-                    Text("Imported")
-                        .font(.system(size: 11, weight: .medium))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 32)
+                .background(bgCard)
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            } else {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ], spacing: 12) {
+                    ForEach(importedPrograms.prefix(4)) { program in
+                        ProgramCard(
+                            program: program,
+                            accentColor: colorForIndex(importedPrograms.firstIndex(where: { $0.id == program.id }) ?? 0)
+                        ) {
+                            selectedProgram = program
+                        }
+                    }
                 }
-                .foregroundStyle(accentColor)
             }
-            .padding(16)
-            .frame(width: 160, height: 180)
-            .background(Color(hex: "111111"))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(accentColor.opacity(0.2), lineWidth: 1)
-            )
+        }
+        .padding(.horizontal)
+    }
+
+    // MARK: - Program Card (grid card style)
+    private struct ProgramCard: View {
+        let program: ProgramTemplate
+        let accentColor: Color
+        let onTap: () -> Void
+
+        @State private var isPressed = false
+
+        var body: some View {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        ZStack {
+                            Circle()
+                                .fill(accentColor.opacity(0.15))
+                                .frame(width: 40, height: 40)
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(accentColor)
+                        }
+
+                        Spacer()
+
+                        Text("\(program.workoutDefinitions.count)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(program.name)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        Text("\(program.durationWeeks) weeks")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+                .padding(16)
+                .frame(height: 140)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "161616"))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [accentColor.opacity(0.8), accentColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
+        }
+    }
+
+    // MARK: - All Programs Sheet
+    private struct AllProgramsSheet: View {
+        let programs: [ProgramTemplate]
+        let onSelect: (ProgramTemplate) -> Void
+        @Environment(\.dismiss) private var dismiss
+
+        private let columns = [
+            GridItem(.flexible(), spacing: 12),
+            GridItem(.flexible(), spacing: 12)
+        ]
+
+        private let coral = Color(hex: "ff6b6b")
+        private let gold = Color(hex: "feca57")
+        private let purple = Color(hex: "a55eea")
+        private let teal = Color(hex: "00d2d3")
+        private let cyan = Color(hex: "54a0ff")
+        private let lime = Color(hex: "1dd1a1")
+
+        var body: some View {
+            NavigationStack {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 12) {
+                        ForEach(programs) { program in
+                            ProgramCardCompact(
+                                program: program,
+                                accentColor: colorForIndex(programs.firstIndex(where: { $0.id == program.id }) ?? 0)
+                            ) {
+                                onSelect(program)
+                            }
+                        }
+                    }
+                    .padding()
+                }
+                .background(Color.black)
+                .navigationTitle("My Programs")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            dismiss()
+                        }
+                    }
+                }
+            }
+        }
+
+        private func colorForIndex(_ index: Int) -> Color {
+            let colors = [coral, gold, purple, teal, cyan, lime]
+            return colors[index % colors.count]
+        }
+    }
+
+    // MARK: - Compact Program Card for Sheet
+    private struct ProgramCardCompact: View {
+        let program: ProgramTemplate
+        let accentColor: Color
+        let onTap: () -> Void
+
+        @State private var isPressed = false
+
+        var body: some View {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        ZStack {
+                            Circle()
+                                .fill(accentColor.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "folder.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(accentColor)
+                        }
+
+                        Spacer()
+
+                        Text("\(program.workoutDefinitions.count)")
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+
+                    Spacer()
+
+                    Text(program.name)
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+
+                    Text("\(program.durationWeeks) weeks")
+                        .font(.caption2)
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+                .padding(12)
+                .frame(height: 120)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "161616"))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [accentColor.opacity(0.8), accentColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 2)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
+        }
+    }
+
+    // MARK: - Workout Card (grid card style)
+    private struct WorkoutCard: View {
+        let workout: Workout
+        let accentColor: Color
+        let onTap: () -> Void
+
+        @State private var isPressed = false
+
+        var body: some View {
+            Button(action: onTap) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        ZStack {
+                            Circle()
+                                .fill(accentColor.opacity(0.15))
+                                .frame(width: 40, height: 40)
+                            Image(systemName: "figure.strengthtraining.traditional")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(accentColor)
+                        }
+
+                        Spacer()
+
+                        Text("\(workout.exercises?.count ?? 0)")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(workout.name)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+
+                        Text("exercises")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+                .padding(16)
+                .frame(height: 140)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "161616"))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [accentColor.opacity(0.8), accentColor],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
         }
     }
 
@@ -703,75 +983,206 @@ struct ProgramsView: View {
         }
     }
 
-    // MARK: - Quick Actions Section (4x grid)
+    // MARK: - Quick Actions Section (2x2 grid - matches HealthView style)
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("QUICK ACTIONS")
-                .font(.system(size: 13, weight: .semibold))
-                .tracking(1)
-                .foregroundStyle(.white.opacity(0.35))
+            // Section header
+            Text("Quick Actions")
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
 
             LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 16) {
-                ProgramQuickAction(icon: "plus", label: "Create", gradientColors: [cyan, Color(hex: "3d8bff")]) {
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                QuickActionCard(icon: "plus", label: "Create", color: cyan) {
                     showCreateProgram = true
                 }
 
-                ProgramQuickAction(icon: "sparkles", label: "AI Gen", gradientColors: [purple, Color(hex: "8854d0")]) {
+                QuickActionCard(icon: "sparkles", label: "AI Generate", color: purple) {
                     showAIWorkoutCreation = true
                 }
 
-                ProgramQuickAction(icon: "square.and.arrow.down", label: "Import", gradientColors: [teal, Color(hex: "00a8a8")]) {
+                QuickActionCard(icon: "square.and.arrow.down", label: "Import", color: teal) {
                     showImportWorkout = true
                 }
 
-                ProgramQuickAction(icon: "trophy.fill", label: "Challenges", gradientColors: [gold, coral]) {
+                QuickActionCard(icon: "trophy.fill", label: "Challenges", color: gold) {
                     showChallenges = true
                 }
             }
         }
     }
 
-    // MARK: - Discover Section
+    // MARK: - Quick Action Card (matches HealthView HealthMetricCard style)
+    private struct QuickActionCard: View {
+        let icon: String
+        let label: String
+        let color: Color
+        let action: () -> Void
+
+        @State private var isPressed = false
+
+        var body: some View {
+            Button(action: action) {
+                VStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(color.opacity(0.15))
+                            .frame(width: 48, height: 48)
+                        Image(systemName: icon)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(color)
+                    }
+
+                    Text(label)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 120)
+                .background(Color(hex: "161616"))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [color.opacity(0.8), color],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
+        }
+    }
+
+    // MARK: - Discover Section (grid layout)
     private var discoverSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("DISCOVER")
-                .font(.system(size: 13, weight: .semibold))
-                .tracking(1)
-                .foregroundStyle(.white.opacity(0.35))
+            // Section header
+            Text("Discover")
+                .font(.system(size: 20, weight: .regular, design: .serif))
+                .foregroundStyle(.white)
 
-            VStack(spacing: 16) {
-                DiscoverRow(
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                DiscoverCard(
                     icon: "square.grid.2x2.fill",
-                    title: "Browse Programs",
-                    subtitle: "100+ templates for every goal",
-                    gradientColors: [lime, teal]
+                    title: "Programs",
+                    subtitle: "100+ templates",
+                    color: lime
                 ) {
                     showProgramBrowser = true
                 }
 
-                DiscoverRow(
+                DiscoverCard(
                     icon: "trophy.fill",
                     title: "Challenges",
-                    subtitle: "Compete with friends",
-                    gradientColors: [gold, coral]
+                    subtitle: "Compete",
+                    color: gold
                 ) {
                     showChallenges = true
                 }
 
-                DiscoverRow(
+                DiscoverCard(
                     icon: "dumbbell.fill",
-                    title: "Exercise Library",
-                    subtitle: "1300+ exercises with demos",
-                    gradientColors: [teal, Color(hex: "00a8a8")]
+                    title: "Exercises",
+                    subtitle: "1300+ demos",
+                    color: teal
                 ) {
                     showExerciseLibrary = true
                 }
+
+                DiscoverCard(
+                    icon: "person.2.fill",
+                    title: "Community",
+                    subtitle: "Coming soon",
+                    color: purple
+                ) {
+                    // Coming soon
+                }
             }
+        }
+    }
+
+    // MARK: - Discover Card (grid card style)
+    private struct DiscoverCard: View {
+        let icon: String
+        let title: String
+        let subtitle: String
+        let color: Color
+        let action: () -> Void
+
+        @State private var isPressed = false
+
+        var body: some View {
+            Button(action: action) {
+                VStack(alignment: .leading, spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(color.opacity(0.15))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(color)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                }
+                .padding(16)
+                .frame(height: 140)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: "161616"))
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    VStack {
+                        LinearGradient(
+                            colors: [color.opacity(0.8), color],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(height: 3)
+                        Spacer()
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+            .onLongPressGesture(minimumDuration: 0, pressing: { pressing in
+                isPressed = pressing
+            }, perform: {})
         }
     }
 
@@ -882,7 +1293,7 @@ struct ProgramsView: View {
             // My Programs
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    sectionHeader("My Workouts", icon: "folder.fill", color: Color(hex: "1dd1a1"))
+                    sectionHeader("My Programs", icon: "folder.fill", color: Color(hex: "1dd1a1"))
                     Spacer()
                     Text("\(workouts.count)")
                         .font(.system(size: 12, weight: .semibold))
@@ -1258,7 +1669,7 @@ private struct AddProgramCard: View {
     }
 }
 
-// MARK: - Program Quick Action (4x Grid)
+// MARK: - Program Quick Action (Square Card - matches Progress style)
 private struct ProgramQuickAction: View {
     let icon: String
     let label: String
@@ -1268,35 +1679,36 @@ private struct ProgramQuickAction: View {
     @EnvironmentObject var themeManager: ThemeManager
     @State private var isPressed = false
 
-    private let bgCard = Color(hex: "111111")
+    private let cardBg = Color(hex: "161616")
+
+    private var primaryColor: Color {
+        gradientColors.first ?? .blue
+    }
 
     var body: some View {
         Button {
             themeManager.mediumImpact()
             action()
         } label: {
-            VStack(spacing: 8) {
-                // Icon with gradient background
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(LinearGradient(colors: gradientColors, startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: 36, height: 36)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                    )
+            VStack(spacing: 12) {
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundStyle(primaryColor)
 
+                // Label
                 Text(label)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
-            .aspectRatio(1, contentMode: .fit)
-            .background(bgCard)
+            .padding(.vertical, 20)
+            .background(cardBg)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.04), lineWidth: 1)
+                    .strokeBorder(primaryColor.opacity(0.3), lineWidth: 1)
             )
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isPressed)
@@ -2965,7 +3377,7 @@ struct SavedProgramsDetailView: View {
             }
             .background(Color(.systemGroupedBackground))
             .searchable(text: $searchText, prompt: "Search workouts")
-            .navigationTitle("My Workouts")
+            .navigationTitle("My Programs")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -4061,6 +4473,7 @@ struct ImportWorkoutView: View {
             estimatedMinutesPerSession: avgDuration,
             goal: .general
         )
+        template.sourceType = .imported
 
         // Convert parsed workouts to ProgramWorkoutDefinitions
         var workoutDefinitions: [ProgramWorkoutDefinition] = []
