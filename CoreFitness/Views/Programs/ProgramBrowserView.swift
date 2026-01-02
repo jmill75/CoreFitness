@@ -49,12 +49,17 @@ struct ProgramBrowserView: View {
         }
     }
 
+    // User's own programs (imported, AI-generated, user-created) - NOT seeded
+    private var myPrograms: [ProgramTemplate] {
+        filteredPrograms.filter { $0.isUserProgram }
+    }
+
     private var featuredPrograms: [ProgramTemplate] {
         filteredPrograms.filter { $0.isFeatured }
     }
 
     private var programsByCategory: [ExerciseCategory: [ProgramTemplate]] {
-        Dictionary(grouping: filteredPrograms) { $0.category }
+        Dictionary(grouping: filteredPrograms.filter { $0.isFeatured }) { $0.category }
     }
 
     var body: some View {
@@ -63,7 +68,7 @@ struct ProgramBrowserView: View {
                 pageBg.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(spacing: 24) {
+                    LazyVStack(spacing: 24) {
                         // Search Bar
                         HStack(spacing: 12) {
                             HStack {
@@ -170,6 +175,37 @@ struct ProgramBrowserView: View {
                             }
                         }
 
+                        // My Programs (imported, AI-generated, user-created) - shown first
+                        if !myPrograms.isEmpty {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "folder.fill")
+                                        .font(.headline)
+                                        .foregroundStyle(cyan)
+                                    Text("My Programs")
+                                        .font(.title3)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white)
+                                    Spacer()
+                                    Text("\(myPrograms.count)")
+                                        .font(.caption)
+                                        .foregroundStyle(.white.opacity(0.5))
+                                }
+                                .padding(.horizontal)
+
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    LazyHStack(spacing: 12) {
+                                        ForEach(myPrograms) { program in
+                                            ProgramCard(program: program, categoryColor: cyan) {
+                                                selectedProgram = program
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+
                         // Featured Programs
                         if !featuredPrograms.isEmpty && !hasActiveFilters {
                             VStack(alignment: .leading, spacing: 12) {
@@ -180,8 +216,8 @@ struct ProgramBrowserView: View {
                                     .padding(.horizontal)
 
                                 ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 16) {
-                                        ForEach(featuredPrograms) { program in
+                                    LazyHStack(spacing: 16) {
+                                        ForEach(featuredPrograms.prefix(10)) { program in
                                             FeaturedProgramCard(program: program) {
                                                 selectedProgram = program
                                             }
@@ -246,11 +282,10 @@ struct ProgramBrowserView: View {
             .navigationTitle("Browse Programs")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundStyle(.cyan)
                 }
             }
             .sheet(isPresented: $showFilters) {
@@ -262,10 +297,6 @@ struct ProgramBrowserView: View {
             }
             .sheet(item: $selectedProgram) { program in
                 ProgramDetailView(program: program, activeProgram: activeProgram)
-            }
-            .onAppear {
-                // Seed programs if needed
-                ProgramData.seedPrograms(in: modelContext)
             }
         }
         .preferredColorScheme(.dark)
@@ -524,8 +555,8 @@ struct CategorySection: View {
             .padding(.horizontal)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(programs) { program in
+                LazyHStack(spacing: 12) {
+                    ForEach(programs.prefix(12)) { program in
                         ProgramCard(program: program, categoryColor: categoryColor) {
                             onSelect(program)
                         }
