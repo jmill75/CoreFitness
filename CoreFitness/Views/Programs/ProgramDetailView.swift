@@ -53,7 +53,7 @@ struct ProgramDetailView: View {
             ZStack {
                 Color.black.ignoresSafeArea()
 
-                ScrollView {
+                ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
                         // Header
                         ProgramHeader(program: program)
@@ -136,12 +136,8 @@ struct ProgramDetailView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
+                    Button("Done") {
                         dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.gray)
                     }
                 }
             }
@@ -247,14 +243,17 @@ struct ProgramDetailView: View {
                 let daysToAdd = daySchedule.dayOfWeek - 1 // 0 for Monday, 6 for Sunday
                 let workoutDate = calendar.date(byAdding: .day, value: daysToAdd, to: weekStartDate)
 
-                // Create the workout - NOT active until user explicitly starts it
+                // First workout (Week 1, Session 1) starts as active
+                let isFirstWorkout = (sessionNumber == 1)
+
+                // Create the workout - first one is active, rest are not
                 let workout = createWorkoutFromDefinition(
                     workoutDef,
                     weekNumber: week,
                     dayNumber: daySchedule.dayOfWeek,
                     sessionNumber: sessionNumber,
                     scheduledDate: workoutDate,
-                    isActive: false
+                    isActive: isFirstWorkout
                 )
 
                 modelContext.insert(workout)

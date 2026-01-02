@@ -257,14 +257,10 @@ struct SetLoggerSheet: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
                         workoutManager.showSetLogger = false
                         workoutManager.currentPhase = .exercising
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.gray)
                     }
                 }
             }

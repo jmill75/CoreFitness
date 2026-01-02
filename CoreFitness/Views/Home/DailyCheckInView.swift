@@ -174,22 +174,8 @@ struct DailyCheckInView: View {
     // MARK: - Header
     private var headerView: some View {
         VStack(spacing: 16) {
-            // Close button and streak
+            // Streak badge and Done button
             HStack {
-                Button {
-                    themeManager.lightImpact()
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                        .background(Color(.systemGray5))
-                        .clipShape(Circle())
-                }
-
-                Spacer()
-
                 // Streak badge
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
@@ -204,6 +190,14 @@ struct DailyCheckInView: View {
                 .padding(.vertical, 8)
                 .background(Color(.systemGray6))
                 .clipShape(Capsule())
+
+                Spacer()
+
+                Button("Done") {
+                    themeManager.lightImpact()
+                    dismiss()
+                }
+                .fontWeight(.semibold)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
