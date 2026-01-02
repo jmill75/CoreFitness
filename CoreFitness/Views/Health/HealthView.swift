@@ -1385,6 +1385,21 @@ struct HealthMetricDetailView: View {
                                             )
                                         )
 
+                                        // Average line (dashed)
+                                        if average > 0 {
+                                            let avgNormalizedY = (average - yRange.min) / (yRange.max - yRange.min)
+                                            let avgY = chartHeight - CGFloat(avgNormalizedY) * chartHeight
+
+                                            Path { path in
+                                                path.move(to: CGPoint(x: 0, y: avgY))
+                                                path.addLine(to: CGPoint(x: width, y: avgY))
+                                            }
+                                            .stroke(
+                                                Color.white.opacity(0.5),
+                                                style: StrokeStyle(lineWidth: 1.5, dash: [6, 4])
+                                            )
+                                        }
+
                                         // Line for multi-day views
                                         Path { path in
                                             for (index, value) in data.enumerated() {
@@ -1402,6 +1417,44 @@ struct HealthMetricDetailView: View {
                                             metricType.color,
                                             style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
                                         )
+
+                                        // High dot (green) and Low dot (red)
+                                        let validData = data.enumerated().filter { $0.element > 0 }
+                                        if let highIndex = validData.max(by: { $0.element < $1.element })?.offset,
+                                           let lowIndex = validData.min(by: { $0.element < $1.element })?.offset {
+                                            let highValue = data[highIndex]
+                                            let lowValue = data[lowIndex]
+
+                                            // High dot (green)
+                                            let highX = CGFloat(highIndex) * stepX
+                                            let highNormalizedY = (highValue - yRange.min) / (yRange.max - yRange.min)
+                                            let highY = chartHeight - CGFloat(highNormalizedY) * chartHeight
+
+                                            Circle()
+                                                .fill(Color(hex: "22c55e"))
+                                                .frame(width: 12, height: 12)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(Color.white, lineWidth: 2)
+                                                )
+                                                .position(x: highX, y: highY)
+
+                                            // Low dot (red) - only show if different from high
+                                            if lowIndex != highIndex {
+                                                let lowX = CGFloat(lowIndex) * stepX
+                                                let lowNormalizedY = (lowValue - yRange.min) / (yRange.max - yRange.min)
+                                                let lowY = chartHeight - CGFloat(lowNormalizedY) * chartHeight
+
+                                                Circle()
+                                                    .fill(Color(hex: "ef4444"))
+                                                    .frame(width: 12, height: 12)
+                                                    .overlay(
+                                                        Circle()
+                                                            .stroke(Color.white, lineWidth: 2)
+                                                    )
+                                                    .position(x: lowX, y: lowY)
+                                            }
+                                        }
                                     }
                                 }
                             }
