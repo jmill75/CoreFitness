@@ -1150,6 +1150,44 @@ class WorkoutManager: ObservableObject {
         return minutesByDay
     }
 
+    /// Get total calories burned for the current week (Mon-Sun)
+    func getWeeklyCalories() -> Int {
+        guard let context = modelContext else { return 0 }
+
+        let calendar = Calendar.current
+        let today = Date()
+
+        // Find the start of the week (Monday)
+        var weekStart = today
+        while calendar.component(.weekday, from: weekStart) != 2 { // 2 = Monday
+            weekStart = calendar.date(byAdding: .day, value: -1, to: weekStart)!
+        }
+        weekStart = calendar.startOfDay(for: weekStart)
+
+        // Fetch all completed sessions
+        let descriptor = FetchDescriptor<WorkoutSession>()
+        guard let sessions = try? context.fetch(descriptor) else { return 0 }
+
+        // Sum calories from completed sessions this week
+        var totalCalories = 0
+
+        for session in sessions {
+            guard session.status == .completed,
+                  let completedAt = session.completedAt,
+                  let calories = session.caloriesBurned else { continue }
+
+            // Check if this session is within the current week
+            let sessionDay = calendar.startOfDay(for: completedAt)
+            let dayOffset = calendar.dateComponents([.day], from: weekStart, to: sessionDay).day ?? -1
+
+            if dayOffset >= 0 && dayOffset < 7 {
+                totalCalories += calories
+            }
+        }
+
+        return totalCalories
+    }
+
     // MARK: - Helper Methods
 
     private func prefillFromLastSession() {

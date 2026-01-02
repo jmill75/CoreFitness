@@ -3697,6 +3697,10 @@ struct WeeklyActivitySection: View {
         weeklyData.filter { $0.minutes > 0 }.count
     }
 
+    private var totalCalories: Int {
+        workoutManager.getWeeklyCalories()
+    }
+
     private var maxMinutes: Int {
         max(weeklyData.map { $0.minutes }.max() ?? 100, 100)
     }
@@ -3752,11 +3756,11 @@ struct WeeklyActivitySection: View {
 
                 // Stats row
                 HStack(spacing: 0) {
-                    ChartStat(value: "\(totalMinutes)", label: "MINUTES")
-                    Spacer()
                     ChartStat(value: "\(workoutCount)", label: "WORKOUTS")
                     Spacer()
-                    ChartStat(value: "12", label: "DAY STREAK") // TODO: Calculate actual streak
+                    ChartStat(value: "\(totalMinutes)", label: "MINUTES")
+                    Spacer()
+                    ChartStat(value: "\(totalCalories)", label: "CALORIES")
                 }
                 .padding(.top, 16)
                 .overlay(alignment: .top) {
