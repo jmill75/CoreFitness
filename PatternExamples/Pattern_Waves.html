@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern: Waves</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .card {
+            width: 390px;
+            background: #161616;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .card-header {
+            height: 140px;
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #22c55e 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Wave Pattern using SVG */
+        .pattern-overlay {
+            position: absolute;
+            inset: 0;
+            opacity: 0.25;
+        }
+
+        .pattern-overlay svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .badge {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        .badge-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .pattern-name {
+            font-family: 'DM Serif Display', serif;
+            font-size: 28px;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .pattern-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.5;
+        }
+
+        .code-hint {
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 11px;
+            color: rgba(255,255,255,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-header">
+            <div class="pattern-overlay">
+                <svg viewBox="0 0 400 150" preserveAspectRatio="none">
+                    <defs>
+                        <pattern id="waves" x="0" y="0" width="100" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M0 20 Q25 0, 50 20 T100 20" fill="none" stroke="white" stroke-width="1.5"/>
+                            <path d="M0 35 Q25 15, 50 35 T100 35" fill="none" stroke="white" stroke-width="1.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#waves)"/>
+                </svg>
+            </div>
+            <div class="badge">
+                <div class="badge-dot"></div>
+                <span class="badge-text">Current Program</span>
+            </div>
+        </div>
+        <div class="card-content">
+            <h2 class="pattern-name">Waves</h2>
+            <p class="pattern-desc">Flowing sine curves that create a sense of movement and energy. Great for fitness apps suggesting motion and progress.</p>
+            <div class="code-hint">SVG pattern with quadratic curves</div>
+        </div>
+    </div>
+</body>
+</html>

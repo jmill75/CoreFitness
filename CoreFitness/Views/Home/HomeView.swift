@@ -1504,21 +1504,33 @@ struct TodaysWorkoutCard: View {
                     )
                     .frame(height: 140)
 
-                    // Pattern overlay (decorative)
-                    GeometryReader { geo in
-                        Path { path in
-                            let size: CGFloat = 60
-                            for x in stride(from: 0, to: geo.size.width + size, by: size) {
-                                for y in stride(from: 0, to: geo.size.height + size, by: size) {
-                                    path.move(to: CGPoint(x: x, y: y))
-                                    path.addQuadCurve(
-                                        to: CGPoint(x: x + size/2, y: y + size),
-                                        control: CGPoint(x: x - size/4, y: y + size/2)
-                                    )
-                                }
-                            }
+                    // Clean shine overlay
+                    ZStack {
+                        // Diagonal shine
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .clear, location: 0.4),
+                                .init(color: .white.opacity(0.15), location: 0.45),
+                                .init(color: .white.opacity(0.25), location: 0.5),
+                                .init(color: .white.opacity(0.15), location: 0.55),
+                                .init(color: .clear, location: 0.6),
+                                .init(color: .clear, location: 1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+
+                        // Top highlight glow
+                        VStack {
+                            LinearGradient(
+                                colors: [.white.opacity(0.12), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 70)
+                            Spacer()
                         }
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1.5)
                     }
 
                     // Badge
@@ -1681,21 +1693,33 @@ struct TodaysChallengeCard: View {
                     )
                     .frame(height: 140)
 
-                    // Pattern overlay (decorative)
-                    GeometryReader { geo in
-                        Path { path in
-                            let size: CGFloat = 60
-                            for x in stride(from: 0, to: geo.size.width + size, by: size) {
-                                for y in stride(from: 0, to: geo.size.height + size, by: size) {
-                                    path.move(to: CGPoint(x: x, y: y))
-                                    path.addQuadCurve(
-                                        to: CGPoint(x: x + size/2, y: y + size),
-                                        control: CGPoint(x: x - size/4, y: y + size/2)
-                                    )
-                                }
-                            }
+                    // Clean shine overlay
+                    ZStack {
+                        // Diagonal shine
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .clear, location: 0.4),
+                                .init(color: .white.opacity(0.15), location: 0.45),
+                                .init(color: .white.opacity(0.25), location: 0.5),
+                                .init(color: .white.opacity(0.15), location: 0.55),
+                                .init(color: .clear, location: 0.6),
+                                .init(color: .clear, location: 1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+
+                        // Top highlight glow
+                        VStack {
+                            LinearGradient(
+                                colors: [.white.opacity(0.12), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 70)
+                            Spacer()
                         }
-                        .stroke(Color.white.opacity(0.25), lineWidth: 1.5)
                     }
 
                     // Badge
