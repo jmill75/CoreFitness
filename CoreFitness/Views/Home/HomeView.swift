@@ -3649,6 +3649,7 @@ struct DayActivity {
     let day: String
     let minutes: Int
     let isToday: Bool
+    var isFuture: Bool = false
 }
 
 struct WeeklyActivitySection: View {
@@ -3662,17 +3663,30 @@ struct WeeklyActivitySection: View {
     private let textPrimary = Color.white
     private let textMuted = Color(hex: "666666")
 
-    // Mock data - replace with actual workout data (Mon-Sun)
+    // Day names Mon-Sun
+    private let dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+    // Get current day index (0 = Mon, 6 = Sun)
+    private var todayIndex: Int {
+        let calendar = Calendar.current
+        let weekday = calendar.component(.weekday, from: Date())
+        // Calendar weekday: 1 = Sunday, 2 = Monday, etc.
+        // We need: 0 = Monday, 6 = Sunday
+        return weekday == 1 ? 6 : weekday - 2
+    }
+
+    // Generate weekly data based on current day (Mon-Sun)
     private var weeklyData: [DayActivity] {
-        [
-            DayActivity(day: "Mon", minutes: 45, isToday: false),
-            DayActivity(day: "Tue", minutes: 95, isToday: false),
-            DayActivity(day: "Wed", minutes: 0, isToday: false),
-            DayActivity(day: "Thu", minutes: 0, isToday: true),
-            DayActivity(day: "Fri", minutes: 0, isToday: false),
-            DayActivity(day: "Sat", minutes: 0, isToday: false),
-            DayActivity(day: "Sun", minutes: 65, isToday: false)
-        ]
+        // TODO: Replace mock minutes with actual workout data from workoutManager
+        let mockMinutesData = [45, 95, 30, 60, 0, 0, 0] // Example past data
+
+        return dayNames.enumerated().map { index, day in
+            let isToday = index == todayIndex
+            let isFuture = index > todayIndex
+            // Future days show 0 minutes, past/today can show actual data
+            let minutes = isFuture ? 0 : (index < mockMinutesData.count ? mockMinutesData[index] : 0)
+            return DayActivity(day: day, minutes: minutes, isToday: isToday, isFuture: isFuture)
+        }
     }
 
     private var totalMinutes: Int {
@@ -3718,16 +3732,18 @@ struct WeeklyActivitySection: View {
                             // Bar
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(
-                                    data.minutes > 0 ?
-                                    LinearGradient(colors: [teal, sage], startPoint: .bottom, endPoint: .top) :
-                                    LinearGradient(colors: [teal.opacity(0.2), teal.opacity(0.2)], startPoint: .bottom, endPoint: .top)
+                                    data.isFuture ?
+                                    LinearGradient(colors: [Color.gray.opacity(0.15), Color.gray.opacity(0.15)], startPoint: .bottom, endPoint: .top) :
+                                    (data.minutes > 0 ?
+                                        LinearGradient(colors: [teal, sage], startPoint: .bottom, endPoint: .top) :
+                                        LinearGradient(colors: [teal.opacity(0.2), teal.opacity(0.2)], startPoint: .bottom, endPoint: .top))
                                 )
                                 .frame(width: 28, height: max(barHeight, 4))
 
                             // Day label
                             Text(data.day)
                                 .font(.system(size: 11, weight: data.isToday ? .semibold : .medium))
-                                .foregroundStyle(data.isToday ? textPrimary : textMuted)
+                                .foregroundStyle(data.isFuture ? textMuted.opacity(0.5) : (data.isToday ? textPrimary : textMuted))
                         }
                         .frame(maxWidth: .infinity)
                     }
