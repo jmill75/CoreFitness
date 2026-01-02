@@ -1213,6 +1213,8 @@ struct HealthMetricDetailView: View {
     @State private var historicalData: [Double] = []
     @State private var isLoading = true
     @State private var selectedPeriod: TimePeriod = .day
+    @State private var scrubberIndex: Int? = nil
+    @State private var isScrubbing = false
 
     private let chartHeight: CGFloat = 200
 
@@ -1455,10 +1457,69 @@ struct HealthMetricDetailView: View {
                                                     .position(x: lowX, y: lowY)
                                             }
                                         }
+
+                                        // Scrubber indicator
+                                        if let index = scrubberIndex, index >= 0, index < data.count, isScrubbing {
+                                            let scrubValue = data[index]
+                                            let scrubX = CGFloat(index) * stepX
+                                            let scrubNormalizedY = (scrubValue - yRange.min) / (yRange.max - yRange.min)
+                                            let scrubY = chartHeight - CGFloat(scrubNormalizedY) * chartHeight
+
+                                            // Vertical line
+                                            Path { path in
+                                                path.move(to: CGPoint(x: scrubX, y: 0))
+                                                path.addLine(to: CGPoint(x: scrubX, y: chartHeight))
+                                            }
+                                            .stroke(Color.white.opacity(0.6), style: StrokeStyle(lineWidth: 1))
+
+                                            // Dot on data point
+                                            Circle()
+                                                .fill(metricType.color)
+                                                .frame(width: 14, height: 14)
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(Color.white, lineWidth: 2.5)
+                                                )
+                                                .position(x: scrubX, y: scrubY)
+
+                                            // Value tooltip
+                                            VStack(spacing: 2) {
+                                                Text(formatValue(scrubValue))
+                                                    .font(.system(size: 14, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                                Text(labelForIndex(index))
+                                                    .font(.system(size: 10))
+                                                    .foregroundStyle(.white.opacity(0.7))
+                                            }
+                                            .padding(.horizontal, 10)
+                                            .padding(.vertical, 6)
+                                            .background(Color.black.opacity(0.8))
+                                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                                            .position(
+                                                x: min(max(scrubX, 40), width - 40),
+                                                y: max(scrubY - 35, 25)
+                                            )
+                                        }
                                     }
                                 }
                             }
                             .frame(height: chartHeight)
+                            .contentShape(Rectangle())
+                            .gesture(
+                                DragGesture(minimumDistance: 0)
+                                    .onChanged { value in
+                                        guard selectedPeriod != .day else { return }
+                                        let stepX = (UIScreen.main.bounds.width - 100) / CGFloat(data.count - 1)
+                                        let index = Int((value.location.x / stepX).rounded())
+                                        let clampedIndex = max(0, min(data.count - 1, index))
+                                        scrubberIndex = clampedIndex
+                                        isScrubbing = true
+                                    }
+                                    .onEnded { _ in
+                                        isScrubbing = false
+                                        scrubberIndex = nil
+                                    }
+                            )
                         }
                         .padding(.horizontal)
 
@@ -1551,6 +1612,40 @@ struct HealthMetricDetailView: View {
             return String(format: "%.0f", value)
         default:
             return "\(Int(value))"
+        }
+    }
+
+    private func labelForIndex(_ index: Int) -> String {
+        let calendar = Calendar.current
+        let today = Date()
+        let formatter = DateFormatter()
+
+        switch selectedPeriod {
+        case .day:
+            // Hourly labels
+            let hour = index
+            if hour == 0 { return "12 AM" }
+            if hour == 12 { return "12 PM" }
+            if hour < 12 { return "\(hour) AM" }
+            return "\(hour - 12) PM"
+
+        case .week:
+            // Days ago
+            guard let date = calendar.date(byAdding: .day, value: -(6 - index), to: today) else { return "" }
+            formatter.dateFormat = "EEE, MMM d"
+            return formatter.string(from: date)
+
+        case .month:
+            // Days ago
+            guard let date = calendar.date(byAdding: .day, value: -(29 - index), to: today) else { return "" }
+            formatter.dateFormat = "MMM d"
+            return formatter.string(from: date)
+
+        case .year:
+            // Months ago
+            guard let date = calendar.date(byAdding: .month, value: -(11 - index), to: today) else { return "" }
+            formatter.dateFormat = "MMM yyyy"
+            return formatter.string(from: date)
         }
     }
 }
